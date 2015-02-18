@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<script type="text/javascript" src="/js/XDClient.js"></script>
+	<script type="text/javascript" src="/js/peer-0.3.9.js"></script>
+	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp"></script>
+    <script>
+	    var zoom = 0;
+	    XDClient.registerObject(
+		    "zoom",
+			zoom,
+			function(obj) {
+			    return obj;
+		    },
+			function(obj) {
+			    zoom = obj;
+				});
+
+
+		var center = 0;
+		XDClient.registerObject(
+		    "center",
+			zoom,
+			function(obj) {
+				return obj;
+			},
+			function(ob) {
+				center = obj;
+			});
+
+	    XDClient.registerRole("all", ["zoom", "center"]);
+		XDClient.registerRole("zoom", ["zoom"]);
+		XDClient.registerRole("center", ["center"]);
+	</script>
+    <link href="xdclient.css" rel="stylesheet" type="text/css">
+</head>
+<body onload="XDClient.connectToServer();">
+<div class="xdclient_button" onClick="XDClient.showMenu();"></div>
+<div class="xdclient_menu" id="xdclient_menu" style="display:none"></div>
+<h1>Welcome to XDApp</h1>
+<hr />
+<select name="view"><option>Sync Zoom</option><option>Sync Position</option><option>Sync All</option></select>
+
+</body>
+</html>
