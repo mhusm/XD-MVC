@@ -11,5 +11,6 @@ Version
 Installation
 ------------
 1. `npm install`
-2. `npm start`
-3. Go to http://hostname:8082/gallery2.html
+2. `bower install`
+3. `npm start`
+4. Go to http://hostname:8082/gallery2.html

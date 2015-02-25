@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "author": "Maria Husmann <husmann@inf.ethz.ch>",
   "description" : "Cross-device MVC",
+  "private": true,
   
   "engines": {
     "node": ">=0.8.x"

@@ -1,4 +1,4 @@
-var xdserver = require('./xdserver.js');
+var xdserver = require('xd-mvc/xdmvcserver.js');
 xdserver.start(9000);
 
 var connect = require('connect'),
@@ -12,7 +12,7 @@ var app = connect().use(bodyParser.json()).use(serveStatic(__dirname + '/public'
 //var app = connect().use(bodyParser.urlencoded({ extended: false, type:'application/json'  })).use(serveStatic(__dirname + '/public'));
 var server = http.createServer(app);
 var fs = require('fs');
-var basePath = "\public\\polymer\\images";
+var basePath = "\public\\images";
 var transient = {};
 var persistent = {};
 
