@@ -63,7 +63,6 @@ function initialize() {
 		XDClient.registerRole(
 			"show other's bounds",
 			["bounds"],
-			null,
 			function(sender, args) {
                 if(views[sender] === undefined) {
 				views[sender] = new google.maps.Rectangle({
@@ -142,7 +141,7 @@ google.maps.event.addDomListener(window, 'load', initialize);
 <div class="xdclient_connect" onClick="XDClient.connectToServer();"></div>
 <div class="xdclient_button" onClick="XDClient.showMenu();"></div>
 <div class="xdclient_menu" id="xdclient_menu" style="display:none"></div>
-<h1>Welcome to XD-Maps</h1>
+<h1>Welcome to XDApp</h1>
 <hr />
 <div id="map-canvas"></div>
 </body>

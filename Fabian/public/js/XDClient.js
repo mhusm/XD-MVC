@@ -15,7 +15,7 @@ var XDClient = {
     otherRoles: {},
 
     // CONNECT WITH THE SERVER
-    connectToServer: function (userId) {
+    connectToServer: function (userId, callback) {
         "use strict";
         var wantedId;
         if(userId !== null && userId !== undefined) {
@@ -36,6 +36,10 @@ var XDClient = {
             console.info("Connection successful. Current id: " + id);
             XDClient.userId = id;
             XDClient.requestAvailablePeers();
+
+            if(callback !== undefined) {
+                callback();
+            }
         });
 
         XDClient.peer.on("connection", XDClient.handleConnection);
@@ -52,7 +56,6 @@ var XDClient = {
                 test: 'test'
             },
             function (x) {
-                console.info(x);
                 var availabilityList = JSON.parse(x);
                 XDClient.availablePeers = {};
                 for (var entry in availabilityList.peers) {
@@ -72,18 +75,21 @@ var XDClient = {
         } else {
             XDClient.connections.forEach(function (conn) {
                 if (conn.open) {
-                    if (XDClient.otherRoles[conn.peer] === null || XDClient.roles[XDClient.otherRoles[conn.peer]].subObjects.indexOf(msg.label) !== -1) {
+                    if (XDClient.otherRoles[conn.peer] === null
+                        || XDClient.otherRoles[conn.peer] === undefined
+                        || XDClient.roles[XDClient.otherRoles[conn.peer]].subObjects.indexOf(msg.label) !== -1) {
+
                         conn.send({
                             "type": "msg",
                             "sender": XDClient.userId,
                             "data": msg
                         });
                         //conn.send(document.getElementById("text").value);
-                        console.info(msg.data + " sent to: " + conn.peer);
+                        console.info(msg.label + ": " + msg.data + " sent to: " + conn.peer);
                         //}
                     }
                 } else {
-                    console.info(msg.data + " not sent to: " + conn.peer);
+                    console.info(msg.label + ": " + msg.data + " not sent to: " + conn.peer);
                 }
             });
         }
@@ -137,6 +143,11 @@ var XDClient = {
         "use strict";
         console.info("Connect to peer " + peer);
         var conn = XDClient.peer.connect(peer);
+
+        if(XDClient.connections.indexOf(conn) === -1) {
+            XDClient.connections.push(conn);
+        }
+
         XDClient.handleConnection(conn);
     },
 
@@ -185,22 +196,16 @@ var XDClient = {
             false);
     },
 
-    // CHANGE ROLE OF PEER AND BRADCAST THE ROLE
-    changeRole: function () {
+     // CHANGE ROLE OF PEER AND BRADCAST THE ROLE
+    changeRole: function (roleName) {
         "use strict";
-        var collection = document.getElementById('xdclient_menu').getElementsByTagName('INPUT');
-        var x;
-        for (x = 0; x < collection.length; x++) {
-            if (collection[x].type.toUpperCase() === 'RADIO' && collection[x].checked) {
-                if (XDClient.roles[collection[x].value] !== null) {
-                    XDClient.userRole = collection[x].value;
-                    console.info("UserRole changed to " + collection[x].value);
-                    XDClient.broadcastRole();
-                    XDClient.lookupAll();
-                } else {
-                    console.warn("Role does not exist. Please use registerRole first.");
-                }
-            }
+        if (roleName !== null && XDClient.roles[roleName] !== null) {
+            XDClient.userRole = roleName;
+            console.info("UserRole changed to " + roleName);
+            XDClient.broadcastRole();
+            XDClient.lookupAll();
+        } else {
+            console.warn("Role does not exist. Please use registerRole first.");
         }
     },
 
@@ -251,10 +256,6 @@ var XDClient = {
         conn.on("close", function () {
             XDClient.handleClose(conn);
         });
-
-        if (XDClient.connections.indexOf(conn) === -1) {
-            XDClient.connections.push(conn);
-        }
     },
 
     // CALLED WHEN A NEW CONNECTION GETS OPENED
@@ -262,18 +263,37 @@ var XDClient = {
         "use strict";
         console.info("Open Connection with " + conn.peer);
         if (XDClient.connections.indexOf(conn) === -1) {
+            // Received a connection: send current data
             XDClient.connections.push(conn);
+            for (var object in XDClient.objectsToSync) {
+                    XDClient.publish({"label": object, "data": JSON.stringify(XDClient.objectsToSync[object].object)});
+                }
         }
-        XDClient.publishSystemMessage({
+        // Broadcast current session
+        XDClient.publishSystemMessage(
+            {
                 "type": "session",
                 "data": XDClient.userSession
             }
         );
+        // Broadcast current Role
         XDClient.publishSystemMessage(
             {
                 "type": "role",
                 "data": XDClient.userRole
-            });
+            }
+        );
+        // Broadcast connected peers
+        var connectedPeers = [];
+        XDClient.connections.forEach(function (connection) {
+            connectedPeers.push(connection.peer);
+        });
+        XDClient.publishSystemMessage(
+            {
+                "type": "peers",
+                "data": JSON.stringify(connectedPeers)
+            }
+        );
     },
 
     // CALLED, WHEN DATA ARRIVES OVER A CONNECTION
@@ -281,7 +301,49 @@ var XDClient = {
         "use strict";
         if (msg.type === "msg") {
             //data received
-            console.info("Data received: " + msg.data.data + " - from: " + msg.sender);
+            console.info("Data received - " + msg.data.label + ": " + msg.data.data + " - from: " + msg.sender);
+
+            var data;
+
+            if (msg.data.type === "delta_object") {
+                // Only received changed entries (of JSON-Object)
+                // -> merge with current locally stored object
+
+                var oldValue = XDClient.objectsToSync[msg.data.label].object;
+                var receivedData = JSON.parse(msg.data.data);
+                var newValue = {};
+                for (var key in receivedData) {
+                    if (receivedData[key] === "XD_VALUE_UNCHANGED") {
+                        newValue[key] = oldValue[key];
+                    } else {
+                        newValue[key] = receivedData[key];
+                    }
+                }
+
+                data = JSON.stringify(newValue);
+
+            } else if (msg.data.type === "delta_array") {
+                // Only received changed entries (of array)
+                // -> merge with current locally stored object
+
+                var oldValue = XDClient.objectsToSync[label].object;
+                var receivedData = JSON.parse(msg.data.data);
+                var newValue = [];
+                receivedData.forEach(function (entry, index) {
+                    if (entry === "XD_VALUE_UNCHANGED") {
+                        newValue[index] = oldValue[index];
+                    } else {
+                        newValue[index] = entry;
+                    }
+                });
+
+                data = JSON.stringify(newValue);
+
+            } else {
+                // Full update
+                data = msg.data.data;
+            }
+
             if (XDClient.userRole !== null && XDClient.roles[XDClient.userRole].callback !== null && XDClient.roles[XDClient.userRole].callback !== undefined) {
 
                 //Use callback of role
@@ -290,7 +352,7 @@ var XDClient = {
                 var x;
                 for (x = 0; x < XDClient.roles[XDClient.userRole].subObjects.length; x++) {
                     if (msg.data.label === XDClient.roles[XDClient.userRole].subObjects[x]) {
-                        args[XDClient.roles[XDClient.userRole].subObjects[x]] = JSON.parse(msg.data.data);
+                        args[XDClient.roles[XDClient.userRole].subObjects[x]] = JSON.parse(data);
                     } else {
                         args[XDClient.roles[XDClient.userRole].subObjects[x]] =
                             XDClient.objectsToSync[XDClient.roles[XDClient.userRole].subObjects[x]].object;
@@ -301,10 +363,12 @@ var XDClient = {
                 XDClient.roles[XDClient.userRole].callback(msg.sender, args);
             } else {
 
-                XDClient.objectsToSync[msg.data.label].object = JSON.parse(msg.data.data);
+                // ??? NOT NECESSARY ANYMORE, BECAUSE OF OBJECT.OBSERVE?
+                //XDClient.objectsToSync[msg.data.label].object = JSON.parse(msg.data.data);
+
                 //Use callback of object
                 if (XDClient.objectsToSync[msg.data.label].callback !== null && XDClient.objectsToSync[msg.data.label].callback !== undefined) {
-                    XDClient.objectsToSync[msg.data.label].callback(msg.sender, JSON.parse(msg.data.data));
+                    XDClient.objectsToSync[msg.data.label].callback(msg.sender, JSON.parse(data));
                 }
             }
         } else if (msg.type === "sys") {
@@ -372,6 +436,8 @@ var XDClient = {
                 ajax.get("http://localhost:9001", {
                         storeSession: 1,
                         id: XDClient.userId,
+                        role: XDClient.userRole,
+                        name: XDClient.userName,
                         sessionId: XDClient.userSession,
                         data: sessionString
                     },
@@ -382,6 +448,13 @@ var XDClient = {
                 for (var object in XDClient.objectsToSync) {
                     XDClient.publish({"label": object, "data": JSON.stringify(XDClient.objectsToSync[object].object)});
                 }
+            } else if (msg.data.type === "peers") {
+                console.info("Connect to partner peers.");
+//                JSON.parse(msg.data.data).forEach(function (peer) {
+//                    if (XDClient.connections.indexOf(peer) === -1) {
+//                        XDClient.connectToPeer(peer);
+//                    }
+//                });
             }
         } else {
             console.warn("Wrongly formatted data received.");
@@ -404,19 +477,39 @@ var XDClient = {
     },
 
     // REGISTER AN OBJECT, WHICH WILL BE OBSERVED
-    registerObject: function (label, object, serialisation, callback) {
+    registerObject: function (label, object, serialisation, callback, deltaUpdates) {
         "use strict";
         if (XDClient.objectsToSync[label] === null || XDClient.objectsToSync[label] === undefined) {
             if (serialisation === null) {
-                serialisation = function (obj) {
-                    return JSON.stringify(obj);
+               XDClient.objectsToSync[label] = {
+                    "object": object,
+                    "serialisation": null,
+                    "callback": callback,
+                    "deltaUpdates": deltaUpdates
+                };
+            } else {
+                XDClient.objectsToSync[label] = {
+                    "object": serialisation(object),
+                    "serialisation": serialisation,
+                    "callback": callback,
+                    "deltaUpdates": deltaUpdates
                 };
             }
-            XDClient.objectsToSync[label] = {
-                "object": serialisation(object),
-                "serialisation": serialisation,
-                "callback": callback
-            };
+
+            if (object instanceof Object) {
+                Object.observe(object, function (label) {
+                    return function (changes) {
+                        changes.forEach(function (change) {
+                            //console.error("O.o(): \n" + JSON.stringify(change) + "\n\n" + JSON.stringify(change.oldValue));
+                            if (change.oldValue === undefined) {
+                                XDClient.updateObject(label, change.object, true, {});
+                            } else if (JSON.stringify(XDClient.objectsToSync[label].object) !== JSON.stringify(change.object)) {
+                                XDClient.updateObject(label, change.object, true, change.oldValue.object);
+                            }
+                        });
+                    }
+                }(label));
+            }
 
             console.info("Object " + label + " has been registered.");
         } else {
@@ -425,23 +518,109 @@ var XDClient = {
     },
 
     // CALL TO BROADCAST OBJECT CHANGE
-    updateObject: function (label, object) {
+    updateObject: function (label, object, forced, oldObject) {
         "use strict";
+
         if (XDClient.objectsToSync[label] !== null && XDClient.objectsToSync[label] !== undefined) {
-            XDClient.objectsToSync[label] = {
-                "object": XDClient.objectsToSync[label].serialisation(object),
-                "serialisation": XDClient.objectsToSync[label].serialisation,
-                "callback": XDClient.objectsToSync[label].callback
-            };
-            console.info("Object " + label + " has been updated.");
+
+            var serialisation = XDClient.objectsToSync[label].serialisation;
+            if (serialisation === null) {
+                serialisation = function (obj) {
+                    return obj;
+                }
+            }
+
+            // Is the object the same as before?
+            if (JSON.stringify(XDClient.objectsToSync[label].object) !== JSON.stringify(serialisation(object)) || forced) {
+
+                var oldValue;
+                if (forced) {
+                    oldValue = oldObject;
+                } else {
+                    oldValue = XDClient.objectsToSync[label].object;
+                }
+
+                if (XDClient.objectsToSync[label].serialisation === null) {
+                    XDClient.objectsToSync[label] = {
+                        "object": object,
+                        "serialisation": XDClient.objectsToSync[label].serialisation,
+                        "callback": XDClient.objectsToSync[label].callback,
+                        "deltaUpdates": XDClient.objectsToSync[label].deltaUpdates
+                    };
+                } else {
+                    XDClient.objectsToSync[label] = {
+                        "object": XDClient.objectsToSync[label].serialisation(object),
+                        "serialisation": XDClient.objectsToSync[label].serialisation,
+                        "callback": XDClient.objectsToSync[label].callback,
+                        "deltaUpdates": XDClient.objectsToSync[label].deltaUpdates
+                    };
+                }
+
+                if (XDClient.objectsToSync[label].deltaUpdates === true) {
+                    if (object.constructor === {}.constructor) {
+                        // {}-Object: Try Delta-update
+
+                        var delta = {};
+
+                        for (var key in object) {
+                            if (JSON.stringify(object[key]) === JSON.stringify(oldValue[key])) {
+                                // value not changed -> do not resend
+                                delta[key] = "XD_VALUE_UNCHANGED";
+                            } else {
+                                // value changed -> send
+                                delta[key] = object[key];
+                            }
+                        }
+
+                        //console.error(delta);
+
+                        XDClient.publish({
+                            "label": label,
+                            "type": "delta_object",
+                            "data": JSON.stringify(delta)
+                        });
+                    } else if (object.constructor === [].constructor) {
+                        // []-Object: Try delta update
+
+                        var delta = [];
+
+                        object.forEach(function (entry, index) {
+                            if (JSON.stringify(entry) === JSON.stringify(oldValue[index])) {
+                                delta[index] = "XD_VALUE_UNCHANGED";
+                            } else {
+                                delta[index] = entry;
+                            }
+                        });
+
+                        XDClient.publish({
+                            "label": label,
+                            "type": "delta_array",
+                            "data": JSON.stringify(delta)
+                        });
+                    } else {
+                        XDClient.publish({
+                            "label": label,
+                            "data": JSON.stringify(XDClient.objectsToSync[label].object)
+                        });
+                    }
+                } else {
+                    XDClient.publish({
+                        "label": label,
+                        "data": JSON.stringify(XDClient.objectsToSync[label].object)
+                    });
+                }
+
+                console.info("Object " + label + " has been updated.");
+            } else {
+                console.info("Object " + label + " is up-to-date.");
+            }
         } else {
             console.warn("Tried to update non registered object. Please use registerObject first.");
         }
-        //objectsToSync[label] = [object, publishSerialization, subscribeDeserialisation];
     },
 
     // REGISTER A ROLE
-    registerRole: function (label, subObjects, pubObjects, callback) {
+    registerRole: function (label, subObjects, callback) {
         "use strict";
         if (XDClient.roles[label] === null || XDClient.roles[label] === undefined) {
             XDClient.roles[label] = {
@@ -470,94 +649,134 @@ var XDClient = {
         ajax.get("http://localhost:9001", {
                 storeSession: 1,
                 id: XDClient.userId,
+                role: XDClient.userRole,
+                name: XDClient.userName,
                 sessionId: XDClient.userSession,
                 data: sessionString
             },
             function (x) {},
-            false);
-    },
+  false);
+  },
 
-    // RESTORE A PREVIOUS SESSION
-    restoreSession: function (sessionId, clientId) {
-        "use strict";
-        ajax.get("http://localhost:9001", {
-                restoreSession: 1,
-                sessionId: sessionId,
-                id: clientId
-            },
-            function (x) {
-                var parsedObjects = JSON.parse(x);
-                for (var object in parsedObjects) {
-                    XDClient.objectsToSync[object].object = parsedObjects[object];
-                    if (XDClient.objectsToSync[object].callback != undefined) {
-                        XDClient.objectsToSync[object].callback(XDClient.userId, parsedObjects[object]);
-                    }
-                }
-                console.info('Restored session.');
-            });
-    },
+   // RESTORE A PREVIOUS SESSION
+  restoreSession: function (sessionId, clientId) {
+      "use strict";
 
-    // DEFAULT-MENU TO PROVIDE BASIC FUNCTIONALITY
-    showMenu: function () {
-        "use strict";
+      // Connect to server with correct ID
+      XDClient.connectToServer(clientId, function () {
+          ajax.get("http://localhost:9001", {
+                  restoreSession: 1,
+                  sessionId: sessionId,
+                  id: clientId
+              },
+              function (x) {
+                  var parsedObjects = JSON.parse(x);
 
-        XDClient.requestAvailablePeers();
+                  // Restore objects
+                  for (var object in parsedObjects.data.data) {
+                      console.info("Object " + object + " restored.");
+                      XDClient.objectsToSync[object].object = parsedObjects.data.data[object];
+                      //Use callback of object
+                      if (XDClient.objectsToSync[object].callback !== null && XDClient.objectsToSync[object].callback !== undefined) {
+                          XDClient.objectsToSync[object].callback(XDClient.userId, parsedObjects.data.data[object]);
+                      }
+                  }
 
-        var html = '<div class="xdclient_menu_inner">' + '<div class="xdclient_close" onclick="XDClient.hideMenu();">x</div>' + '<h1>XDClient Menu</h1><hr />' + '<h3>Username</h3>' + '<input name="username" id="username" placeholder="Username" type="text"';
+                  // Restore name
+                  if (parsedObjects.data.name !== undefined && parsedObjects.data.name !== null && parsedObjects.data.name !== 'null') {
+                      XDClient.changeName(parsedObjects.data.name);
 
-        if (XDClient.userName != null) {
-            html = html + 'value="' + XDClient.userName + '"';
-        }
+                  }
 
-        html = html + '/><button type="submit" onclick="javascript: XDClient.changeName(document.getElementById(\'username\').value);">Change</button>' + '<h3>Available Peers</h3>';
+                  // Restore role
+                  if (parsedObjects.data.role !== undefined && parsedObjects.data.role !== null && parsedObjects.data.role !== 'null') {
+                      XDClient.changeRole(parsedObjects.data.role);
+                      //XDClient.userRole = parsedObjects.data.role;
+                  }
 
-        if (Object.keys(XDClient.availablePeers).length > 0) {
-            var conns = [];
-            XDClient.connections.forEach(function (c) {
-                conns.push(c.peer);
-            });
-            console.log(JSON.stringify(XDClient.availablePeers));
-            for (var p in XDClient.availablePeers) {
-                if (conns.indexOf(p) === -1) {
-                    html = html + '<input type="checkbox" value="' + p + '">';
+                  // Restore session Id
+                  XDClient.userSession = sessionId;
+                  ajax.get("http://localhost:9001", {
+                          joinSession: 1,
+                          id: XDClient.userId,
+                          session: XDClient.userSession
+                      },
+                      function (x) {},
+                      false);
 
-                    // has the client a name?
-                    if (XDClient.availablePeers[p].name !== undefined) {
-                        html = html + XDClient.availablePeers[p].name;
-                    } else {
-                        html = html + p;
-                    }
 
-                    // is the client in a session?
-                    if(XDClient.availablePeers[p].session !== undefined) {
-                        html = html + ' <small>(' + XDClient.availablePeers[p].session + ')</small>';
-                    }
+                  // Reconnect to peers (if available)
+                  parsedObjects.peers.forEach(function (key) {
+                      if (XDClient.availablePeers[key] !== undefined) {
+                          XDClient.connectToPeer(key);
+                      }
+                  });
 
-                    html = html + '<br />';
-                } else {
-                    html = html + '<input type="checkbox" value="' + p + '" checked="checked">';
-                    if (XDClient.availablePeers[p].name !== undefined) {
-                        html = html + XDClient.availablePeers[p].name + ' <small>' + XDClient.availablePeers[p].session + '</small>';
-                    } else {
-                        html = html + p;
-                    }
+                  console.info('Restored session.');
+              });
+      });
+  },
 
-                    // is the client in a session?
-                    if(XDClient.availablePeers[p].session !== undefined) {
-                        html = html + ' <small>(' + XDClient.availablePeers[p].session + ')</small>';
-                    }
+   // DEFAULT-MENU TO PROVIDE BASIC FUNCTIONALITY
+  showMenu: function () {
+      "use strict";
 
-                    html = html + '<br />';
-                }
-            };
-            html = html + '<br/><button onclick="XDClient.connectToSelectedPeers();">Connect!</button>';
-        } else {
-            html = html + 'No connections available.';
-        }
+      XDClient.requestAvailablePeers();
 
-        html = html + '<hr />';
-        html = html + '<h3>Available Roles</h3>';
+      var html = '<div class="xdclient_menu_inner">' + '<div class="xdclient_close" onclick="XDClient.hideMenu();">x</div>' + '<h1>XDClient Menu</h1><hr />' + '<h3>Username</h3>' + '<input name="username" id="username" placeholder="Username" type="text"';
 
+      if (XDClient.userName != null) {
+          html = html + 'value="' + XDClient.userName + '"';
+      }
+
+      html = html + '/><button type="submit" onclick="javascript: XDClient.changeName(document.getElementById(\'username\').value);">Change</button>' + '<h3>Available Peers</h3>';
+
+      if (Object.keys(XDClient.availablePeers).length > 0) {
+          var conns = [];
+          XDClient.connections.forEach(function (c) {
+              conns.push(c.peer);
+          });
+          console.log(JSON.stringify(XDClient.availablePeers));
+          for (var p in XDClient.availablePeers) {
+              if (conns.indexOf(p) === -1) {
+                  html = html + '<input type="checkbox" value="' + p + '">';
+
+                  // has the client a name?
+                  if (XDClient.availablePeers[p].name !== undefined) {
+                      html = html + XDClient.availablePeers[p].name;
+                  } else {
+                      html = html + p;
+                  }
+
+                  // is the client in a session?
+                  if (XDClient.availablePeers[p].session !== undefined) {
+                      html = html + ' <small>(' + XDClient.availablePeers[p].session + ')</small>';
+                  }
+
+                  html = html + '<br />';
+              } else {
+                  html = html + '<input type="checkbox" value="' + p + '" checked="checked">';
+                  if (XDClient.availablePeers[p].name !== undefined) {
+                      html = html + XDClient.availablePeers[p].name + ' <small>' + XDClient.availablePeers[p].session + '</small>';
+                  } else {
+                      html = html + p;
+                  }
+
+                  // is the client in a session?
+                  if (XDClient.availablePeers[p].session !== undefined) {
+                      html = html + ' <small>(' + XDClient.availablePeers[p].session + ')</small>';
+                  }
+
+                  html = html + '<br />';
+              }
+          };
+          html = html + '<br/><button onclick="XDClient.connectToSelectedPeers();">Connect!</button>';
+      } else {
+          html = html + 'No connections available.';
+      }
+
+      html = html + '<hr />';
+      html = html + '<h3>Available Roles</h3>';
         var k = null;
         for (k in XDClient.roles) {
             if (k === XDClient.userRole) {
@@ -570,7 +789,7 @@ var XDClient = {
         if (k === null) {
             html = html + '<br/>No roles defined.';
         } else {
-            html = html + '<br/><button onclick="XDClient.changeRole();">Change role</button>';
+            html = html + '<br/><button onclick="var collection = document.getElementById(\'xdclient_menu\').getElementsByTagName(\'INPUT\'); var x;for (x = 0; x < collection.length; x++) {if (collection[x].type.toUpperCase() === \'RADIO\' && collection[x].checked) {if (XDClient.roles[collection[x].value] !== null) {XDClient.changeRole(collection[x].value);}}}">Change role</button>';
         }
 
         html = html + '<hr />';
@@ -589,18 +808,6 @@ var XDClient = {
         document.getElementById('xdclient_menu').innerHTML = '';
     }
 };
-
-Object.observe(XDClient.objectsToSync, function (changes) {
-    "use strict";
-    changes.forEach(function (change) {
-        if (change.oldValue === undefined || JSON.stringify(XDClient.objectsToSync[change.name].object) !== JSON.stringify(change.oldValue.object)) {
-            XDClient.publish({
-                "label": change.name,
-                "data": JSON.stringify(XDClient.objectsToSync[change.name].object)
-            });
-        }
-    });
-});
 
 var ajax = {};
 ajax.x = function () {

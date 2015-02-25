@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html ng-app="XDMediaplayer">
+
+<head>
+    <script type="text/javascript" src="/js/XDClient.js"></script>
+    <script type="text/javascript" src="/js/peer-0.3.9.js"></script>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.13/angular.js"></script>
+    <script type="text/javascript" src="/js/controllers/controllers.js"></script>
+    <link href="xdclient.css" rel="stylesheet" type="text/css">
+</head>
+
+<body ng-controller="MediaplayerCtrl">
+    <div class="xdclient_connect" onClick="XDClient.connectToServer();"></div>
+    <div class="xdclient_button" onClick="XDClient.showMenu();"></div>
+    <div class="xdclient_menu" id="xdclient_menu" style="display:none"></div>
+    <h1>XDMediaPlayer</h1>
+    <hr />
+    <img height="120px" ng-src="{{library[playlist[currentImage].name].preview}}" />
+     <a ng-click="previousImage()" href="#">< Previous</a> | <a ng-click="playback()" href="#" id="playbutton">Play</a> | <a ng-click="nextImage()" href="#">Next ></a>
+        <select ng-model="interval" ng-options="item for item in intervals">
+        </select>
+    <h2>Playlist</h2>
+    <div style="float:left;" ng-repeat="image in playlist">
+        <a ng-click="showImage($index)"><img height="40px" ng-src="{{library[image.name].preview}}" /></a>
+    </div><div style="clear: both"></div>
+    <hr />
+    <h2>Library</h2>
+  <ul>
+    <li data-ng-repeat="file in library">
+      <img id="preview_{{file.key}}" width="40px" data-ng-src="{{file.preview}}" /><br />
+        <strong>{{file.name}}</strong><br />
+        Owner: {{file.contributor}}<br />
+        <a ng-click="addFileToPlaylist(file.name)" href="#">Add to Playlist</a>
+    </li>
+  </ul>
+  <div class="mediaEdit">
+        <h4>Add media</h4>
+        <form>
+            <input type="file" fileread="uploadme" multiple name="files" id="files" accept="audio/*|video/*" />
+            <input type="button" ng-click="addFilesToLibrary()" value="Insert to Library" />
+        </form>
+    </div>
+
+</body>
+
+</html>

@@ -5,8 +5,7 @@
   "version" : "0.0.1",
   "dependencies" : {
     "peer" :  >= 0.2.8,
-    "request" : >= 2.49.0,
-    "require" : >= 2.4.17
+    "request" : >= 2.49.0
   },
   "keywords": {
     "model",

@@ -4,6 +4,7 @@ var url = require('url');
 var fs = require('fs');
 var peer = require('peer');
 var request = require('request');
+var storageModule = require('./storage.js');
 
 // FILESERVER
 var static = require('node-static');
@@ -107,66 +108,70 @@ var XDServer = http.createServer(function (request, response) {
 
         } else if (parameters.query.storeSession != null && parameters.query.id != null && parameters.query.sessionId != null && parameters.query.data != null) {
             // store session
+            storageModule.storeSession(parameters.query.sessionId, parameters.query.id, parameters.query.role, parameters.query.name, parameters.query.data, response);
 
-            // Create sessionfile if not exists
-            fs.exists(__dirname + "/storage/" + parameters.query.sessionId + '.db', function (exists) {
-                if (!exists) {
-                    fs.writeFile(__dirname + "/storage/" + parameters.query.sessionId + '.db', '{}');
-                }
-
-                // Read out sessiondata
-                fs.readFile(__dirname + "/storage/" + parameters.query.sessionId + '.db', 'utf8', function (err, data) {
-                    if (err) {
-                        response.setHeader("Content-Type", "text/html");
-                        response.statusCode = 404;
-                        response.end();
-                        console.error("A storage error occurred.", err);
-                    } else {
-
-                        var file = {};
-                        if (data !== null && data !== undefined) {
-                            file = JSON.parse(data);
-                        }
-
-                        file[parameters.query.id] = JSON.parse(parameters.query.data);
-
-                        // Write sessiondata back
-                        fs.writeFile(__dirname + "/storage/" + parameters.query.sessionId + '.db',
-                            JSON.stringify(file),
-                            function (err) {
-                                if (err) {
-                                    response.setHeader("Content-Type", "text/html");
-                                    response.statusCode = 404;
-                                    response.end();
-                                    console.error("A storage error occurred.", err);
-                                } else {
-                                    response.end();
-                                    console.info("Stored session " + parameters.query.sessionId + " of " + parameters.query.id + ".");
-                                }
-                            });
-                    }
-                });
-            });
+//            // Create sessionfile if not exists
+//            fs.exists(__dirname + "/storage/" + parameters.query.sessionId + '.db', function (exists) {
+//                if (!exists) {
+//                    fs.writeFile(__dirname + "/storage/" + parameters.query.sessionId + '.db', '{}');
+//                }
+//
+//                // Read out sessiondata
+//                fs.readFile(__dirname + "/storage/" + parameters.query.sessionId + '.db', 'utf8', function (err, data) {
+//                    if (err) {
+//                        response.setHeader("Content-Type", "text/html");
+//                        response.statusCode = 404;
+//                        response.end();
+//                        console.error("A storage error occurred.", err);
+//                    } else {
+//
+//                        var file = {};
+//                        if (data !== null && data !== undefined) {
+//                            file = JSON.parse(data);
+//                        }
+//
+//                        file[parameters.query.id] = {"role": parameters.query.role, "name": parameters.query.name, "data": JSON.parse(parameters.query.data)};
+//
+//                        // Write sessiondata back
+//                        fs.writeFile(__dirname + "/storage/" + parameters.query.sessionId + '.db',
+//                            JSON.stringify(file),
+//                            function (err) {
+//                                if (err) {
+//                                    response.setHeader("Content-Type", "text/html");
+//                                    response.statusCode = 404;
+//                                    response.end();
+//                                    console.error("A storage error occurred.", err);
+//                                } else {
+//                                    response.end();
+//                                    console.info("Stored session " + parameters.query.sessionId + " of " + parameters.query.id + ".");
+//                                }
+//                            });
+//                    }
+//                });
+//            });
 
 
 
     } else if (parameters.query.restoreSession != null && parameters.query.id != null && parameters.query.sessionId != null) {
-        // restore session
-        console.log('restore');
-        fs.readFile(__dirname + "/storage/" + parameters.query.sessionId + '.db', 'utf8', function (err, data) {
-            if (err) {
-                response.setHeader("Content-Type", "text/html");
-                response.statusCode = 404;
-                response.end();
-                console.error("A storage error occurred.", err);
-            }
 
-            var file = JSON.parse(data);
-            response.write(JSON.stringify(file[parameters.query.id]));
-            response.end();
-            console.info('Restored session ' + parameters.query.sessionId + ' for user ' + parameters.query.id + '.');
-
-        });
+//        // restore session
+        storageModule.restoreSession(parameters.query.sessionId, parameters.query.id, response);
+//        console.log('restore');
+//        fs.readFile(__dirname + "/storage/" + parameters.query.sessionId + '.db', 'utf8', function (err, data) {
+//            if (err) {
+//                response.setHeader("Content-Type", "text/html");
+//                response.statusCode = 404;
+//                response.end();
+//                console.error("A storage error occurred.", err);
+//            }
+//
+//            var file = JSON.parse(data);
+//            response.write(JSON.stringify({"peers": Object.keys(file), "data": file[parameters.query.id]}));
+//            response.end();
+//
+//            console.info('Restored session ' + parameters.query.sessionId + ' for user ' + parameters.query.id + '.');
+//
+//        });
     } else {
         // someone tried to call a not supported method
         // answer with 404
