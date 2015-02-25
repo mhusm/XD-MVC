@@ -1,0 +1,26 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<script src="../../js/xdmvc.js"></script>
+<polymer-element name="xdmvc-available" >
+	<template>
+        <h2>Available devices</h2>
+        <ul>
+			<template repeat="{{p in peers}}">
+				<li>{{p}} <button on-click="{{connect}}">Connect</button></li>
+ 			</template>
+        
+        </ul>
+ 	</template>
+	<script>
+		Polymer({
+			created: function() {
+                this.peers = XDmvc.availablePeers;
+ 			},
+             
+            connect: function(event, detail, sender){
+                XDmvc.connectTo(sender.parentNode.templateInstance.model.p);
+                console.log(sender.parentNode.templateInstance.model.p);
+            }
+	  
+		});
+	</script>
+</polymer-element>
