@@ -1,21 +1,14 @@
 {
-  "name": "XD-MVC",
+  "name": "xd-mvc",
   "version": "0.1.0",
   "author": "Maria Husmann <husmann@inf.ethz.ch>",
   "description" : "Cross-device MVC",
-  
-  "scripts": {
-    "start": "node xdmvcserver.js"
-  },
   
   "engines": {
     "node": ">=0.8.x"
   },
   
   "dependencies": {
-    "connect": ">=2.7.2",
-    "peer": ">=0.2.4",
-	"body-parser": ">=1.9.2",
-	"serve-static": ">=1.7.1"
+    "peer": ">=0.2.4"
    }
 }

@@ -1,4 +1,4 @@
-<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../../polymer/polymer.html">
 <polymer-element name="model-element2" attributes="synchronized" >
 	<script>
 		Polymer({
@@ -9,7 +9,7 @@
            attached: function() {
                var sync = this.synchronized;
                Object.keys(this.synchronized).forEach(function(key){
-                   XDp2p.synchronize(sync[key], undefined, key);
+                   XDmvc.synchronize(sync[key], undefined, key);
                });
 			}
 	  

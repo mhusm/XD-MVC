@@ -1,4 +1,4 @@
-<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../../polymer/polymer.html">
 <polymer-element name="role-element" attributes="roles selected isselected" >
     <template>
         <h2>My roles</h2>
@@ -18,9 +18,9 @@
             },
             
             ready: function(){
-                XDp2p.roles = this.selected;
+                XDmvc.roles = this.selected;
                 var self = this;
-                Object.observe(XDp2p.roles, function(changes){
+                Object.observe(XDmvc.roles, function(changes){
                     self.updateIsselected();
                 });
             },
@@ -53,13 +53,13 @@
             },
             
             addRole: function(role) {
-                XDp2p.addRole(role);
+                XDmvc.addRole(role);
                 this.fire('roleChanged')
                
             },
             
             removeRole: function(role){
-                XDp2p.removeRole(role);
+                XDmvc.removeRole(role);
                 this.fire('roleChanged')
           
             },
@@ -67,7 +67,7 @@
             selectedChanged: function(){
                 var sel = this.isselected;
                 this.selected.forEach(function(r) {
-                    XDp2p.addRole(r);
+                    XDmvc.addRole(r);
                     if (!sel[r]) {
                         sel[r] = true;
                     }

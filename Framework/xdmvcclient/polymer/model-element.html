@@ -1,4 +1,4 @@
-<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../../polymer/polymer.html">
 <polymer-element name="model-element" attributes="persistent transient url" >
 	<script>
 		Polymer('model-element', {
@@ -8,8 +8,8 @@
             },
             
            attached: function() {
-                XDp2p.synchronize(this.persistent, undefined, "persistent");
-                XDp2p.synchronize(this.transient, undefined, "transient");
+                XDmvc.synchronize(this.persistent, undefined, "persistent");
+                XDmvc.synchronize(this.transient, undefined, "transient");
                 var thisPersistent = this.persistent;
                 var thisTransient = this.transient;
                 var thisElement = this;
@@ -29,7 +29,7 @@
 	/*				
                     $.post(thisElement.url, {"changed" : thisPersistent},
                         function (data) {
-          //                  XDp2p.loadNew(thisPersistent, data.persistent, "persistent");
+          //                  XDmvc.loadNew(thisPersistent, data.persistent, "persistent");
                        }, 
 					   "application/json; charset=utf-8"
                     );
@@ -44,8 +44,8 @@
                 $.getJSON(thisElement.url,
                     function (data) {
                         Object.unobserve(thisPersistent, observe);
-                        XDp2p.loadNew(thisPersistent, data.persistent, "persistent");
-                        XDp2p.loadNew(thisTransient, data.transient, "transient");
+                        XDmvc.loadNew(thisPersistent, data.persistent, "persistent");
+                        XDmvc.loadNew(thisTransient, data.transient, "transient");
                         Object.observe(thisPersistent, observe);
                         console.log(thisTransient);
                 });
