@@ -1,0 +1,130 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+
+<polymer-element name="pointer-element2" attributes="position" >
+	<template>
+		<content id="content" on-down="{{down}}" on-track="{{track}}" on-up="{{up}}" touch-action="none"></content>
+		
+		<div id="pointer" style="{{stylesString}}"></div>
+		
+		<style>
+		  :host {
+			/* Note: by default elements are always display:inline. */
+			display: inline-block;
+			position: relative;
+		  }
+		  
+		  ::content * {
+			display: inline-block;
+		  }
+		  
+		  #pointer{
+			position: absolute;
+			top: 20px;
+			left: 0;
+			height: 10px;
+			width: 10px;
+			background-color: #E6399B;
+			border-radius: 50%;
+            display: none;
+		  }
+		</style>
+	</template>
+	<script>
+		var getOffset = function getOffset(e){
+			var target = e.target || e.srcElement,
+				style = target.currentStyle || window.getComputedStyle(target, null),
+				borderLeftWidth = parseInt(style['borderLeftWidth'], 10),
+				borderTopWidth = parseInt(style['borderTopWidth'], 10),
+				rect = target.getBoundingClientRect(),
+//				offsetX = e.clientX - borderLeftWidth - rect.left,
+//				offsetY = e.clientY - borderTopWidth - rect.top;
+				offsetX = e.clientX - rect.left,
+				offsetY = e.clientY - rect.top;
+			return {x: offsetX, y: offsetY};
+		};
+
+		var getRelativePosition = function getRelativePosition(offset, target){
+			var	style = target.currentStyle || window.getComputedStyle(target, null),
+	//			borderLeftWidth = parseInt(style['borderLeftWidth'], 10),
+	//			borderTopWidth = parseInt(style['borderTopWidth'], 10),
+				rect = target.getBoundingClientRect();
+			return {x: offset.x/rect.width, y: offset.y/rect.height};
+		};
+		
+		var getAbsolutePosition = function getAbsolutePosition(relative, target){
+	//		console.log(target.getBoundingClientRect());
+			var rect = target.getBoundingClientRect();
+		//	console.log(rect);
+			return {x: relative.x * rect.width, y: relative.y * rect.height};
+		};
+
+		
+		Polymer({
+			created: function() {
+                this.styles = {};
+				this.styles.left = 100+"px";
+				this.styles.top = 100 +"px";
+				this.stylesString = PolymerExpressions.prototype.styleObject.call(this, this.styles);
+	//			this.transient = { };
+				this.position = {x: 0, y: 0} ;
+		//		console.log(this.transient.position.x);
+			},
+		
+		    down: function (event, details, target) {
+				var offset = getOffset(event);
+				var rel = getRelativePosition(offset, event.srcElement);
+				var abs = getAbsolutePosition(rel, event.srcElement);
+  
+	//			console.log(offset);
+		//		console.log(rel);
+			//	console.log(abs);
+            },
+		    track: function (event, details, target) {
+//				this.$.pointer.style.top = getOffset(event).y +'px';
+//				this.$.pointer.style.left = getOffset(event).x +'px';
+//				this.$.pointer.style.color = 'white';
+//				console.log(this.transient.position);
+				var offset = getOffset(event);
+				var rel = getRelativePosition(offset, event.srcElement);
+				var old = this.position;
+				this.position.x = rel.x;
+				this.position.y = rel.y;
+ //               var old = album.url;
+				
+				                // Need to notify, nesting too deep
+                // TODO or this could be handled by the framework
+ /*               Object.getNotifier(this.position).notify({
+                    type: 'update',
+                    name: 'position',
+                    oldValue: old
+                });
+*/
+
+			
+			},
+		    up: function (event) {
+                this.async(function() {
+                  this.styles.display= "none";
+                  this.stylesString = PolymerExpressions.prototype.styleObject.call(this, this.styles);
+                }, null, 5000);
+
+            },
+			
+			updatePosition: function updatePosition() {
+				var abs = getAbsolutePosition(this.position, this.children[0]);
+				console.log(abs);
+				this.styles.left = abs.x +"px";
+				this.styles.top = abs.y +"px";
+                this.styles.display= "block";
+				this.stylesString = PolymerExpressions.prototype.styleObject.call(this, this.styles);
+			},
+			
+			observe: {
+                'position.x': 'updatePosition',
+                'position.y': 'updatePosition',
+            }
+
+		});
+		
+	</script>
+</polymer-element>

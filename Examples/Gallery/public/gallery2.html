@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="js/find-polyfill.js"></script>
+        <!-- 1. Load platform support before any code that touches the DOM. -->
+        <script src="bower_components/webcomponentsjs/webcomponents.js"></script>
+        <!-- 2. Load the component using an HTML Import -->
+        <link rel="import" href="elements/image-element.html">
+        <link rel="import" href="elements/pointer-element.html">
+        <link rel="import" href="elements/model-element.html">
+        <link rel="import" href="elements/model-tool.html">
+        <link rel="import" href="elements/xdp2p-server.html">
+        <link rel="import" href="elements/role-element.html">
+        <link rel="import" href="elements/gallery-element.html">
+        <link rel="import" href="elements/gallery-overview.html">
+        <link rel="import" href="elements/xdp2p-available.html">
+        <link rel="import" href="elements/xdp2p-connections.html">
+        <link rel="import" href="elements/xdp2p-connect.html">
+        <link rel="import" href="elements/xdp2p-tools.html">
+                      <link rel="stylesheet" href="../css/gallery.css" />
+        
+        <meta name="viewport" content="width=device-width, user-scalable=no">
+    </head>
+    <body>
+        
+        <polymer-element name="my-app" attributes="persistent transient" >
+            <template>
+
+                <model-element id="model" 
+                               persistent='{ "albums": [], "large": [], "thumbs": []}'
+                               transient = '{"current":0, "currentAlbum": "", "position" : {}}'
+                               url= '/gallery'
+                               >
+                </model-element>
+                 <button on-click="{{showAlbum}}" 
+                        hidden?="{{albumVisible || albumsVisible || !$.roles.isselected.owner}}">
+                    Back to Album
+                </button>
+                <button on-click="{{showAlbums}}" 
+                        hidden?="{{albumsVisible || !albumVisible || !$.roles.isselected.owner}}">
+                    Back to Albums
+                </button>
+                <gallery-overview id='overview'
+                                  hidden?="{{!albumsVisible }}"
+                                  transient="{{$.model.transient}}" 
+                                  persistent="{{$.model.persistent}}" 
+                                  on-click="{{albumClicked}}">
+                </gallery-overview>
+				<image-element hidden?="{{!imageVisible}}"
+							   id="image"
+							   transient="{{$.model.transient}}"
+							   persistent="{{$.model.persistent}}"
+							   showControls="{{$.roles.isselected.owner}}"
+							   showCover="{{false}}">
+				</image-element>
+                <gallery-element id='gallery'
+                                 transient="{{$.model.transient}}"
+                                 persistent="{{$.model.persistent}}"
+                                 hidden?="{{!albumVisible}}"
+                                 on-image="{{imageClicked}}">
+                </gallery-element>
+<!--				<pointer-element  transient="{{$.model.transient}}" > -->
+ 
+	<!--			</pointer-element> -->
+                <role-element id="roles"
+                              roles="['owner', 'visitor', 'albums', 'album', 'image', 'small', 'medium', 'large']"
+                              selected="['albums']">
+                </role-element>
+                <xdp2p-server id='xdp2p' url='darroch.inf.ethz.ch' reconnect='true' show='true'></xdp2p-server>
+                <xdp2p-tools transient="{{$.model.transient}}"
+                             persistent="{{$.model.persistent}}"
+                             roles="{{$.roles.roles}}"></xdp2p-tools>
+                <style>
+                    button {
+                        margin-bottom: 8px;
+                    }   
+                    
+                </style>
+            </template>
+            <script>
+                Polymer('my-app', {
+                    created: function(){
+                        this.othersRoles = XDp2p.othersRoles;
+                        this.albumsVisible = true;
+                        this.albumVisible = false;
+                        this.imageVisible = false;
+                        
+                        // TODO find a better way to enable/disable visual tools?
+                        if (getQueryParams(window.location.search).notools === 'true') {
+                            console.log("no tools");
+                            var sheet = window.document.styleSheets[0];
+                            console.log(sheet);
+                            sheet.insertRule('::shadow xdp2p-tools, ::shadow xdp2p-server, ::shadow role-element { display: none; }', sheet.cssRules.length);
+                            
+                        }
+                    },
+
+                    ready: function() {
+                        console.log("ready");
+                        // Gestures
+                        var element = this.$.image;
+                        var roleElement = this.$.roles;
+                         
+                        Hammer(element).on("swiperight", function(event) {
+                            console.log(roleElement.isselected);
+                            if (roleElement.isselected.owner) {
+                                element.previous();
+                            }
+                        });  
+                        Hammer(element).on("swipeleft", function(event) {
+                            if (roleElement.isselected.owner) {
+                                element.next();
+                            }
+                        });  
+                          console.log(XDp2p.myPosition);
+/*
+                        Object.observe(XDp2p.myPosition, function (changes) {
+                            console.log("position changed");
+                            // For testing, the first device is the owner
+                            if (XDp2p.myPosition.value === 0) {
+                                console.log("adding owner");
+                                roleElement.addRole('owner');   
+                                roleElement.removeRole('visitor');   
+                           } else { // other devices are visitors
+                                console.log("removing owner");
+                                roleElement.removeRole('owner');   
+                                roleElement.addRole('visitor');   
+                            }
+                        });
+  */                  },
+                    
+                    albumClicked: function() {
+                        this.$.roles.removeRole('albums');
+                        this.$.roles.addRole('album');
+                    },
+
+                    showAlbums: function() {
+                        this.$.roles.addRole('albums');
+                        this.$.roles.removeRole('album');
+                        this.$.roles.removeRole('image');
+                    },
+
+                    showAlbum: function() {
+                        this.$.roles.addRole('album');
+                        this.$.roles.removeRole('image');
+                    },
+                    
+                    imageClicked: function(){
+                        this.$.roles.addRole('image');
+                    },
+                    
+                    updateViews: function(){
+                        console.log("updateViews");
+                        var roles = this.$.roles;
+                        this.albumsVisible = roles.isselected.albums &&  !roles.isselected.visitor;
+                        this.albumVisible = roles.isselected.album && !(roles.isselected.image && roles.isselected.small) &&  !roles.isselected.visitor;
+                        this.imageVisible = (roles.isselected.image || roles.isselected.visitor) && !this.albumsVisible;
+                        if (roles.isselected.large && this.othersRoles.small > 0) {
+                            this.albumsVisible = false;
+                            this.albumVisible = this.othersRoles.albums > 0; 
+                            this.imageVisible = this.othersRoles.album > 0;
+                        }
+                        if (roles.isselected.small && this.othersRoles.large > 0) {
+                            this.albumsVisible = roles.isselected.albums;
+                            this.albumVisible = roles.isselected.album; 
+                            this.imageVisible = false;
+                        }
+                        
+                        
+                    },
+                    
+                    domReady: function(){
+                        var that = this;
+                        
+                        var connect = getQueryParams(window.location.search).connect;
+                        console.log(connect);
+                        if (!connect){
+                            console.log('connect' +connect);
+                            var connectString = 'connect='+XDp2p.userId
+                            window.history.pushState('', '', window.location.search.length > 0? window.location.search +"&" +connectString : '?'+connectString);
+                            this.$.roles.addRole('owner');   
+                        } else{
+                            if (connect !==  XDp2p.userId) {
+                                XDp2p.connectTo(getQueryParams(window.location.search).connect);
+                                this.$.roles.addRole('visitor');   
+                            } else {
+                                this.$.roles.addRole('owner');   
+                            }
+                        }
+                        var width = $(window).width();
+
+                        if (width <= 800 ) {
+                            this.$.roles.addRole("small");   
+/*                        } else if (width > 500 && width < 1000) {
+                            this.$.roles.addRole("medium"); 
+*/                        } else {
+                            this.$.roles.addRole("large");   
+                        }
+
+                        Object.observe(this.$.roles.isselected, function(changes){
+                            that.updateViews();
+                        });
+
+                        Object.observe(this.othersRoles, function(changes){
+                           that.updateViews();
+                        });
+                        
+                  }
+
+                    
+                    
+                });
+            </script>
+        </polymer-element>        
+        <my-app></my-app>
+
+
+        <script src="http://code.jquery.com/jquery-2.0.3.js"></script>
+        <script src="../js/peer-0.3.8.js"></script>
+        <script src="js/hammer.js"></script>
+        <script src="../js/XDp2p.js"></script>
+        <script src="js/queryParams.js"></script>
+<!--        <script src="js/viewer.js"></script> -->
+ 	
+    </body>
+</html>

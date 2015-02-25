@@ -1,0 +1,14 @@
+img {
+	display: inline-block;
+	max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+:host(.current) {
+	border: solid 2px blue;
+	margin: 8px;
+}
+:host {
+	display: inline-block;
+}

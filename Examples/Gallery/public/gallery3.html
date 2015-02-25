@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <head>
+        <script src="js/find-polyfill.js"></script>
+       <!-- 1. Load platform support before any code that touches the DOM. -->
+        <script src="bower_components/webcomponentsjs/webcomponents.js"></script>
+        <!-- 2. Load the component using an HTML Import -->
+        <link rel="import" href="elements/model-element2.html">
+        <link rel="import" href="elements/gallery-element2.html">
+        <link rel="import" href="elements/image-element2.html">
+        <link rel="import" href="elements/model-tool.html">
+
+        <link rel="import" href="elements/xdp2p-server.html">
+		<link rel="import" href="elements/xdp2p-available.html">
+        <link rel="import" href="elements/xdp2p-tools.html">
+         <meta name="viewport" content="width=device-width, user-scalable=no">
+
+    </head>
+    </head>
+    <body>
+        <polymer-element name="my-app"  >
+            <template>
+      <model-element2 id="model" 
+                       synchronized = '{"gallery":{"images":[]}, "current": { "current":0}, "position": {"x": 50, "y":50}}'
+                       >
+        </model-element2>
+        <input type="file" multiple accept="image/*" on-change="{{handleFiles}}"></input>
+        <gallery-element2 images="{{$.model.synchronized.gallery.images}}" current="{{$.model.synchronized.current.current}}"></gallery-element2>
+            <image-element2 images="{{$.model.synchronized.gallery.images}}"
+                            current="{{$.model.synchronized.current.current}}"
+                            position="{{$.model.synchronized.position}}"></image-element2>
+            <role-element
+                                          roles="['overview']"
+                              selected="['overview']">
+                </role-element>
+                <xdp2p-server url='darroch.inf.ethz.ch' reconnect='true' show='true'></xdp2p-server>
+                <xdp2p-tools transient="{{$.model.synchronized}}"
+                             roles="{{$.roles.roles}}"></xdp2p-tools>
+
+            <style>
+            img {
+                max-width: 50px;   
+            }
+        </style>
+            </template>
+ 
+    <script>
+                   Polymer({
+                    created: function(){
+                        
+                    },
+
+                       
+                    handleFiles: function (event, detail, sender) {
+                        var files = sender.files;
+                        for (var i = 0; i < files.length; i++) {
+                            var file = files[i];
+                            var imageType = /image.*/;
+
+                            if (!file.type.match(imageType)) {
+                              continue;
+                            }
+
+                            var imgData = this.$.model.synchronized.gallery;  
+                            var reader = new FileReader();
+                            reader.onload = function(e) { 
+                                var old = imgData.images.slice();
+                                imgData.images.push(e.target.result);
+                                Object.getNotifier(imgData).notify({
+                                    type: 'update',
+                                    name: 'images',
+                                    oldValue: old
+                                });
+
+                            }; 
+                            reader.readAsDataURL(file);
+                        }
+                    }
+                    
+                });
+
+    </script>
+        
+    </polymer-element>
+    <my-app></my-app>
+</body>
+</html>

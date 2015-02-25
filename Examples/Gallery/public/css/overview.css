@@ -1,0 +1,18 @@
+img {
+	display: block;
+	max-width: 95%;
+}
+
+.album {
+    float: left;
+    margin: 2px;
+}
+
+
+:host(.current) {
+	border: solid 2px blue;
+	margin: 8px;
+}
+:host {
+	display: inline-block;
+}
