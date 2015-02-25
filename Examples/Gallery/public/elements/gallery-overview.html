@@ -29,7 +29,7 @@
                 // TODO this also send an update to the server, because the persistent data changes
                 $.getJSON("/gallery", {"album" : title},
                     function (data) {
-                        XDp2p.loadNew(thisPersistent, data.persistent, "persistent");
+                        XDmvc.loadNew(thisPersistent, data.persistent, "persistent");
                    }
                 );
                 
