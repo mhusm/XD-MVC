@@ -17,30 +17,35 @@ var XDmvc = {
     availablePeers: [],
 	
 	connectToServer : function (userId, host, port) {
-		// TODO check if we're connected already
-		XDmvc.userId = userId;
-		XDmvc.peer = new Peer(userId, {
-            host: host,
-            port: port,
- //           debug: 3,
-            // There is still an issue sometimes with connecting remote devices. But not consistently
-            // Not sure wether the STUN servers help
-            config: { 'iceServers': [
-                {url: 'stun:stun.l.google.com:19302'},
-                {url: 'stun:stun1.l.google.com:19302'},
-                {url: 'stun:stun2.l.google.com:19302'},
-                {url: 'stun:stun3.l.google.com:19302'},
-                {url: 'stun:stun4.l.google.com:19302'}
-            ]}
-        });
-		XDmvc.peer.on('connection', XDmvc.handleConnection);
-		XDmvc.peer.on('error', XDmvc.handleError);
-		if (XDmvc.reconnect) {
-			XDmvc.connectToStoredPeers();
-		}
-        var intervalID = window.setInterval(XDmvc.requestAvailablePeers, 5000);
+        // If not connected already
+        if (!XDmvc.peer) {
+            XDmvc.userId = userId;
+            XDmvc.peer = new Peer(userId, {
+                host: host,
+                port: port,
+                //           debug: 3,
+                // There is still an issue sometimes with connecting remote devices. But not consistently
+                // Not sure whether the STUN servers help
+                config: { 'iceServers': [
+                    {url: 'stun:stun.l.google.com:19302'},
+                    {url: 'stun:stun1.l.google.com:19302'},
+                    {url: 'stun:stun2.l.google.com:19302'},
+                    {url: 'stun:stun3.l.google.com:19302'},
+                    {url: 'stun:stun4.l.google.com:19302'}
+                ]}
+            });
+            XDmvc.peer.on('connection', XDmvc.handleConnection);
+            XDmvc.peer.on('error', XDmvc.handleError);
+            if (XDmvc.reconnect) {
+                XDmvc.connectToStoredPeers();
+            }
+
+            // Check periodically who is connected.
+            window.setInterval(XDmvc.requestAvailablePeers, 5000);
+        }
 	},
-    
+
+    // TODO integrate this from Fabian
     requestAvailablePeers: function () {
 		XDmvc.peer.listAllPeers(function (peers) {
             XDmvc.availablePeers.length = 0;
@@ -95,6 +100,8 @@ var XDmvc = {
 		var others = XDmvc.connections.filter(function (el) {return el.peer !== conn.peer; })
                     .map(function (el) {return el.peer; });
 		this.send({type: 'connections', data: others });
+
+        //TODO also send state of synchronised obejcts
         
         XDmvc.sendRoles();
 
@@ -447,7 +454,6 @@ var XDmvc = {
     
     
 	
-	// TODO maybe expose only essential API? (would need refactoring to Immediately-invoked Function Expression)
 
 	
 };
