@@ -1,0 +1,35 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<polymer-element name="gallery-overview2" attributes="albums, currentAlbum" >
+	<template>
+        <h2>My Albums</h2>
+        <div>
+            <template repeat="{{a, idx in albums}}">
+                <div class="album" on-click="{{albumClicked}}" id="{{'album' +idx}}" >
+                    <span>{{a.title}}</span>
+                    <img src="{{a.url}}" />
+                </div>
+            </template>
+        </div>
+        <link rel="stylesheet" href="../css/overview.css" />
+    </template>
+	<script>
+		Polymer({
+			created: function() {
+                this.albums = [{}];
+                this.currentAlbum = -1;
+                var that = this;
+                $.getJSON("/gallery",
+                    function (data) {
+                        that.albums = data;
+                        console.log(that.albums);
+                    }
+                );
+ 			},
+            albumClicked: function(event, detail, target) {
+                var title = target.templateInstance.model.a.title;
+                this.currentAlbum = target.templateInstance.model.idx;
+            }
+ 	  
+		});
+	</script>
+</polymer-element>

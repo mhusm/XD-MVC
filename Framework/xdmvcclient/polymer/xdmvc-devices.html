@@ -1,0 +1,14 @@
+<link rel="import" href="../../polymer/polymer.html">
+<script src="../js/xdmvc.js"></script>
+<polymer-element name="xdmvc-devices" attributes="device othersDevices" >
+    <template>
+    </template>
+ 	<script>
+		Polymer({
+			created: function() {
+                this.othersDevices = XDmvc.othersDevices;
+                this.device = XDmvc.device;
+            }
+		});
+	</script>
+</polymer-element>
