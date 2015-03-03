@@ -12,8 +12,8 @@
                 this.reconnet = false;
                 this.show = false;
 				var id = localStorage.getItem("userId");
-				this.userId = id? id:  "Id"+Date.now();
-                localStorage.setItem("userId", this.userId);
+				this.deviceId = id? id:  "Id"+Date.now();
+                localStorage.setItem("userId", this.deviceId);
 
 			},
             
@@ -22,8 +22,8 @@
 			// Automatically connect to the server
 				var id = localStorage.getItem("userId");
                 XDmvc.init(this.reconnect);
-				if (this.userId != "Set Id") {
-					XDmvc.connectToServer(this.userId, this.url, this.port);
+				if (this.deviceId != "Set Id") {
+					XDmvc.connectToServer(this.deviceId, this.url, this.port);
 				} 
 			},
 		  
@@ -31,8 +31,8 @@
 				var text = this.$.userid.textContent;
 				if (text !== localStorage.getItem("userId")){
 					localStorage.setItem("userId", text);
-					this.userId = text;
-					XDmvc.connectToServer(this.userId, this.url, this.port);
+					this.deviceId = text;
+					XDmvc.connectToServer(this.deviceId, this.url, this.port);
  
 				}
 			

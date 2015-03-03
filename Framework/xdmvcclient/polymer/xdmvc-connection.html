@@ -1,0 +1,31 @@
+<link rel="import" href="../../polymer/polymer.html">
+<script src="../js/xdmvc.js"></script>
+<polymer-element name="xdmvc-connection" attributes="server reconnect port deviceId">
+	<script>
+		Polymer({
+			created: function() {
+                this.url = document.location.hostname;
+                this.port = "9000"
+                this.reconnet = false;
+				var id = localStorage.getItem("deviceId");
+				this.deviceId = id? id:  "Id"+Date.now();
+                localStorage.setItem("deviceId", this.deviceId);
+
+			},
+
+			domReady: function(){
+				var id = localStorage.getItem("userId");
+                XDmvc.init(this.reconnect);
+				XDmvc.connectToServer(this.deviceId, this.url, this.port);
+			},
+		  
+			changeDeviceId: function(newID){
+				if (newID !== localStorage.getItem("deviceId")){
+					localStorage.setItem("deviceId", newID);
+					this.deviceId = newID;
+					XDmvc.connectToServer(this.deviceId, this.url, this.port);
+				}
+			}
+		});
+	</script>
+</polymer-element>
