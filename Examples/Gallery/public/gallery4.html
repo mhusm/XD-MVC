@@ -181,11 +181,11 @@
                         console.log(connect);
                         if (!connect){
                             console.log('connect' +connect);
-                            var connectString = 'connect='+XDp2p.userId
+                            var connectString = 'connect='+XDp2p.deviceId
                             window.history.pushState('', '', window.location.search.length > 0? window.location.search +"&" +connectString : '?'+connectString);
                             this.$.roles.addRole('owner');   
                         } else{
-                            if (connect !==  XDp2p.userId) {
+                            if (connect !==  XDp2p.deviceId) {
                                 XDp2p.connectTo(getQueryParams(window.location.search).connect);
                                 this.$.roles.addRole('visitor');   
                             } else {

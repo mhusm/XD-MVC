@@ -8,7 +8,6 @@ module.exports = function(grunt) {
             server:  ["./node_modules/xd-mvc"]
         },
 
-
         "bower-install-simple": {
             options: {
                 color: true,

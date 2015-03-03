@@ -1,5 +1,10 @@
-var xdserver = require('xd-mvc/xdmvcserver.js');
-xdserver.start(9000);
+var XDmvcServer = require('xd-mvc/xdmvcserver.js');
+var xdmvc = new XDmvcServer();
+console.log(xdmvc);
+xdmvc.start(9000, 9001);
+xdmvc.on("connected", function(id){
+   console.log(id);
+});
 
 var connect = require('connect'),
     http = require('http'),

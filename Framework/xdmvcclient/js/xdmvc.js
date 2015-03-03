@@ -1,12 +1,13 @@
 /*global console, CustomEvent, Peer, Event */
-
 'use strict';
 /*jslint plusplus: true */
 var XDmvc = {
 	peer : null,
 	connections : [],
     attemptedConnections : [],
-	userId : undefined,
+	deviceId : undefined,
+    device: {},
+    othersDevices: {small:0, medium:0, large:0},
 	syncData : {},
 	lastSyncId : 0,
 	storedPeers: [],
@@ -19,7 +20,7 @@ var XDmvc = {
 	connectToServer : function (userId, host, port) {
         // If not connected already
         if (!XDmvc.peer) {
-            XDmvc.userId = userId;
+            XDmvc.deviceId = userId;
             XDmvc.peer = new Peer(userId, {
                 host: host,
                 port: port,
@@ -51,7 +52,7 @@ var XDmvc = {
             XDmvc.availablePeers.length = 0;
             var peer;
             peers.filter(function (p) {
-                return p !== XDmvc.userId && !XDmvc.connections.some(function (el) {return el.peer === p; });
+                return p !== XDmvc.deviceId && !XDmvc.connections.some(function (el) {return el.peer === p; });
             })
                 .forEach(function (peer) {
                     XDmvc.availablePeers.push(peer);
@@ -104,6 +105,7 @@ var XDmvc = {
         //TODO also send state of synchronised obejcts
         
         XDmvc.sendRoles();
+        XDmvc.sendDevice();
 
 	},
 	
@@ -135,9 +137,12 @@ var XDmvc = {
 			} else if (msg.type === 'roles') {
                 old = this.roles;
                 this.roles = msg.data;
-				event = new CustomEvent('XDroles', {'roles': msg.data, 'peer': this.peer});
-				document.dispatchEvent(event);
                 XDmvc.updateOthersRoles(old, this.roles);
+            } else if (msg.type === 'device') {
+                this.device = msg.data;
+                XDmvc.othersDevices[msg.data.type] +=1;
+                event = new CustomEvent('XDdevice', {'detail': msg.data});
+                document.dispatchEvent(event);
             } else if (msg.type === 'sync') {
 		//		console.log(msg);
 				XDmvc.update(XDmvc.syncData[msg.id].data, msg.data, msg.id);
@@ -157,7 +162,6 @@ var XDmvc = {
 		}
 	},
 	
-    // TODO allow to remotely update other device's roles?
     updateOthersRoles: function (oldRoles, newRoles) {
         var added = newRoles.filter(function (r) { return oldRoles ? oldRoles.indexOf(r) === -1 : true; });
         var removed = oldRoles ? oldRoles.filter(function (r) { return newRoles.indexOf(r) === -1; }) : [];
@@ -172,9 +176,9 @@ var XDmvc = {
             roles[r] = roles[r] && roles[r] > 0 ? roles[r] - 1 : 0;
         });
 
-        // TODO check wether there really was a change?
-        event = new CustomEvent('XDotherRolesChanged');
-        
+        // TODO check whether there really was a change? Report added and removed?
+        event = new CustomEvent('XDothersRolesChanged');
+        document.dispatchEvent(event);
     },
 	
 	handleError : function (err) {
@@ -220,6 +224,10 @@ var XDmvc = {
 			XDmvc.sortConnections(XDmvc.compareConnections);
 		}
         XDmvc.updateOthersRoles(connection.roles, []);
+
+        if (connection.device) {
+            XDmvc.othersDevices[connection.device.type] -=1;
+        }
         
         index = XDmvc.attemptedConnections.indexOf(connection);
         if (index > -1) {
@@ -278,6 +286,7 @@ var XDmvc = {
 		
 	},
 
+    // TODO maybe specify a path in an object tree to be watched?
 	synchronize : function (data, callback, id) {
 		// if no id given, generate one
 		id = typeof id !== 'undefined' ? id : 'sync' + (XDmvc.lastSyncId++);
@@ -333,6 +342,7 @@ var XDmvc = {
 	init : function (reconnect) {
 		XDmvc.loadPeers();
 		XDmvc.reconnect = reconnect;
+        XDmvc.detectDevice();
 
 	/*
 		Object.observe(XDmvc.connections, function(changes){
@@ -372,7 +382,7 @@ var XDmvc = {
 	sortConnections: function (compareFunc) {
         
 		XDmvc.connections.sort(compareFunc);
-		var thisConn = {peer: XDmvc.userId};
+		var thisConn = {peer: XDmvc.deviceId};
 		var idx = XDmvc.connections.findIndex(function (element) {
 			return compareFunc(thisConn, element) < 0;
 		});
@@ -405,7 +415,7 @@ var XDmvc = {
     
     sendRoles: function () {
         console.log('sending roles');
-        console.log(this.userId);
+        console.log(this.deviceId);
         console.log(this.roles);
         this.sendToAll('roles', this.roles);
     },
@@ -446,14 +456,28 @@ var XDmvc = {
     changeRoleForPeer: function (role, isAdd, peer) {
         var conn = XDmvc.getConnection(peer);
         conn.send({type: "role",  operation: isAdd ? "add" : "remove", role: role});
-    }
-    
-    
-    
-    
-    
-    
-	
+    },
 
-	
+    sendDevice: function () {
+        this.sendToAll('device', this.device);
+    },
+
+
+    detectDevice: function(){
+        // TODO this is not optimal. Would be nice to detect physical size. But also type, such as tablet, TV etc.
+        var width = document.documentElement.clientWidth;
+        var height = document.documentElement.clientHeight;
+        var smaller = Math.min(width, height);
+        this.device.width = width;
+        this.device.height = height;
+
+        if (smaller <= 800 ) {
+            this.device.type = "small";
+        } else if (smaller > 800 && smaller <= 1200) {
+            this.device.type = "medium";
+        } else {
+            this.device.type = "large";
+        }
+    }
+
 };

@@ -129,8 +129,9 @@ XDmvcServer.prototype.handleAjaxRequest = function(req, res, next){
 //        // restore session
         this.emit("restore", query.sessionId, query.id, res);
  //       storageModule.restoreSession(query.sessionId, query.id, res);
-    } else if (query.objectChanged != null && query.id != null && query.sessionId != null) {
+    } else if (query.objectChanged != null) {
         //TODO implement
+        // TODO or maybe also implement a post request for this to a specified server on the client side
         this.emit("objectChanged");
     } else {
         // someone tried to call a not supported method

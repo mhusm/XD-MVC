@@ -1,18 +1,17 @@
 <link rel="import" href="../../polymer/polymer.html">
-<polymer-element name="model-element2" attributes="synchronized" >
+<polymer-element name="xdmvc-synchronised" attributes="objects" >
 	<script>
 		Polymer({
             created: function() {
-                this.synchronized = {};
+                this.objects = {};
             },
             
            attached: function() {
-               var sync = this.synchronized;
-               Object.keys(this.synchronized).forEach(function(key){
+               var sync = this.objects;
+               Object.keys(this.objects).forEach(function(key){
                    XDmvc.synchronize(sync[key], undefined, key);
                });
 			}
-	  
 		});
 	</script>
 </polymer-element>

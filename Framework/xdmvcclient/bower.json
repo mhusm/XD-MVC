@@ -2,6 +2,7 @@
   "name": "XD-MVC Client",
   "version": "0.0.0",
   "license": "MIT",
+  "main": "js/xdmvc.js",
   "ignore": [
     "**/.*",
     "node_modules",
@@ -10,7 +11,7 @@
     "tests"
   ],
   "dependencies": {
-    "polymer": "Polymer/polymer#~0.5.1",
+    "polymer": "Polymer/polymer#~0.5.5",
     "peerjs": "~0.3.14"
    }
 }

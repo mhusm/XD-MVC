@@ -18,7 +18,7 @@
         <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-connections.html">
         <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-connect.html">
         <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-tools.html">
-                      <link rel="stylesheet" href="../css/gallery.css" />
+                      <link rel="stylesheet" href="css/gallery.css" />
         
         <meta name="viewport" content="width=device-width, user-scalable=no">
     </head>
@@ -179,11 +179,11 @@
                         console.log(connect);
                         if (!connect){
                             console.log('connect' +connect);
-                            var connectString = 'connect='+XDmvc.userId
+                            var connectString = 'connect='+XDmvc.deviceId
                             window.history.pushState('', '', window.location.search.length > 0? window.location.search +"&" +connectString : '?'+connectString);
                             this.$.roles.addRole('owner');   
                         } else{
-                            if (connect !==  XDmvc.userId) {
+                            if (connect !==  XDmvc.deviceId) {
                                 XDmvc.connectTo(getQueryParams(window.location.search).connect);
                                 this.$.roles.addRole('visitor');   
                             } else {
