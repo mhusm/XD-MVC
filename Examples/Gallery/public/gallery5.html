@@ -57,7 +57,7 @@
                              selected="['albums']">
                 </xdmvc-roles>
 
-                <xdmvc-devices></xdmvc-devices>
+                <xdmvc-devices id="devices"></xdmvc-devices>
 
                 <style>
                     button {
@@ -98,17 +98,18 @@
                     updateViews: function(){
                         console.log("updateViews");
                         var roles = this.$.roles;
+                        var devices = this.$.devices;
 
                         this.albumsVisible = roles.isselected.albums &&  !roles.isselected.visitor;
 
-                        this.albumVisible = roles.isselected.album && !(roles.isselected.image && roles.isselected.small) &&  !roles.isselected.visitor;
+                        this.albumVisible = roles.isselected.album && !(roles.isselected.image && devices.device.type === "small") &&  !roles.isselected.visitor;
                         this.imageVisible = (roles.isselected.image || roles.isselected.visitor) && !this.albumsVisible;
-                        if (roles.isselected.large && this.othersRoles.small > 0) {
+                        if (devices.device.type === "large" && devices.othersDevices.small > 0) {
                             this.albumsVisible = false;
-                            this.albumVisible = this.othersRoles.albums > 0; 
-                            this.imageVisible = this.othersRoles.album > 0;
+                            this.albumVisible = roles.othersRoles.albums > 0;
+                            this.imageVisible = roles.othersRoles.album > 0;
                         }
-                        if (roles.isselected.small && this.othersRoles.large > 0) {
+                        if (devices.device.type === "small" && devices.othersDevices.large > 0) {
                             this.albumsVisible = roles.isselected.albums;
                             this.albumVisible = roles.isselected.album; 
                             this.imageVisible = false;

@@ -471,9 +471,9 @@ var XDmvc = {
         this.device.width = width;
         this.device.height = height;
 
-        if (smaller <= 800 ) {
+        if (smaller <= 500 ) {
             this.device.type = "small";
-        } else if (smaller > 800 && smaller <= 1200) {
+        } else if (smaller > 500 && smaller <= 800) {
             this.device.type = "medium";
         } else {
             this.device.type = "large";
