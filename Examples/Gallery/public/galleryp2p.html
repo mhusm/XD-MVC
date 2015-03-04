@@ -25,23 +25,22 @@
                                     objects='{ "gallery": {"images": []},  "current": { "index":0},
                                "cursor" :{"x": 0, "y": 0}}'>
                 </xdmvc-synchronised>
-
-                <input type="file" multiple accept="image/*" on-change="{{handleFiles}}"/>
-                <gallery-element id='gallery'
-                                 albums="{{albums}}"
-                                 currentAlbum = "{{$.sync.objects.gallery.currentAlbum}}"
-                                 current="{{$.sync.objects.gallery.currentImage}}"
-                                 on-image="{{imageClicked}}"/>
-
-
-                <gallery-element images="{{$.sync.objects.gallery.images}}" current="{{$.sync.objects.current.index}}"></gallery-element>
-                <image-element images="{{$.sync.objects.gallery.images}}"
-                                current="{{$.sync.objects.current.index}}"
-                                position="{$.sync.objects.current.cursor}}"></image-element>
                 <xdmvc-roles id="roles"
                              roles="['owner', 'visitor', 'album', 'image']"
                              selected="['album']">
                 </xdmvc-roles>
+
+                <template bind if="{{$.roles.isselected.owner}}">
+                    <input type="file" multiple accept="image/*" on-change="{{handleFiles}}"/>
+                    <gallery-element id='gallery'
+                                     images="{{$.sync.objects.gallery.images}}"
+                                     current="{{$.sync.objects.current.index}}">
+                    </gallery-element>
+                </template>
+                <image-element images="{{$.sync.objects.gallery.images}}"
+                                current="{{$.sync.objects.current.index}}"
+                                position="{$.sync.objects.current.cursor}}"
+                                showControls="{{$.roles.isselected.owner}}"></image-element>
 
                 <xdmvc-devices id="devices"></xdmvc-devices>
 

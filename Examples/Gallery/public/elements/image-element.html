@@ -6,7 +6,7 @@
                 <img  src="{{images[current]}}" />
             </pointer-element>
             <button on-click="{{previous}}" hidden?="{{!showControls}}" disabled?="{{current == 0}}" >Previous</button>
-            <button on-click="{{next}}" hidden?="{{!showControls}}" disabled?="{{current >= large.length -1}}" >Next</button>
+            <button on-click="{{next}}" hidden?="{{!showControls}}" disabled?="{{current >= images.length -1}}" >Next</button>
     		<link rel="stylesheet" href="../css/image.css" />
 	</template>
 	<script>
