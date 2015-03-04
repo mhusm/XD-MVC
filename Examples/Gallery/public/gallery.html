@@ -38,8 +38,7 @@
                         Back to Albums
                     </button>
                     <gallery-element id='gallery'
-                                      albums="{{albums}}"
-                                      currentAlbum = "{{$.sync.objects.gallery.currentAlbum}}"
+                                      images="{{albums[$.sync.objects.gallery.currentAlbum].thumbs}}"
                                       current="{{$.sync.objects.gallery.currentImage}}"
                                       on-image="{{imageClicked}}"/>
                  </template>
