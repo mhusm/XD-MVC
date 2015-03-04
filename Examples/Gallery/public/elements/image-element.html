@@ -2,13 +2,12 @@
 <link rel="import" href="pointer-element.html">
 <polymer-element name="image-element" attributes="images current cursor showControls" >
 	<template>
-             <pointer-element  position="{{cursor}}" >
+            <pointer-element  position="{{cursor}}" >
                 <img  src="{{images[current]}}" />
             </pointer-element>
             <button on-click="{{previous}}" hidden?="{{!showControls}}" disabled?="{{current == 0}}" >Previous</button>
             <button on-click="{{next}}" hidden?="{{!showControls}}" disabled?="{{current >= large.length -1}}" >Next</button>
-        </template>
-		<link rel="stylesheet" href="../css/image.css" />
+    		<link rel="stylesheet" href="../css/image.css" />
 	</template>
 	<script>
 		Polymer( {
