@@ -3,7 +3,7 @@
 
 var XDClient = {
     peer: null,
-    userId: null,
+    deviceId: null,
     userRole: null,
     userName: null,
     userSession: null,
@@ -21,7 +21,7 @@ var XDClient = {
         if(userId !== null && userId !== undefined) {
             wantedId = userId;
         } else {
-            wantedId = XDClient.userId;
+            wantedId = XDClient.deviceId;
         }
 
         if(XDClient.peer !== null && XDClient.peer !== undefined) {
@@ -34,7 +34,7 @@ var XDClient = {
         });
         XDClient.peer.on("open", function (id) {
             console.info("Connection successful. Current id: " + id);
-            XDClient.userId = id;
+            XDClient.deviceId = id;
             XDClient.requestAvailablePeers();
 
             if(callback !== undefined) {
@@ -59,7 +59,7 @@ var XDClient = {
                 var availabilityList = JSON.parse(x);
                 XDClient.availablePeers = {};
                 for (var entry in availabilityList.peers) {
-                    if (entry !== XDClient.userId) {
+                    if (entry !== XDClient.deviceId) {
                         XDClient.availablePeers[entry] = availabilityList.peers[entry];
                     }
                 }
@@ -81,7 +81,7 @@ var XDClient = {
 
                         conn.send({
                             "type": "msg",
-                            "sender": XDClient.userId,
+                            "sender": XDClient.deviceId,
                             "data": msg
                         });
                         //conn.send(document.getElementById("text").value);
@@ -105,7 +105,7 @@ var XDClient = {
                 if (conn.open) {
                         conn.send({
                             "type": "sys",
-                            "sender": XDClient.userId,
+                            "sender": XDClient.deviceId,
                             "data": msg
                         });
                         //conn.send(document.getElementById("text").value);
@@ -189,7 +189,7 @@ var XDClient = {
         // Submit rolechange to server
         ajax.get("http://localhost:9001", {
                 changeName: 1,
-                id: XDClient.userId,
+                id: XDClient.deviceId,
                 name: XDClient.userName
             },
             function (x) {},
@@ -229,7 +229,7 @@ var XDClient = {
         // Submit rolechange to server
         ajax.get("http://localhost:9001", {
                 changeRole: 1,
-                id: XDClient.userId,
+                id: XDClient.deviceId,
                 role: XDClient.userRole
             },
             function (x) {},
@@ -378,14 +378,14 @@ var XDClient = {
                 XDClient.otherRoles[msg.sender] = msg.data.data;
             } else if (msg.data.type === "session") {
                 if (msg.data.data === null && XDClient.userSession === null) {
-                    if (msg.sender > XDClient.userId) {
-                        XDClient.userSession = msg.sender + '_' + XDClient.userId;
+                    if (msg.sender > XDClient.deviceId) {
+                        XDClient.userSession = msg.sender + '_' + XDClient.deviceId;
                         XDClient.publishSystemMessage({
                                 "type": "session",
                                 "data": XDClient.userSession
                             });
                     } else {
-                        XDClient.userSession = XDClient.userId + '_' + msg.sender;
+                        XDClient.userSession = XDClient.deviceId + '_' + msg.sender;
                         XDClient.publishSystemMessage({
                                 "type": "session",
                                 "data": XDClient.userSession
@@ -420,7 +420,7 @@ var XDClient = {
                     console.info("Agreed on SessionID: " + XDClient.userSession);
                     ajax.get("http://localhost:9001", {
                             joinSession: 1,
-                            id: XDClient.userId,
+                            id: XDClient.deviceId,
                             session: XDClient.userSession
                         },
                         function (x) {},
@@ -435,7 +435,7 @@ var XDClient = {
 
                 ajax.get("http://localhost:9001", {
                         storeSession: 1,
-                        id: XDClient.userId,
+                        id: XDClient.deviceId,
                         role: XDClient.userRole,
                         name: XDClient.userName,
                         sessionId: XDClient.userSession,
@@ -648,7 +648,7 @@ var XDClient = {
 
         ajax.get("http://localhost:9001", {
                 storeSession: 1,
-                id: XDClient.userId,
+                id: XDClient.deviceId,
                 role: XDClient.userRole,
                 name: XDClient.userName,
                 sessionId: XDClient.userSession,
@@ -678,7 +678,7 @@ var XDClient = {
                       XDClient.objectsToSync[object].object = parsedObjects.data.data[object];
                       //Use callback of object
                       if (XDClient.objectsToSync[object].callback !== null && XDClient.objectsToSync[object].callback !== undefined) {
-                          XDClient.objectsToSync[object].callback(XDClient.userId, parsedObjects.data.data[object]);
+                          XDClient.objectsToSync[object].callback(XDClient.deviceId, parsedObjects.data.data[object]);
                       }
                   }
 
@@ -698,7 +698,7 @@ var XDClient = {
                   XDClient.userSession = sessionId;
                   ajax.get("http://localhost:9001", {
                           joinSession: 1,
-                          id: XDClient.userId,
+                          id: XDClient.deviceId,
                           session: XDClient.userSession
                       },
                       function (x) {},

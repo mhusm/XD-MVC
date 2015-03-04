@@ -99,7 +99,7 @@ XDMediaplayer.controller('MediaplayerCtrl', function ($scope) {
                 "file": f,
                 "type": f.type,
                 "size": f.size,
-                "contributor": XDClient.userId
+                "contributor": XDClient.deviceId
             };
             var reader = new FileReader();
 

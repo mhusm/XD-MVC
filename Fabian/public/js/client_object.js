@@ -1,6 +1,6 @@
 var XDClient = {
 	serverPeer : null,
-	userId : null,
+	deviceId : null,
 
 	availablePeers : [],
 	connections : [],
@@ -39,7 +39,7 @@ var XDClient = {
 			this.availablePeers = [];
 			this.connections = [];
 			peers.filter(function(p) {
-				return p != this.userId;
+				return p != this.deviceId;
 			}).forEach(function(p) {
 				this.availablePeers.push(p);
 				//TODO: LIST AVAILABLE PEERS
