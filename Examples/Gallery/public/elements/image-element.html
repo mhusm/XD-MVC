@@ -1,64 +1,33 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
-<link rel="import" href="./pointer-element.html">
-<polymer-element name="image-element" attributes="transient persistent offset showControls showCover" >
+<link rel="import" href="pointer-element.html">
+<polymer-element name="image-element" attributes="images current cursor showControls" >
 	<template>
-		<pointer-element  transient="{{transient}}" >
-			<img src="{{persistent.large[index]}}" ></img>
-		</pointer-element>
-        <button on-click="{{previous}}" hidden?="{{!showControls}}" disabled?="{{transient.current == 0}}" >Previous</button>
-        <button on-click="{{next}}" hidden?="{{!showControls}}" disabled?="{{transient.current + offset >= persistent.large.length -1}}" >Next</button>
-        <button on-click="{{setAsCover}}"  hidden?="{{!showCover}}" >Set as cover</button>
+             <pointer-element  position="{{cursor}}" >
+                <img  src="{{images[current]}}" />
+            </pointer-element>
+            <button on-click="{{previous}}" hidden?="{{!showControls}}" disabled?="{{current == 0}}" >Previous</button>
+            <button on-click="{{next}}" hidden?="{{!showControls}}" disabled?="{{current >= large.length -1}}" >Next</button>
+        </template>
 		<link rel="stylesheet" href="../css/image.css" />
 	</template>
 	<script>
 		Polymer( {
 			created: function() {
-                this.persistent = { large: []};
-                this.transient = { current: 0};
-                this.offset = 0;
+                this.images = [];
+                this.current = 0;
                 this.index = 0;
                 this.showControls = true;
-                this.showCover = true;
 			},
                     
             next: function () {
-                this.transient.current += 1;
+                this.current += 1;
             },
 
             previous: function () {
-                if (this.transient.current > 0){
-                    this.transient.current -= 1;                
+                if (this.current > 0){
+                    this.current -= 1;                
                 }
-            },
-            
-            updateIndex: function () {
-                var newIdx = this.transient.current + this.offset;
-                this.index = newIdx >= this.persistent.large.length ? this.persistent.large.length -1 : newIdx;
-            },
-            
-            setAsCover: function() {
-                var currAlbum = this.transient.currentAlbum;
-                console.log(currAlbum);
-                console.log(this.transient);
-                var album = this.persistent.albums.find(function(a) {
-                   return a.title == currAlbum });
-                var old = album.url;
-                album.url = this.persistent.large[this.index].replace("large/", "thumbs/");
-                
-                // Need to notify, nesting too deep
-                // TODO or this could be handled by the framework
-                Object.getNotifier(this.persistent).notify({
-                    type: 'update',
-                    name: 'url',
-                    oldValue: old
-                });
-           },
-            
-            observe: {
-                'transient.current': 'updateIndex',
-                'offset' : 'updateIndex'
             }
-	  
 		});
 	</script>
 </polymer-element>

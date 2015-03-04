@@ -1,5 +1,5 @@
-<link rel="import" href="../bower_components/polymer/polymer.html">
-<link rel="import" href="./pointer-element2.html">
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../pointer-element.html">
 <polymer-element name="image-element2" attributes="images current offset position showControls showCover" >
 	<template>
          <template if="{{images.length > index}}">
@@ -9,7 +9,7 @@
             <button on-click="{{previous}}" hidden?="{{!showControls}}" disabled?="{{current == 0}}" >Previous</button>
             <button on-click="{{next}}" hidden?="{{!showControls}}" disabled?="{{current + offset >= large.length -1}}" >Next</button>
         </template>
-		<link rel="stylesheet" href="../css/image.css" />
+		<link rel="stylesheet" href="../../css/image.css" />
 	</template>
 	<script>
 		Polymer( {

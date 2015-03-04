@@ -1,0 +1,28 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<polymer-element name="gallery-element" attributes="transient persistent">
+	<template>
+        <link rel="stylesheet" href="../../css/gallery.css" />
+        <h2>{{transient.currentAlbum}}</h2>
+		<div>
+			<template repeat="{{i, idx in persistent.thumbs}}">
+				<img  on-click="{{imageHandler}}"  class="{{ {current: idx == transient.current} | tokenList }}" src="{{i}}" ></img>
+ 			</template>
+		</div>
+	</template>
+ 	<script>
+		Polymer('gallery-element', {
+			created: function() {
+				// hint that images is an array
+				this.persistent = { thumbs: [] };
+				this.transient = { current: 0};
+			},
+		  
+			imageHandler: function(event, detail, sender){
+    //            console.log(sender.templateInstance);
+				this.transient.current = sender.templateInstance.model.idx;
+                this.fire('image');
+ 			}
+		});
+	</script>
+</polymer-element>
+

@@ -1,6 +1,6 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
 
-<polymer-element name="pointer-element" attributes="transient" >
+<polymer-element name="pointer-element" attributes="position" >
 	<template>
 		<content id="content" on-down="{{down}}" on-track="{{track}}" on-up="{{up}}" touch-action="none"></content>
 		
@@ -66,7 +66,7 @@
 				this.styles.top = 100 +"px";
 				this.stylesString = PolymerExpressions.prototype.styleObject.call(this, this.styles);
 	//			this.transient = { };
-				this.transient = { position: {x: 0, y: 0} };
+				this.position = {x: 0, y: 0} ;
 		//		console.log(this.transient.position.x);
 			},
 		
@@ -86,20 +86,19 @@
 //				console.log(this.transient.position);
 				var offset = getOffset(event);
 				var rel = getRelativePosition(offset, event.srcElement);
-				var old = this.transient.position;
-				this.transient.position.x = rel.x;
-				this.transient.position.y = rel.y;
+				var old = this.position;
+				this.position.x = rel.x;
+				this.position.y = rel.y;
  //               var old = album.url;
 				
 				                // Need to notify, nesting too deep
                 // TODO or this could be handled by the framework
-				console.log(this.transient);
-                Object.getNotifier(this.transient).notify({
+ /*               Object.getNotifier(this.position).notify({
                     type: 'update',
                     name: 'position',
                     oldValue: old
                 });
-
+*/
 
 			
 			},
@@ -112,8 +111,8 @@
             },
 			
 			updatePosition: function updatePosition() {
-				var abs = getAbsolutePosition(this.transient.position, this.children[0]);
-	//			console.log(abs);
+				var abs = getAbsolutePosition(this.position, this.children[0]);
+				console.log(abs);
 				this.styles.left = abs.x +"px";
 				this.styles.top = abs.y +"px";
                 this.styles.display= "block";
@@ -121,8 +120,8 @@
 			},
 			
 			observe: {
-                'transient.position.x': 'updatePosition',
-                'transient.position.y': 'updatePosition',
+                'position.x': 'updatePosition',
+                'position.y': 'updatePosition',
             }
 
 		});

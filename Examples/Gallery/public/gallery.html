@@ -1,127 +1,160 @@
 <!DOCTYPE html>
 <html>
     <head>
+        <script src="bower_components/xdmvcclient/js/find-polyfill.js"></script>
         <!-- 1. Load platform support before any code that touches the DOM. -->
         <script src="bower_components/webcomponentsjs/webcomponents.js"></script>
         <!-- 2. Load the component using an HTML Import -->
         <link rel="import" href="elements/image-element.html">
-        <link rel="import" href="elements/model-element.html">
-        <link rel="import" href="elements/model-tool.html">
-        <link rel="import" href="elements/xdp2p-server.html">
-        <link rel="import" href="elements/role-element.html">
+        <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-synchronised.html">
+        <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-connection.html">
+        <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-roles.html">
+        <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-devices.html">
         <link rel="import" href="elements/gallery-element.html">
         <link rel="import" href="elements/gallery-overview.html">
-        <link rel="import" href="elements/xdp2p-available.html">
-        <link rel="import" href="elements/xdp2p-connections.html">
-        <link rel="import" href="elements/xdp2p-connect.html">
-        <link rel="import" href="elements/xdp2p-tools.html">
-        
-        <link rel="stylesheet" href="../css/gallery.css" />
+        <link rel="stylesheet" href="css/gallery.css" />
+
         <meta name="viewport" content="width=device-width, user-scalable=no">
     </head>
     <body>
-        
+
         <polymer-element name="my-app" attributes="persistent transient" >
             <template>
+                <xdmvc-connection reconnect="true"></xdmvc-connection>
 
-                <model-element id="model" 
-                               persistent='{ "albums": [], "large": [], "thumbs": []}'
-                               transient = '{"current":0, "currentAlbum": ""}'
-                               url= '/gallery';
+                <xdmvc-synchronised id="sync"
+                               objects='{ "gallery": {"currentAlbum": -1, "currentImage": 0},
+                               "cursor" :{"x": 0, "y": 0}}'
                                >
-                </model-element>
-                <button on-click="{{showOverview}}" 
-                        hidden?="{{$.roles.isselected.overview || $.roles.isseleced.viewer}}">
-                    Albums
-                </button>
-                <gallery-overview hidden?="{{!$.roles.isselected.overview || !$.roles.isselected.owner}}"
-                                  transient="{{$.model.transient}}" 
-                                  persistent="{{$.model.persistent}}" 
-                                  on-click="{{overviewClicked}}">
+                </xdmvc-synchronised>
+                <gallery-overview id='overview'
+                                   hidden?="{{!albumsVisible}}"
+                                   on-click="{{albumClicked}}"
+                                   currentAlbum="{{$.sync.objects.gallery.currentAlbum}}"
+                                albums="{{albums}}">
                 </gallery-overview>
-                <gallery-element transient="{{$.model.transient}}"
-                                 persistent="{{$.model.persistent}}"
-                                 hidden?="{{!$.roles.isselected.owner || $.roles.isselected.viewer ||  $.roles.isselected.overview }}">
-                </gallery-element>
-                <image-element hidden?="{{ (($.roles.isselected.overview || othersRoles.visitor > 0 ) && $.roles.isselected.owner)}}"
-                               id="image"
-                               transient="{{$.model.transient}}"
-                               persistent="{{$.model.persistent}}"
-                               showControls="{{$.roles.isselected.visitor}}"
-                               showCover="{{$.roles.isselected.owner && $.roles.isselected.visitor}}">
-                </image-element>
-                <role-element id="roles"
-                              roles="['owner', 'visitor', 'overview']"
-                              selected="['overview']">
-                </role-element>
-                <xdp2p-server url='darroch.inf.ethz.ch' reconnect='true' show='true'></xdp2p-server>
-                <xdp2p-tools transient="{{$.model.transient}}"
-                             persistent="{{$.model.persistent}}"
-                             roles="{{$.roles.roles}}"></xdp2p-tools>
+                <template bind if="{{albumVisible}}">
+                    <button on-click="{{showAlbums}}"
+                            hidden?="{{albumsVisible || !albumVisible || !$.roles.isselected.owner}}">
+                        Back to Albums
+                    </button>
+                    <gallery-element id='gallery'
+                                      albums="{{albums}}"
+                                      currentAlbum = "{{$.sync.objects.gallery.currentAlbum}}"
+                                      current="{{$.sync.objects.gallery.currentImage}}"
+                                      on-image="{{imageClicked}}"/>
+                 </template>
 
+                <template bind if="{{$.sync.objects.gallery.currentAlbum >=0 && imageVisible}}">
+                    <image-element id="image"
+                                    images="{{albums[$.sync.objects.gallery.currentAlbum].large}}"
+                                    current="{{$.sync.objects.gallery.currentImage}}"
+                                    cursor="$.sync.objects.cursor"
+                                    showControls="{{$.roles.isselected.owner}}"/>
+                </template>
+                <xdmvc-roles id="roles"
+                             roles="['owner', 'visitor', 'albums', 'album', 'image']"
+                             selected="['albums']">
+                </xdmvc-roles>
+
+                <xdmvc-devices id="devices"></xdmvc-devices>
+
+                <style>
+                    button {
+                        margin-bottom: 8px;
+                    }   
+                    
+                </style>
             </template>
             <script>
-                Polymer('my-app', {
+                Polymer({
                     created: function(){
-                        this.othersRoles = XDp2p.othersRoles;
-                        // TODO find a better way to enable/disable visual tools?
-                        if (location.search === "?notools") {
-                            console.log("no tools");
-                            var sheet = window.document.styleSheets[0];
-                            console.log(sheet);
-                            sheet.insertRule('::shadow xdp2p-tools, ::shadow xdp2p-server, ::shadow role-element { display: none; }', sheet.cssRules.length);
-                            
+                        this.albums = [];
+                        this.albumsVisible = true;
+                        this.albumVisible = false;
+                        this.imageVisible = false;
+                    },
+
+                    albumClicked: function() {
+                        this.$.roles.removeRole('albums');
+                        this.$.roles.addRole('album');
+                    },
+
+                    showAlbums: function() {
+                        this.$.roles.addRole('albums');
+                        this.$.roles.removeRole('album');
+                        this.$.roles.removeRole('image');
+                    },
+
+                    showAlbum: function() {
+                        this.$.roles.addRole('album');
+                        this.$.roles.removeRole('image');
+                    },
+                    
+                    imageClicked: function(){
+                        this.$.roles.addRole('image');
+                    },
+                    
+                    updateViews: function(){
+                        console.log("updateViews");
+                        var roles = this.$.roles;
+                        var devices = this.$.devices;
+
+                        this.albumsVisible = roles.isselected.albums &&  !roles.isselected.visitor;
+
+                        this.albumVisible = roles.isselected.album && !(roles.isselected.image && devices.device.type === "small") &&  !roles.isselected.visitor;
+                        this.imageVisible = (roles.isselected.image || roles.isselected.visitor) && !this.albumsVisible;
+                        if (devices.device.type === "large" && devices.othersDevices.small > 0) {
+                            this.albumsVisible = false;
+                            this.albumVisible = roles.othersRoles.albums > 0;
+                            this.imageVisible = roles.othersRoles.album > 0;
                         }
+                        if (devices.device.type === "small" && devices.othersDevices.large > 0) {
+                            this.albumsVisible = roles.isselected.albums;
+                            this.albumVisible = roles.isselected.album; 
+                            this.imageVisible = false;
+                        }
+                        
                     },
-
-                    ready: function() {
-                        console.log("ready");
-                        // Gestures
-                        var element = this.$.image;
-                        var roleElement = this.$.roles;
-                         
-                        var right = Hammer(element).on("swiperight", function(event) {
-                            element.previous();
-                        });  
-                        var left = Hammer(element).on("swipeleft", function(event) {
-                            element.next();
-                        });  
-                        console.log(XDp2p.myPosition);
-                        Object.observe(XDp2p.myPosition, function (changes) {
-                            console.log("position changed");
-                            // For testing, the first device is the owner
-                            if (XDp2p.myPosition.value === 0) {
-                                console.log("adding owner");
-                                roleElement.addRole('owner');   
-                                roleElement.removeRole('visitor');   
-                          } else { // other devices are visitors
-                                console.log("removing owner");
-                                roleElement.removeRole('owner');   
-                                roleElement.addRole('visitor');   
+                    
+                    domReady: function(){
+                        var that = this;
+                        
+                        var connect = getQueryParams(window.location.search).connect;
+                        console.log(connect);
+                        if (!connect){
+                            console.log('connect' +connect);
+                            var connectString = 'connect='+XDmvc.deviceId
+                            window.history.pushState('', '', window.location.search.length > 0? window.location.search +"&" +connectString : '?'+connectString);
+                            this.$.roles.addRole('owner');   
+                        } else{
+                            if (connect !==  XDmvc.deviceId) {
+                                XDmvc.connectTo(getQueryParams(window.location.search).connect);
+                                this.$.roles.addRole('visitor');   
+                            } else {
+                                this.$.roles.addRole('owner');   
                             }
-                        });
-                    },
-                    
-                    overviewClicked: function() {
-                        this.$.roles.removeRole('overview');
-                    },
+                        }
 
-                    showOverview: function() {
-                        this.$.roles.addRole('overview');
-                    }
-                    
-                    
+                        Object.observe(this.$.roles.isselected, function(changes){
+                            that.updateViews();
+                        });
+
+                        Object.observe(this.$.roles.othersRoles, function(changes){
+                           that.updateViews();
+                        });
+                        
+                  }
+
                 });
             </script>
         </polymer-element>        
+
         <my-app></my-app>
 
-
         <script src="http://code.jquery.com/jquery-2.0.3.js"></script>
-        <script src="../js/peer-0.3.8.js"></script>
-        <script src="js/hammer.js"></script>
-        <script src="../js/XDp2p.js"></script>
-<!--        <script src="js/viewer.js"></script> -->
- 	
+        <script src="bower_components/xdmvcclient/js/xdmvc.js"></script>
+        <script src="bower_components/xdmvcclient/js/queryParams.js"></script>
+
     </body>
 </html>

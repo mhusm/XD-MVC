@@ -1,0 +1,40 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<polymer-element name="gallery-overview" attributes="transient persistent offset" >
+	<template>
+        <h2>My Albums</h2>
+        <div>
+            <template repeat="{{a, idx in persistent.albums}}">
+                <div class="album" on-click="{{albumClicked}}" id="{{'album' +idx}}" >
+                    <span>{{a.title}}</span>
+                    <img src="{{a.url}}" ></img>
+                </div>
+            </template>
+        </div>
+        <link rel="stylesheet" href="../../css/overview.css" />
+    </template>
+	<script>
+		Polymer('gallery-overview', {
+			created: function() {
+                this.persistent = { albums: []};
+                this.transient = { curentAlbum: ""};
+ 			},
+            albumClicked: function(event, detail, target) {
+                console.log(event);   
+                console.log(target.templateInstance.model); 
+                var thisPersistent = this.persistent;
+                var title = target.templateInstance.model.a.title;
+                this.transient.currentAlbum = title;
+                
+                // TODO should this be handled by the model component?
+                // TODO this also send an update to the server, because the persistent data changes
+                $.getJSON("/gallery", {"album" : title},
+                    function (data) {
+                        XDmvc.loadNew(thisPersistent, data.persistent, "persistent");
+                   }
+                );
+                
+            }
+ 	  
+		});
+	</script>
+</polymer-element>
