@@ -44,7 +44,6 @@ var XDClient = {
 				this.availablePeers.push(p);
 				//TODO: LIST AVAILABLE PEERS
 			})
-			})
 		});
 	},
 
