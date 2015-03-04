@@ -16,7 +16,7 @@
 			},
 
 			domReady: function(){
-				var id = localStorage.getItem("userId");
+				var id = localStorage.getItem("deviceId");
                 XDmvc.init(this.reconnect);
 				XDmvc.connectToServer(this.deviceId, this.url, this.port);
 			},
