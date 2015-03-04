@@ -13,7 +13,7 @@ Installation
 1. `npm install`
 2. `bower install`
 3. `npm start`
-4. Go to http://hostname:8082/gallery.html (use Chrome)
+4. Go to http://hostname:8082/gallery.html or http://hostname:8082/galleryp2p.html (use Chrome)
 
 
 Configuration
