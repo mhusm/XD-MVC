@@ -37,10 +37,12 @@
                                      current="{{$.sync.objects.current.index}}">
                     </gallery-element>
                 </template>
-                <image-element images="{{$.sync.objects.gallery.images}}"
-                                current="{{$.sync.objects.current.index}}"
-                                position="{$.sync.objects.current.cursor}}"
-                                showControls="{{$.roles.isselected.owner}}"></image-element>
+                <template bind if="{{!($.roles.isselected.owner && $.devices.othersDevices.large > 0)}}">
+                    <image-element images="{{$.sync.objects.gallery.images}}"
+                                    current="{{$.sync.objects.current.index}}"
+                                    position="{$.sync.objects.current.cursor}}"
+                                    showControls="{{$.roles.isselected.owner}}"></image-element>
+                </template>
 
                 <xdmvc-devices id="devices"></xdmvc-devices>
 
