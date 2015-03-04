@@ -2,56 +2,62 @@
 <html>
     <head>
     <head>
-        <script src="js/find-polyfill.js"></script>
+        <script src="bower_components/xdmvcclient/js/find-polyfill.js"></script>
        <!-- 1. Load platform support before any code that touches the DOM. -->
         <script src="bower_components/webcomponentsjs/webcomponents.js"></script>
         <!-- 2. Load the component using an HTML Import -->
-        <link rel="import" href="elements/model-element2.html">
+        <link rel="import" href="elements/image-element.html">
+        <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-synchronised.html">
+        <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-connection.html">
+        <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-roles.html">
+        <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-devices.html">
         <link rel="import" href="elements/gallery-element.html">
-        <link rel="import" href="elements/deprecated/image-element2.html">
-        <link rel="import" href="elements/model-tool.html">
-
-        <link rel="import" href="elements/xdp2p-server.html">
-		<link rel="import" href="elements/xdp2p-available.html">
-        <link rel="import" href="elements/xdp2p-tools.html">
-         <meta name="viewport" content="width=device-width, user-scalable=no">
+        <meta name="viewport" content="width=device-width, user-scalable=no">
 
     </head>
     </head>
     <body>
         <polymer-element name="my-app"  >
             <template>
-      <model-element2 id="model" 
-                       synchronized = '{"gallery":{"images":[]}, "current": { "current":0}, "position": {"x": 50, "y":50}}'
-                       >
-        </model-element2>
-        <input type="file" multiple accept="image/*" on-change="{{handleFiles}}"/>
-        <gallery-element2 images="{{$.model.synchronized.gallery.images}}" current="{{$.model.synchronized.current.current}}"></gallery-element2>
-            <image-element2 images="{{$.model.synchronized.gallery.images}}"
-                            current="{{$.model.synchronized.current.current}}"
-                            position="{{$.model.synchronized.position}}"></image-element2>
-            <role-element
-                                          roles="['overview']"
-                              selected="['overview']">
-                </role-element>
-                <xdp2p-server url='darroch.inf.ethz.ch' reconnect='true' show='true'></xdp2p-server>
-                <xdp2p-tools transient="{{$.model.synchronized}}"
-                             roles="{{$.roles.roles}}"></xdp2p-tools>
+                <xdmvc-connection reconnect="true"></xdmvc-connection>
 
-            <style>
-            img {
-                max-width: 50px;   
-            }
-        </style>
+                <xdmvc-synchronised id="sync"
+                                    objects='{ "gallery": {"images": []},  "current": { "index":0},
+                               "cursor" :{"x": 0, "y": 0}}'>
+                </xdmvc-synchronised>
+
+                <input type="file" multiple accept="image/*" on-change="{{handleFiles}}"/>
+                <gallery-element id='gallery'
+                                 albums="{{albums}}"
+                                 currentAlbum = "{{$.sync.objects.gallery.currentAlbum}}"
+                                 current="{{$.sync.objects.gallery.currentImage}}"
+                                 on-image="{{imageClicked}}"/>
+
+
+                <gallery-element images="{{$.sync.objects.gallery.images}}" current="{{$.sync.objects.current.index}}"></gallery-element>
+                <image-element images="{{$.sync.objects.gallery.images}}"
+                                current="{{$.sync.objects.current.index}}"
+                                position="{$.sync.objects.current.cursor}}"></image-element>
+                <xdmvc-roles id="roles"
+                             roles="['owner', 'visitor', 'album', 'image']"
+                             selected="['album']">
+                </xdmvc-roles>
+
+                <xdmvc-devices id="devices"></xdmvc-devices>
+
+                <style>
+                    img {
+                        max-width: 50px;
+                    }
+                </style>
             </template>
  
-    <script>
-                   Polymer({
+            <script>
+                Polymer({
                     created: function(){
-                        
+
                     },
 
-                       
                     handleFiles: function (event, detail, sender) {
                         var files = sender.files;
                         for (var i = 0; i < files.length; i++) {
@@ -62,7 +68,7 @@
                               continue;
                             }
 
-                            var imgData = this.$.model.synchronized.gallery;  
+                            var imgData = this.$.sync.objects.gallery;
                             var reader = new FileReader();
                             reader.onload = function(e) { 
                                 var old = imgData.images.slice();
@@ -76,13 +82,66 @@
                             }; 
                             reader.readAsDataURL(file);
                         }
+                    },
+                    updateViews: function(){
+                        console.log("updateViews");
+                        var roles = this.$.roles;
+                        var devices = this.$.devices;
+
+                        this.albumsVisible = roles.isselected.albums &&  !roles.isselected.visitor;
+
+                        this.albumVisible = roles.isselected.album && !(roles.isselected.image && devices.device.type === "small") &&  !roles.isselected.visitor;
+                        this.imageVisible = (roles.isselected.image || roles.isselected.visitor) && !this.albumsVisible;
+                        if (devices.device.type === "large" && devices.othersDevices.small > 0) {
+                            this.albumsVisible = false;
+                            this.albumVisible = roles.othersRoles.albums > 0;
+                            this.imageVisible = roles.othersRoles.album > 0;
+                        }
+                        if (devices.device.type === "small" && devices.othersDevices.large > 0) {
+                            this.albumsVisible = roles.isselected.albums;
+                            this.albumVisible = roles.isselected.album;
+                            this.imageVisible = false;
+                        }
+
+                    },
+
+                    domReady: function() {
+                        var that = this;
+
+                        var connect = getQueryParams(window.location.search).connect;
+                        console.log(connect);
+                        if (!connect) {
+                            console.log('connect' + connect);
+                            var connectString = 'connect=' + XDmvc.deviceId
+                            window.history.pushState('', '', window.location.search.length > 0 ? window.location.search + "&" + connectString : '?' + connectString);
+                            this.$.roles.addRole('owner');
+                        } else {
+                            if (connect !== XDmvc.deviceId) {
+                                XDmvc.connectTo(getQueryParams(window.location.search).connect);
+                                this.$.roles.addRole('visitor');
+                            } else {
+                                this.$.roles.addRole('owner');
+                            }
+                        }
+
+                        Object.observe(this.$.roles.isselected, function (changes) {
+                            that.updateViews();
+                        });
+
+                        Object.observe(this.$.roles.othersRoles, function (changes) {
+                            that.updateViews();
+                        });
+
                     }
-                    
+
                 });
 
-    </script>
+           </script>
         
-    </polymer-element>
-    <my-app></my-app>
-</body>
+        </polymer-element>
+        <my-app></my-app>
+
+        <script src="bower_components/xdmvcclient/js/queryParams.js"></script>
+
+    </body>
 </html>
