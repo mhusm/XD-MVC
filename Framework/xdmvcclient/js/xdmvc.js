@@ -102,17 +102,16 @@ var XDmvc = {
                     .map(function (el) {return el.peer; });
 		this.send({type: 'connections', data: others });
 
-        //TODO also send state of synchronised objects
-        
         XDmvc.sendRoles();
         XDmvc.sendDevice();
 
         // Send the current state the newly connected device
         if (conn.sendSync) {
+            console.log("sending current state")
+
             Object.keys(XDmvc.syncData).forEach(function (element, index) {
-                console.log(element);
-                console.log(XDmvc.syncData[element]);
-                XDmvc.syncData[element].syncFunction();
+                var msg = {type: 'sync', data: XDmvc.syncData[element].data, id: element};
+                conn.send(msg);
             });
             conn.sendSync = false;
         }
@@ -135,7 +134,7 @@ var XDmvc = {
 	
 	handleData : function (msg) {
         var old, event, ids;
-		console.log(msg);
+		console.log(this);
 		if (Object.prototype.toString.call(msg) === "[object Object]") {
 			// Connect to the ones we are not connected to yet
 			if (msg.type === 'connections') {
@@ -156,8 +155,8 @@ var XDmvc = {
                 event = new CustomEvent('XDdevice', {'detail': msg.data});
                 document.dispatchEvent(event);
             } else if (msg.type === 'sync') {
-		//		console.log(msg);
-				XDmvc.update(XDmvc.syncData[msg.id].data, msg.data, msg.id);
+				console.log(msg);
+				XDmvc.update(msg.data, msg.id, msg.arrayDelta);
 				if (XDmvc.syncData[msg.id].callback) {
 					XDmvc.syncData[msg.id].callback.apply(undefined, [msg.data, msg.id]);
 				}
@@ -282,14 +281,27 @@ var XDmvc = {
 	sendSyncToAll : function (changes, id) {
 		console.log(changes);
 	//	console.log(XDmvc.syncData);
+        var arrayDelta = [];
+        if (Array.isArray(XDmvc.syncData[id].data) && changes){
+            var splices = changes;
+            splices.forEach(function(splice) {
+                var spliceArgs = [splice.index, splice.removed.length];
+                var addIndex = splice.index;
+                while (addIndex < splice.index + splice.addedCount) {
+                    spliceArgs.push(XDmvc.syncData[id].data[addIndex]);
+                    addIndex++;
+                }
+                arrayDelta.push(spliceArgs);
+            });
+        }
+        // Send delta for array, otherwise new copy of object
+        var msg = {type: 'sync', data: arrayDelta.length > 0? arrayDelta: XDmvc.syncData[id].data, id: id, arrayDelta: arrayDelta.length>0};
 		var len = XDmvc.connections.length,
             i;
 		for (i = 0; i < len; i++) {
 			var con = XDmvc.connections[i];
 			if (con.open) {
-				console.log("sync");
-				// TODO maybe send only changes?
-				con.send({type: 'sync', data: XDmvc.syncData[id].data, id: id});
+ 				con.send(msg);
 			}
 		}
         if (XDmvc.syncData[id].callback){
@@ -298,38 +310,65 @@ var XDmvc = {
 		
 	},
 
+    // TODO use observeJS
     // TODO maybe specify a path in an object tree to be watched?
 	synchronize : function (data, callback, id) {
-		// if no id given, generate one
-		id = typeof id !== 'undefined' ? id : 'sync' + (XDmvc.lastSyncId++);
-	//	var id = 'sync' +(XDmvc.lastSyncId++);
-		var sync = function (data) {return XDmvc.sendSyncToAll(data, id); };
-		XDmvc.syncData[id] = {data: data, callback: callback, syncFunction: sync};
-		Object.observe(data, sync);
-        // TODO this only observes one level. should observe nested objects as well!
+        id = typeof id !== 'undefined' ? id : 'sync' + (XDmvc.lastSyncId++);
+        var sync = function (data) {return XDmvc.sendSyncToAll(data, id); };
+        XDmvc.syncData[id] = {data: data, callback: callback, syncFunction: sync};
+        console.log(data);
+        if ( Array.isArray(data)){
+            var observer = new ArrayObserver(data);
+            observer.open(sync);
+            XDmvc.syncData[id].observer = observer;
+
+        } else {
+            // if no id given, generate one
+            //	var id = 'sync' +(XDmvc.lastSyncId++);
+            Object.observe(data, sync);
+        }
+        // TODO this only observes one level. should observe nested objects as well?
     },
 	
 	
 	
-	update : function (oldObj, newObj, id) {
+	update : function (newObj, id, arrayDelta) {
 	// temporarily disable observation to avoid triggering events
         console.log("update");
         console.log(newObj);
-        var key;
-		Object.unobserve(oldObj, XDmvc.syncData[id].syncFunction);
-		for (key in newObj) {
-            // TODO what about properties that were deleted?
-            if (oldObj.hasOwnProperty(key) && newObj.hasOwnProperty(key)) {
-                delete oldObj[key];
+        var observed =  XDmvc.syncData[id];
+        console.log(observed);
+        if (Array.isArray(observed.data)) {
+             if (arrayDelta) {
+                newObj.forEach(function(spliceArgs){
+                    console.log(spliceArgs);
+                    Array.prototype.splice.apply(observed.data, spliceArgs);
+                });
+            } else {
+                // No delta, replace with old
+                observed.data.splice(0, observed.data.length);
+                Array.prototype.push.apply(observed.data, newObj);
             }
-		}
-		for (key in newObj) {
-            if (newObj.hasOwnProperty(key)) {
-                oldObj[key] = newObj[key];
+            observed.observer.discardChanges();
+
+        } else {
+            var key;
+            Object.unobserve(observed.data, observed.syncFunction);
+            // TODO handle properties that were deleted
+            // New properties
+            for (key in newObj) {
+                if (observed.data.hasOwnProperty(key) && newObj.hasOwnProperty(key)) {
+                    delete observed.data[key];
+                }
             }
-		}
-		Object.observe(oldObj, XDmvc.syncData[id].syncFunction);
-        
+            for (key in newObj) {
+                if (newObj.hasOwnProperty(key)) {
+                    observed.data[key] = newObj[key];
+                }
+            }
+            Object.observe(observed.data, XDmvc.syncData[id].syncFunction);
+        }
+
 	},
     
 	loadNew : function (oldObj, newObj, id) {

@@ -22,7 +22,7 @@
                 <xdmvc-connection reconnect="true"></xdmvc-connection>
 
                 <xdmvc-synchronised id="sync"
-                                    objects='{ "gallery": {"images": []},  "current": { "index":0},
+                                    objects='{"current": { "index":0}, "images": [],
                                "cursor" :{"x": 0, "y": 0}}'>
                 </xdmvc-synchronised>
                 <xdmvc-roles id="roles"
@@ -33,12 +33,12 @@
                 <template bind if="{{$.roles.isselected.owner}}">
                     <input type="file" multiple accept="image/*" on-change="{{handleFiles}}"/>
                     <gallery-element id='gallery'
-                                     images="{{$.sync.objects.gallery.images}}"
+                                     images="{{$.sync.objects.images}}"
                                      current="{{$.sync.objects.current.index}}">
                     </gallery-element>
                 </template>
                 <template bind if="{{!($.roles.isselected.owner && $.devices.othersDevices.large > 0)}}">
-                    <image-element images="{{$.sync.objects.gallery.images}}"
+                    <image-element images="{{$.sync.objects.images}}"
                                     current="{{$.sync.objects.current.index}}"
                                     position="{$.sync.objects.current.cursor}}"
                                     showControls="{{$.roles.isselected.owner}}"></image-element>
@@ -69,11 +69,11 @@
                               continue;
                             }
 
-                            var imgData = this.$.sync.objects.gallery;
+                            var imgData = this.$.sync.objects.images;
                             var reader = new FileReader();
                             reader.onload = function(e) { 
-                                var old = imgData.images.slice();
-                                imgData.images.push(e.target.result);
+                                var old = imgData.slice();
+                                imgData.push(e.target.result);
                                 Object.getNotifier(imgData).notify({
                                     type: 'update',
                                     name: 'images',
