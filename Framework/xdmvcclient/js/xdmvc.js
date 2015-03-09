@@ -102,10 +102,20 @@ var XDmvc = {
                     .map(function (el) {return el.peer; });
 		this.send({type: 'connections', data: others });
 
-        //TODO also send state of synchronised obejcts
+        //TODO also send state of synchronised objects
         
         XDmvc.sendRoles();
         XDmvc.sendDevice();
+
+        // Send the current state the newly connected device
+        if (conn.sendSync) {
+            Object.keys(XDmvc.syncData).forEach(function (element, index) {
+                console.log(element);
+                console.log(XDmvc.syncData[element]);
+                XDmvc.syncData[element].syncFunction();
+            });
+            conn.sendSync = false;
+        }
 
 	},
 	
@@ -117,8 +127,10 @@ var XDmvc = {
 		conn.on('open', XDmvc.handleOpen);
 		conn.on('close', XDmvc.handleClose);
         XDmvc.attemptedConnections.push(conn);
-  //      XDmvc.addConnection(conn);
-		
+
+        // Flag that this peer should receive state on open
+        conn.sendSync = true;
+
 	},
 	
 	handleData : function (msg) {
@@ -275,7 +287,7 @@ var XDmvc = {
 		for (i = 0; i < len; i++) {
 			var con = XDmvc.connections[i];
 			if (con.open) {
-		//		console.log("sync");
+				console.log("sync");
 				// TODO maybe send only changes?
 				con.send({type: 'sync', data: XDmvc.syncData[id].data, id: id});
 			}
