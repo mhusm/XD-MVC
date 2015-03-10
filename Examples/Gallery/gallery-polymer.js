@@ -50,14 +50,10 @@ function handleGallery(req, res, next){
     var path = parsedUrl.pathname.split("/");
     res.setHeader('Access-Control-Allow-Origin', '*')
 
-    console.log(parsedUrl.pathname);
-    console.log(path);
-
     if (path.length === 2 && path[1].length ===0){
         res.writeHead(200, {'Content-Type': 'text/json' });
         res.write(JSON.stringify(albums));
         res.end('\n');
-        console.log("sending data");
     }
 
 }
