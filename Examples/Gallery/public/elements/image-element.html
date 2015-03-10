@@ -31,24 +31,7 @@
 
             setAsCover: function() {
                 this.fire('cover', {src: this.images[this.current]});
-  /*
-                var currAlbum = this.transient.currentAlbum;
-                console.log(currAlbum);
-                console.log(this.transient);
-                var album = this.persistent.albums.find(function(a) {
-                    return a.title == currAlbum });
-                var old = album.url;
-                album.url = this.persistent.large[this.index].replace("large/", "thumbs/");
-
-                // Need to notify, nesting too deep
-                // TODO or this could be handled by the framework
-                Object.getNotifier(this.persistent).notify({
-                    type: 'update',
-                    name: 'url',
-                    oldValue: old
-                });
-                */
-            },
+            }
 
         });
 	</script>
