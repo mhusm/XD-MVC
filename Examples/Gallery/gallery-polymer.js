@@ -9,6 +9,7 @@ var connect = require('connect'),
 var url = require('url');
 
 var app = connect().use(bodyParser.json()).use(serveStatic(__dirname + '/public'));
+
 app.use("/gallery", handleGallery);
 var server = http.createServer(app);
 var fs = require('fs');
@@ -47,6 +48,8 @@ function handleGallery(req, res, next){
     var parsedUrl = url.parse(req.url, true)
     var query = parsedUrl.query;
     var path = parsedUrl.pathname.split("/");
+    res.setHeader('Access-Control-Allow-Origin', '*')
+
     console.log(parsedUrl.pathname);
     console.log(path);
 
@@ -61,8 +64,9 @@ function handleGallery(req, res, next){
 
 createModel();
 xdmvc.start(9000, 9001);
-xdmvc.on("objectChanged", function(id){
-    console.log(id);
+xdmvc.on("objectChanged", function(msg){
+    console.log(msg);
+    albums[msg.data.id].url = msg.data.cover;
 });
 
 server.listen(8082);

@@ -16,33 +16,37 @@ var XDmvc = {
     roles: [], // roles that this peer has
     othersRoles: {}, // roles that other peers have
     availablePeers: [],
+    ajaxPort: 0,
 	
-	connectToServer : function (userId, host, port) {
+	connectToServer : function (userId, host, port, ajaxPort) {
         // If not connected already
-        if (!XDmvc.peer) {
-            XDmvc.deviceId = userId;
-            XDmvc.peer = new Peer(userId, {
+        if (!this.peer) {
+            this.deviceId = userId;
+            this.peer = new Peer(userId, {
                 host: host,
                 port: port,
                 //           debug: 3,
-                // There is still an issue sometimes with connecting remote devices. But not consistently
-                // Not sure whether the STUN servers help
-                config: { 'iceServers': [
-                    {url: 'stun:stun.l.google.com:19302'},
-                    {url: 'stun:stun1.l.google.com:19302'},
-                    {url: 'stun:stun2.l.google.com:19302'},
-                    {url: 'stun:stun3.l.google.com:19302'},
-                    {url: 'stun:stun4.l.google.com:19302'}
-                ]}
+                config: {
+                    'iceServers': [
+                        {url: 'stun:stun.l.google.com:19302'},
+                        {url: 'stun:stun1.l.google.com:19302'},
+                        {url: 'stun:stun2.l.google.com:19302'},
+                        {url: 'stun:stun3.l.google.com:19302'},
+                        {url: 'stun:stun4.l.google.com:19302'}
+                    ]
+                }
             });
-            XDmvc.peer.on('connection', XDmvc.handleConnection);
-            XDmvc.peer.on('error', XDmvc.handleError);
-            if (XDmvc.reconnect) {
-                XDmvc.connectToStoredPeers();
+            this.peer.on('connection', this.handleConnection);
+            this.peer.on('error', this.handleError);
+            if (this.reconnect) {
+                this.connectToStoredPeers();
             }
 
             // Check periodically who is connected.
-            window.setInterval(XDmvc.requestAvailablePeers, 5000);
+            window.setInterval(this.requestAvailablePeers, 5000);
+        }
+        if (ajaxPort) {
+            this.ajaxPort = ajaxPort;
         }
 	},
 
@@ -304,33 +308,47 @@ var XDmvc = {
  				con.send(msg);
 			}
 		}
+
+        var url = window.location.protocol +"//" +window.location.hostname +":" +XDmvc.ajaxPort
+        if (XDmvc.ajaxPort > 0 &&  XDmvc.syncData[id].updateServer) {
+
+             ajax.postJSON(url, msg,
+                function(reply){
+                    console.log(reply);
+                },
+                true
+            );
+            console.log("sending ajax");
+            console.log(msg);
+
+        }
+
         if (XDmvc.syncData[id].callback){
             XDmvc.syncData[id].callback.apply(undefined, [XDmvc.syncData[id].data, id]); // notify for local changes
         }
 		
 	},
 
-    // TODO use observeJS
-    // TODO maybe specify a path in an object tree to be watched?
-	synchronize : function (data, callback, id) {
+    updateServer: function(){
+
+    },
+
+
+	synchronize : function (data, callback, id, updateServer) {
+        // if no id given, generate one. Though this may not always work. It could be better to enforce IDs.
         id = typeof id !== 'undefined' ? id : 'sync' + (XDmvc.lastSyncId++);
         var sync = function (data) {return XDmvc.sendSyncToAll(data, id); };
-        XDmvc.syncData[id] = {data: data, callback: callback, syncFunction: sync};
-        console.log(data);
-        if ( Array.isArray(data)){
-            var observer = new ArrayObserver(data);
-            observer.open(sync);
-            XDmvc.syncData[id].observer = observer;
-
+        XDmvc.syncData[id] = {data: data, callback: callback, syncFunction: sync, updateServer: updateServer};
+        if (Array.isArray(data)){
+            XDmvc.syncData[id].observer = new ArrayObserver(data);
+            XDmvc.syncData[id].observer.open(sync);
         } else {
-            // if no id given, generate one
-            //	var id = 'sync' +(XDmvc.lastSyncId++);
+            // TODO this only observes one level. should observe nested objects as well?
+            // TODO use observeJS also for objects?
             Object.observe(data, sync);
         }
-        // TODO this only observes one level. should observe nested objects as well?
     },
-	
-	
+
 	
 	update : function (newObj, id, arrayDelta) {
 	// temporarily disable observation to avoid triggering events
@@ -395,13 +413,6 @@ var XDmvc = {
 		XDmvc.reconnect = reconnect;
         XDmvc.detectDevice();
 
-	/*
-		Object.observe(XDmvc.connections, function(changes){
-			console.log(changes);
-	//		renderConnections();
-			// TODO send an event?
-		});
-		*/
 	},
 	
 	addConnection: function (conn) {

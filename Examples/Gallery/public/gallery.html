@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <script src="bower_components/xdmvcclient/js/find-polyfill.js"></script>
         <!-- 1. Load platform support before any code that touches the DOM. -->
         <script src="bower_components/webcomponentsjs/webcomponents.js"></script>
         <!-- 2. Load the component using an HTML Import -->
@@ -23,18 +22,21 @@
 
                 <xdmvc-synchronised id="sync"
                                objects='{ "gallery": {"currentAlbum": -1, "currentImage": 0},
-                               "cursor" :{"x": 0, "y": 0}}'
-                               >
+                               "cursor" :{"x": 0, "y": 0}}'>
+                </xdmvc-synchronised>
+                <xdmvc-synchronised id="persistent"
+                                    objects='{ "album": {"id":"", "cover": ""}}'
+                                    updateServer="true">
                 </xdmvc-synchronised>
                 <gallery-overview id='overview'
                                    hidden?="{{!albumsVisible}}"
                                    on-click="{{albumClicked}}"
                                    currentAlbum="{{$.sync.objects.gallery.currentAlbum}}"
-                                albums="{{albums}}">
+                                   albums="{{albums}}">
                 </gallery-overview>
                 <template bind if="{{albumVisible}}">
                     <button on-click="{{showAlbums}}"
-                            hidden?="{{albumsVisible || !albumVisible || !$.roles.isselected.owner}}">
+                            hidden?="{{albumsVisible  || !$.roles.isselected.owner}}">
                         Back to Albums
                     </button>
                     <gallery-element id='gallery'
@@ -44,11 +46,16 @@
                  </template>
 
                 <template bind if="{{$.sync.objects.gallery.currentAlbum >=0 && imageVisible}}">
+                    <button on-click="{{showAlbum}}"
+                            hidden?="{{!$.roles.isselected.owner}}">
+                        Back to Album
+                    </button>
                     <image-element id="image"
                                     images="{{albums[$.sync.objects.gallery.currentAlbum].large}}"
                                     current="{{$.sync.objects.gallery.currentImage}}"
                                     cursor="$.sync.objects.cursor"
-                                    showControls="{{$.roles.isselected.owner}}"/>
+                                    showControls="{{$.roles.isselected.owner}}"
+                                    on-cover="{{handleCoverChange}}"/>
                 </template>
                 <xdmvc-roles id="roles"
                              roles="['owner', 'visitor', 'albums', 'album', 'image']"
@@ -113,6 +120,19 @@
                             this.imageVisible = false;
                         }
                         
+                    },
+
+                    handleCoverChange: function(event, detail, sender){
+                        console.log(detail);
+                        var album = this.$.persistent.objects.album;
+                        var gallery = this.$.sync.objects.gallery;
+                        console.log(gallery);
+                        console.log(gallery.currentAlbum);
+                        console.log(this.albums[gallery.currentAlbum]);
+                        var thumbnail = detail.src.replace("large", "thumbs");
+                        this.albums[gallery.currentAlbum].url = thumbnail;
+                        album.cover = thumbnail;
+                        album.id = gallery.currentAlbum;
                     },
                     
                     domReady: function(){

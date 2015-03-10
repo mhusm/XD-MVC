@@ -1,15 +1,20 @@
 <link rel="import" href="../../polymer/polymer.html">
-<polymer-element name="xdmvc-synchronised" attributes="objects" >
+<script src="../js/find-polyfill.js"></script>
+<script src="../js/ajax.js"></script>
+<script src="../js/xdmvc.js"></script>
+<polymer-element name="xdmvc-synchronised" attributes="objects updateServer" >
 	<script>
 		Polymer({
             created: function() {
                 this.objects = {};
+                this.updateServer = false;
             },
             
            attached: function() {
                var sync = this.objects;
+               var that = this;
                Object.keys(this.objects).forEach(function(key){
-                   XDmvc.synchronize(sync[key], undefined, key);
+                   XDmvc.synchronize(sync[key], undefined, key, that.updateServer);
                });
 			}
 		});

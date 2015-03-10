@@ -1,13 +1,16 @@
 <link rel="import" href="../../polymer/polymer.html">
+<script src="../js/find-polyfill.js"></script>
+<script src="../js/ajax.js"></script>
 <script src="../js/xdmvc.js"></script>
 <script src="../../peerjs/peer.js"></script>
 
-<polymer-element name="xdmvc-connection" attributes="server reconnect port deviceId">
+<polymer-element name="xdmvc-connection" attributes="server reconnect port deviceId ajaxPort">
 	<script>
 		Polymer({
 			created: function() {
                 this.url = document.location.hostname;
-                this.port = "9000"
+                this.port = 9000;
+                this.ajaxPort = 9001;
                 this.reconnet = false;
 				var id = localStorage.getItem("deviceId");
 				this.deviceId = id? id:  "Id"+Date.now();
@@ -18,14 +21,14 @@
 			domReady: function(){
 				var id = localStorage.getItem("deviceId");
                 XDmvc.init(this.reconnect);
-				XDmvc.connectToServer(this.deviceId, this.url, this.port);
+				XDmvc.connectToServer(this.deviceId, this.url, this.port, this.ajaxPort);
 			},
 		  
 			changeDeviceId: function(newID){
 				if (newID !== localStorage.getItem("deviceId")){
 					localStorage.setItem("deviceId", newID);
 					this.deviceId = newID;
-					XDmvc.connectToServer(this.deviceId, this.url, this.port);
+					XDmvc.connectToServer(this.deviceId, this.url, this.port, this.ajaxPort);
 				}
 			}
 		});

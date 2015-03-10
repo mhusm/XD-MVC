@@ -7,6 +7,7 @@
             </pointer-element>
             <button on-click="{{previous}}" hidden?="{{!showControls}}" disabled?="{{current == 0}}" >Previous</button>
             <button on-click="{{next}}" hidden?="{{!showControls}}" disabled?="{{current >= images.length -1}}" >Next</button>
+            <button on-click="{{setAsCover}}"  hidden?="{{!showControls}}" >Set as cover</button>
     		<link rel="stylesheet" href="../css/image.css" />
 	</template>
 	<script>
@@ -26,7 +27,29 @@
                 if (this.current > 0){
                     this.current -= 1;                
                 }
-            }
-		});
+            },
+
+            setAsCover: function() {
+                this.fire('cover', {src: this.images[this.current]});
+  /*
+                var currAlbum = this.transient.currentAlbum;
+                console.log(currAlbum);
+                console.log(this.transient);
+                var album = this.persistent.albums.find(function(a) {
+                    return a.title == currAlbum });
+                var old = album.url;
+                album.url = this.persistent.large[this.index].replace("large/", "thumbs/");
+
+                // Need to notify, nesting too deep
+                // TODO or this could be handled by the framework
+                Object.getNotifier(this.persistent).notify({
+                    type: 'update',
+                    name: 'url',
+                    oldValue: old
+                });
+                */
+            },
+
+        });
 	</script>
 </polymer-element>
