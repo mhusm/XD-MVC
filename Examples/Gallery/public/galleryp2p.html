@@ -39,7 +39,7 @@
                 <template bind if="{{!($.roles.isselected.owner && $.devices.othersDevices.large > 0)}}">
                     <image-element images="{{$.sync.objects.images}}"
                                     current="{{$.sync.objects.current.index}}"
-                                    position="{$.sync.objects.current.cursor}}"
+                                    cursor="{{$.sync.objects.cursor}}"
                                     showControls="{{$.roles.isselected.owner}}"></image-element>
                 </template>
 
