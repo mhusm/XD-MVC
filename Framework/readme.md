@@ -38,13 +38,15 @@ Import the elements that you are going to use in the header.
 ```
 
 
-Connecting to the server. None of the attributes are required.
-If `reconnect` is set to `true`, the device will automatically try to reocnnect to previously connected devices.
+### Connecting to the server
+None of the attributes are required.
+If `reconnect` is set to `true`, the device will automatically try to reconnect to previously connected devices.
 ```html
 <xdmvc-connection server="darroch.inf.ethz.ch" port="9000" ajaxPort="9001" reconnect="true"></xdmvc-connection>
 ```
 
-Specifying objects for synchronisation. Each object must have an identifier (here gallery, cursors).
+### Specifying objects for synchronisation.
+Each object must have an identifier (here gallery, cursors).
 Only objects and arrays can be synchronised.
 Currently, objects are transmitted as a whole, but for arrays there is a delta update mechanism.
 ```html
@@ -61,7 +63,8 @@ If `updateServer` is set to `true`, changes to these object are send to the serv
 </xdmvc-synchronised>
 ```
 
-Example structure of an application:
+### Example structure of an application
+Wrap your application in a Polymer element.
 ```html
 <html>
     <head>
