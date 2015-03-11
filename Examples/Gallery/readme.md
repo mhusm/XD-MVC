@@ -13,11 +13,11 @@ The Fabian folder is not required.
 ## Starting
 For the server version:
 1. `node gallery-polymer.js`
-2. Point your brower to http://hostname:8082/gallery.html
+2. Point your browser to http://hostname:8082/gallery.html
 
 For the peer-to-peer version:
 1. `node gallery-p2p.js`
-2. Point your brower to http://hostname:8082/galleryp2p.html
+2. Point your browser to http://hostname:8082/galleryp2p.html
 
 Note that the applications only work in Chrome at the moment.
 
