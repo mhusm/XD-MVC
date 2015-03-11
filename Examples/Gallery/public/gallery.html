@@ -4,11 +4,11 @@
         <!-- 1. Load platform support before any code that touches the DOM. -->
         <script src="bower_components/webcomponentsjs/webcomponents.js"></script>
         <!-- 2. Load the component using an HTML Import -->
-        <link rel="import" href="elements/image-element.html">
         <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-synchronised.html">
         <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-connection.html">
         <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-roles.html">
         <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-devices.html">
+        <link rel="import" href="elements/image-element.html">
         <link rel="import" href="elements/gallery-element.html">
         <link rel="import" href="elements/gallery-overview.html">
 
@@ -16,7 +16,7 @@
     </head>
     <body>
 
-        <polymer-element name="my-app" attributes="persistent transient" >
+        <polymer-element name="my-app" >
             <template>
                 <xdmvc-connection reconnect="true"></xdmvc-connection>
 
