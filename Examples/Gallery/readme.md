@@ -21,6 +21,6 @@ For the peer-to-peer version:
 
 Note that the applications only work in Chrome at the moment.
 
-##Configuration
+## Configuration
 You can add your own photos to the image folder, just use the same folder structure as the example albums.
 
