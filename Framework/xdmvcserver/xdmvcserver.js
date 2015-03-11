@@ -162,10 +162,11 @@ XDmvcServer.prototype.handleAjaxRequest = function(req, res, next, xdmvcServer){
 };
 
 XDmvcServer.prototype.start = function(portPeer, portAjax) {
+    portPeer = portPeer? portPeer : 9000;
+    portAjax = portAjax? portAjax : 9001;
+
     this.startPeerSever(portPeer);
-    if (portAjax > 0) {
-        this.startAjaxServer(portAjax);
-    }
+    this.startAjaxServer(portAjax);
 };
 
 module.exports = XDmvcServer;
