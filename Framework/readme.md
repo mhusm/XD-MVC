@@ -164,27 +164,27 @@ Wrap your application in a Polymer element.
                 <xdmvc-synchronised id="sync"
                                      objects='{"current": { "index":0}, "images": [],
                                 "cursor" :{"x": 0, "y": 0}}'>
-                 </xdmvc-synchronised>
-                 <xdmvc-roles id="roles"
-                              roles="['owner', 'visitor', 'album', 'image']"
-                              selected="['album']">
-                 </xdmvc-roles>
+                </xdmvc-synchronised>
+                <xdmvc-roles id="roles"
+                          roles="['owner', 'visitor', 'album', 'image']"
+                          selected="['album']">
+                </xdmvc-roles>
+                <xdmvc-devices id="devices"></xdmvc-devices>
 
-                 <template bind if="{{$.roles.isselected.owner}}">
-                     <input type="file" multiple accept="image/*" on-change="{{handleFiles}}"/>
-                     <gallery-element id='gallery'
-                                      images="{{$.sync.objects.images}}"
-                                      current="{{$.sync.objects.current.index}}">
-                     </gallery-element>
-                 </template>
-                 <template bind if="{{!($.roles.isselected.owner && $.devices.othersDevices.large > 0)}}">
-                     <image-element images="{{$.sync.objects.images}}"
-                                     current="{{$.sync.objects.current.index}}"
-                                     cursor="{{$.sync.objects.cursor}}"
-                                     showControls="{{$.roles.isselected.owner}}"></image-element>
-                 </template>
+                <template bind if="{{$.roles.isselected.owner}}">
+                    <input type="file" multiple accept="image/*" on-change="{{handleFiles}}"/>
+                    <gallery-element id='gallery'
+                                  images="{{$.sync.objects.images}}"
+                                  current="{{$.sync.objects.current.index}}">
+                    </gallery-element>
+                </template>
+                <template bind if="{{!($.roles.isselected.owner && $.devices.othersDevices.large > 0)}}">
+                    <image-element images="{{$.sync.objects.images}}"
+                                 current="{{$.sync.objects.current.index}}"
+                                 cursor="{{$.sync.objects.cursor}}"
+                                 showControls="{{$.roles.isselected.owner}}"></image-element>
+                </template>
 
-                 <xdmvc-devices id="devices"></xdmvc-devices>
            </template>
         </polymer-element>
 
