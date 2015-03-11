@@ -39,7 +39,7 @@ Import the elements that you are going to use in the header.
 
 
 ### Connecting to the server
-None of the attributes are required.
+None of the attributes are required as there are defaults that match the server-side component.
 If `reconnect` is set to `true`, the device will automatically try to reconnect to previously connected devices.
 ```html
 <xdmvc-connection server="darroch.inf.ethz.ch" port="9000" ajaxPort="9001" reconnect="true"></xdmvc-connection>
@@ -62,6 +62,86 @@ If `updateServer` is set to `true`, changes to these object are send to the serv
                     updateServer="true">
 </xdmvc-synchronised>
 ```
+
+Use the specified objects in your elements.
+```html
+<gallery-overview id='overview'
+                   currentAlbum="{{$.sync.objects.gallery.currentAlbum}}"
+                   albums="{{albums}}">
+</gallery-overview>
+<gallery-element id='gallery'
+                  images="{{albums[$.sync.objects.gallery.currentAlbum].thumbs}}"
+                  current="{{$.sync.objects.gallery.currentImage}}"
+                  on-image="{{imageClicked}}"/>
+```
+
+### Roles
+Define the roles of the system. Roles can be preselected.
+```html
+<xdmvc-roles id="roles"
+             roles="['owner', 'visitor', 'albums', 'album', 'image']"
+             selected="['albums']">
+</xdmvc-roles>
+```
+
+Roles can be add and removed to the current device dynamically. For example, in an event handler.
+```javascript
+albumClicked: function() {
+    this.$.roles.removeRole('albums');
+    this.$.roles.addRole('album');
+}
+```
+
+Roles of the current device can be queried.
+```javascript
+this.albumsVisible = this.$.roles.isselected.albums &&  !this.$.roles.isselected.visitor;
+```
+
+Roles of connected devices can also be queried. A number indicates how many devices in the system (not including self) have given role.
+```javascript
+this.$.roles.othersRoles.albums > 0
+```
+
+
+### Devices
+Similarly to the roles, you can query the devices. Add the devices element to your application.
+```html
+<xdmvc-devices id="devices"></xdmvc-devices>
+```
+
+Query the current device and connected devices
+```javascript
+if (devices.device.type === "small" && devices.othersDevices.large > 0) {
+    // do something
+}
+```
+
+### Distributing the UI
+Use the role and device query mechanism to adapt your UI by binding to conditional templates.
+
+```html
+<template bind if="{{$.roles.isselected.owner}}">
+    <input type="file" multiple accept="image/*" on-change="{{handleFiles}}"/>
+    <gallery-element id='gallery'
+                     images="{{$.sync.objects.images}}"
+                     current="{{$.sync.objects.current.index}}">
+    </gallery-element>
+</template>
+```
+
+Note that anything in the template will not be loaded if the query evaluates to `false`. Alternatively, you can bind to the `hidden` attribute.
+This will load the code and run the associated scripts, but not show the element.
+```html
+<button on-click="{{showAlbum}}"
+        hidden?="{{!$.roles.isselected.owner}}">
+    Back to Album
+</button>
+```
+
+
+
+
+
 
 ### Example structure of an application
 Wrap your application in a Polymer element.
