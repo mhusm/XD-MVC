@@ -283,8 +283,6 @@ var XDmvc = {
 	},
 	
 	sendSyncToAll : function (changes, id) {
-		console.log(changes);
-	//	console.log(XDmvc.syncData);
         var arrayDelta = [];
         if (Array.isArray(XDmvc.syncData[id].data) && changes){
             var splices = changes;

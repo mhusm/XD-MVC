@@ -1,11 +1,5 @@
-Cross-device MVC
-============================
+# Cross-device MVC
 
 
-Version
--
-
-0.1
-
-
-Please look at the examples for instructions on usage.
+##Instructions
+Please look at the examples for more details on usage.
