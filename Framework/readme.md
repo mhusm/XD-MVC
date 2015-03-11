@@ -107,7 +107,9 @@ Similarly to the roles, you can query the devices. Add the devices element to yo
 <xdmvc-devices id="devices"></xdmvc-devices>
 ```
 
-Query the current device and connected devices
+Query the current device and connected devices. Currently there are three device types: Small, medium, and large.
+The categorisation of the devices only depends on screen size in pixels at the moment.
+Unfortunately, it is not possible to detect physical screen size. We plan to support capabilities such as touch in the future.
 ```javascript
 if (devices.device.type === "small" && devices.othersDevices.large > 0) {
     // do something
