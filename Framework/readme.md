@@ -1,8 +1,6 @@
 # Cross-device MVC
 
-
-## Instructions
-Please look at the examples for more details on usage.
+Here is a quick introduction to the framework. Please look at the examples for more details on usage.
 
 ## Server
 
