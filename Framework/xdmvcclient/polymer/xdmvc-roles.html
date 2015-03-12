@@ -2,17 +2,8 @@
 <script src="../js/find-polyfill.js"></script>
 <script src="../js/ajax.js"></script>
 <script src="../js/xdmvc.js"></script>
-<polymer-element name="xdmvc-roles" attributes="roles selected isselected show" >
+<polymer-element name="xdmvc-roles" attributes="roles selected isselected" >
     <template>
-        <template bind if="{{show}}">
-            <h2>My roles</h2>
-            <ul>
-                <template repeat="{{r in roles }}" bind="{{selected}}">
-                    <label><input on-change="{{selectionChanged}}" type="checkbox" checked="{{isselected[r]}}"/>{{r}}</label>
-                </template>
-
-            </ul>
-        </template>
     </template>
 	<script>
 		Polymer({
@@ -20,7 +11,6 @@
                 this.roles = [];
                 this.selected = [];
                 this.isselected = {};
-                this.show = false;
                 this.othersRoles = XDmvc.othersRoles;
             },
             

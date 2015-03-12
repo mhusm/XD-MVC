@@ -9,8 +9,8 @@ var connect = require('connect'),
 var url = require('url');
 
 var app = connect().use(bodyParser.json()).use(serveStatic(__dirname + '/public'));
-
 app.use("/gallery", handleGallery);
+
 var server = http.createServer(app);
 var fs = require('fs');
 var basePath = "\public\\images";
