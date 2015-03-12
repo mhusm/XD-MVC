@@ -14,7 +14,6 @@
         <meta name="viewport" content="width=device-width, user-scalable=no">
 
     </head>
-    </head>
     <body>
         <polymer-element name="my-app"  >
             <template>
@@ -71,20 +70,12 @@
                             var imgData = this.$.sync.objects.images;
                             var reader = new FileReader();
                             reader.onload = function(e) { 
-                                var old = imgData.slice();
                                 imgData.push(e.target.result);
-                                Object.getNotifier(imgData).notify({
-                                    type: 'update',
-                                    name: 'images',
-                                    oldValue: old
-                                });
-
-                            }; 
+                            };
                             reader.readAsDataURL(file);
                         }
                     },
                     updateViews: function(){
-                        console.log("updateViews");
                         var roles = this.$.roles;
                         var devices = this.$.devices;
 
@@ -109,9 +100,7 @@
                         var that = this;
 
                         var connect = getQueryParams(window.location.search).connect;
-                        console.log(connect);
                         if (!connect) {
-                            console.log('connect' + connect);
                             var connectString = 'connect=' + XDmvc.deviceId
                             window.history.pushState('', '', window.location.search.length > 0 ? window.location.search + "&" + connectString : '?' + connectString);
                             this.$.roles.addRole('owner');

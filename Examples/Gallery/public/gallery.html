@@ -101,7 +101,6 @@
                     },
                     
                     updateViews: function(){
-                        console.log("updateViews");
                         var roles = this.$.roles;
                         var devices = this.$.devices;
 
@@ -123,12 +122,8 @@
                     },
 
                     handleCoverChange: function(event, detail, sender){
-                        console.log(detail);
                         var album = this.$.persistent.objects.album;
                         var gallery = this.$.sync.objects.gallery;
-                        console.log(gallery);
-                        console.log(gallery.currentAlbum);
-                        console.log(this.albums[gallery.currentAlbum]);
                         var thumbnail = detail.src.replace("large", "thumbs");
                         this.albums[gallery.currentAlbum].url = thumbnail;
                         album.cover = thumbnail;
@@ -139,10 +134,8 @@
                         var that = this;
                         
                         var connect = getQueryParams(window.location.search).connect;
-                        console.log(connect);
                         if (!connect){
-                            console.log('connect' +connect);
-                            var connectString = 'connect='+XDmvc.deviceId
+                            var connectString = 'connect='+XDmvc.deviceId;
                             window.history.pushState('', '', window.location.search.length > 0? window.location.search +"&" +connectString : '?'+connectString);
                             this.$.roles.addRole('owner');   
                         } else{
@@ -154,11 +147,11 @@
                             }
                         }
 
-                        Object.observe(this.$.roles.isselected, function(changes){
+                        Object.observe(this.$.roles.isselected, function(){
                             that.updateViews();
                         });
 
-                        Object.observe(this.$.roles.othersRoles, function(changes){
+                        Object.observe(this.$.roles.othersRoles, function(){
                            that.updateViews();
                         });
                         
