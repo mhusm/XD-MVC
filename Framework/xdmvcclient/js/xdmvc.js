@@ -59,7 +59,6 @@ var XDmvc = {
     requestAvailablePeers: function () {
 		XDmvc.peer.listAllPeers(function (peers) {
             XDmvc.availablePeers.length = 0;
-            var peer;
             peers.filter(function (p) {
                 return p !== XDmvc.deviceId && !XDmvc.connections.some(function (el) {return el.peer === p; });
             })
@@ -116,9 +115,7 @@ var XDmvc = {
 
         // Send the current state the newly connected device
         if (conn.sendSync) {
-            console.log("sending current state")
-
-            Object.keys(XDmvc.syncData).forEach(function (element, index) {
+            Object.keys(XDmvc.syncData).forEach(function (element) {
                 var msg = {type: 'sync', data: XDmvc.syncData[element].data, id: element};
                 conn.send(msg);
             });
@@ -309,7 +306,7 @@ var XDmvc = {
 			}
 		}
 
-        var url = window.location.protocol +"//" +window.location.hostname +":" +XDmvc.ajaxPort
+        var url = window.location.protocol +"//" +window.location.hostname +":" +XDmvc.ajaxPort;
         if (XDmvc.ajaxPort > 0 &&  XDmvc.syncData[id].updateServer) {
 
              ajax.postJSON(url, msg,
