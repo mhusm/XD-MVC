@@ -63,9 +63,9 @@ var XDmvc = {
             peers.filter(function (p) {
                 return p !== XDmvc.deviceId && !XDmvc.connections.some(function (el) {return el.peer === p; });
             })
-                .forEach(function (peer) {
-                    XDmvc.availablePeers.push(peer);
-                });
+            .forEach(function (peer) {
+                XDmvc.availablePeers.push(peer);
+            });
         });
         
     },

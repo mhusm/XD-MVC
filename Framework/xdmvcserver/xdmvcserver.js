@@ -62,7 +62,7 @@ XDmvcServer.prototype.startAjaxServer = function(port){
     var that = this;
     var ajax = function(req, res, next){
         return that.handleAjaxRequest(req,res,next, that);
-    }
+    };
     var app = connect().use(bodyParser.json({limit: '50mb'})).use(allowCrossDomain).use(ajax);
     var server = http.createServer(app);
     server.listen(port);
@@ -77,7 +77,7 @@ XDmvcServer.prototype.handleAjaxRequest = function(req, res, next, xdmvcServer){
     }
 
     res.setHeader("Content-Type", "text/json");
-    res.setHeader('Access-Control-Allow-Origin', '*')
+    res.setHeader('Access-Control-Allow-Origin', '*');
     res.statusCode = 200;
 
     if (query.listAllPeers != null) {
