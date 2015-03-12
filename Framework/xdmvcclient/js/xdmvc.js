@@ -220,8 +220,6 @@ var XDmvc = {
 	
 	cleanUpConnections : function () {
 		var closed = XDmvc.connections.filter(function (c) {
- //           console.log(c.peer);
- //           console.log(c.open);
 			return !c.open;
 		});
 		
@@ -270,7 +268,6 @@ var XDmvc = {
 			conn.on('data', XDmvc.handleData);
 			conn.on('close', XDmvc.handleClose);
             XDmvc.attemptedConnections.push(conn);
-//			XDmvc.addConnection(conn);
 		}
 	},
 	
@@ -393,8 +390,6 @@ var XDmvc = {
 	},
     
 	loadNew : function (oldObj, newObj, id) {
-////        console.log(oldObj);
- //       console.log(newObj);
         var key;
 		for (key in newObj) {
             // TODO what about properties that were deleted?
@@ -410,64 +405,60 @@ var XDmvc = {
 	},
 
 	
-	// TODO set configs such as server etc here
-	init : function () {
+    // TODO set configs such as server etc here
+    init : function () {
         // Check if there is an id, otherwise generate ones
         var id = localStorage.getItem("deviceId");
         this.deviceId = id? id:  "Id"+Date.now();
         localStorage.setItem("deviceId", this.deviceId);
 
-		XDmvc.loadPeers();
+        XDmvc.loadPeers();
         XDmvc.detectDevice();
         XDmvc.host = document.location.hostname;
 
     },
 
-	
-	addConnection: function (conn) {
+
+    addConnection: function (conn) {
         console.log("adding connection" + conn.peer);
         console.trace();
-		XDmvc.connections.push(conn);
-		XDmvc.sortConnections(XDmvc.compareConnections);
+        XDmvc.connections.push(conn);
+        XDmvc.sortConnections(XDmvc.compareConnections);
         var index = XDmvc.attemptedConnections.indexOf(conn);
         if (index > -1) {
             XDmvc.attemptedConnections.splice(index, 1);
         }
-        
-	//	console.log("added " +conn.peer);
-	//	console.log(XDmvc.connections);
-	},
-	
-	// TODO maybe the developer/user should be able to specify an order. 
-	// Order is not enough for some cases, take into account device roles?
-	compareConnections: function (connection1, connection2) {
-		if (connection1.peer > connection2.peer) {
-			return 1;
-		}
-		if (connection1.peer < connection2.peer) {
-			return -1;
-		}
-		return 0;
-	},
-	
-	sortConnections: function (compareFunc) {
-        
-		XDmvc.connections.sort(compareFunc);
-		var thisConn = {peer: XDmvc.deviceId};
-		var idx = XDmvc.connections.findIndex(function (element) {
-			return compareFunc(thisConn, element) < 0;
-		});
-		XDmvc.myPosition.value = idx > -1 ? idx : XDmvc.connections.length;
-	//	console.log(XDmvc.myPosition)
-	},
-    
+    },
+
+    // TODO maybe the developer/user should be able to specify an order.
+    // Order is not enough for some cases, take into account device roles?
+    compareConnections: function (connection1, connection2) {
+        if (connection1.peer > connection2.peer) {
+            return 1;
+        }
+        if (connection1.peer < connection2.peer) {
+            return -1;
+        }
+        return 0;
+    },
+
+    sortConnections: function (compareFunc) {
+
+        XDmvc.connections.sort(compareFunc);
+        var thisConn = {peer: XDmvc.deviceId};
+        var idx = XDmvc.connections.findIndex(function (element) {
+            return compareFunc(thisConn, element) < 0;
+        });
+        XDmvc.myPosition.value = idx > -1 ? idx : XDmvc.connections.length;
+    },
+
     addRole: function (role) {
         if (!this.hasRole(role)) {
             this.roles.push(role);
             this.sendRoles();
         }
     },
-    
+
     removeRole: function (role) {
         console.log("removing role " + role);
         var index = this.roles.indexOf(role);
@@ -477,20 +468,18 @@ var XDmvc = {
             console.log("sending roles to others");
         }
     },
-    
+
     hasRole: function (role) {
-       // console.log(role);
-     //   console.log(this.roles);
         return this.roles.indexOf(role) > -1;
     },
-    
+
     sendRoles: function () {
         console.log('sending roles');
         console.log(this.deviceId);
         console.log(this.roles);
         this.sendToAll('roles', this.roles);
     },
-    
+
     // Returns an array of connections that have a given role
     otherHasRole: function (role) {
         var haveRoles = this.connections.filter(function (conn) {
@@ -500,11 +489,11 @@ var XDmvc = {
         });
         return haveRoles;
     },
-    
+
     getConnection: function (peerId) {
         return XDmvc.connections.find(function (c) {return c.peer === peerId; });
     },
-    
+
     getAttemptedConnection: function (peerId) {
         return XDmvc.attemptedConnections.find(function (c) {
             return c.peer === peerId;
@@ -520,10 +509,10 @@ var XDmvc = {
             conn.close();
             XDmvc.removeConnection(conn);
         }
-        
+
     },
-    
-     
+
+
     changeRoleForPeer: function (role, isAdd, peer) {
         var conn = XDmvc.getConnection(peer);
         conn.send({type: "role",  operation: isAdd ? "add" : "remove", role: role});
@@ -534,7 +523,6 @@ var XDmvc = {
             this.deviceId = newId;
             localStorage.deviceId = newId;
             // If connected, disconnect and reconnect
-            console.log(this.peer);
             if (this.peer) {
                 this.peer.destroy();
                 this.cleanUpConnections();
@@ -563,10 +551,6 @@ var XDmvc = {
         var smaller = Math.min(width, height);
         this.device.width = width;
         this.device.height = height;
-        var name = localStorage.getItem("deviceName");
-        this.device.name = name? name : this.deviceId;
-        localStorage.setItem("deviceName", this.device.name);
-
         if (smaller <= 500 ) {
             this.device.type = "small";
         } else if (smaller > 500 && smaller <= 800) {
@@ -574,6 +558,10 @@ var XDmvc = {
         } else {
             this.device.type = "large";
         }
+
+        var name = localStorage.getItem("deviceName");
+        this.device.name = name? name : this.deviceId;
+        localStorage.setItem("deviceName", this.device.name);
     }
 
 };
