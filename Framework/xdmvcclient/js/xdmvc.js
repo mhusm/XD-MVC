@@ -412,14 +412,15 @@ var XDmvc = {
 	
 	// TODO set configs such as server etc here
 	init : function () {
-		XDmvc.loadPeers();
-        XDmvc.detectDevice();
-        XDmvc.host = document.location.hostname;
-
         // Check if there is an id, otherwise generate ones
         var id = localStorage.getItem("deviceId");
         this.deviceId = id? id:  "Id"+Date.now();
         localStorage.setItem("deviceId", this.deviceId);
+
+		XDmvc.loadPeers();
+        XDmvc.detectDevice();
+        XDmvc.host = document.location.hostname;
+
     },
 
 	
@@ -547,6 +548,13 @@ var XDmvc = {
         this.sendToAll('device', this.device);
     },
 
+    changeName: function(newName){
+        if (newName !== this.device.name) {
+            this.device.name = newName;
+            localStorage.deviceName = newName;
+            this.sendDevice();
+        }
+    },
 
     detectDevice: function(){
         // TODO this is not optimal. Would be nice to detect physical size. But also type, such as tablet, TV etc.
@@ -555,7 +563,9 @@ var XDmvc = {
         var smaller = Math.min(width, height);
         this.device.width = width;
         this.device.height = height;
-        this.device.name = "deviceName";
+        var name = localStorage.getItem("deviceName");
+        this.device.name = name? name : this.deviceId;
+        localStorage.setItem("deviceName", this.device.name);
 
         if (smaller <= 500 ) {
             this.device.type = "small";
