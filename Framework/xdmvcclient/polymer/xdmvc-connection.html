@@ -8,28 +8,21 @@
 	<script>
 		Polymer({
 			created: function() {
+                XDmvc.init(this.reconnect);
                 this.url = document.location.hostname;
-                this.port = 9000;
-                this.ajaxPort = 9001;
-                this.reconnet = false;
-				var id = localStorage.getItem("deviceId");
-				this.deviceId = id? id:  "Id"+Date.now();
-                localStorage.setItem("deviceId", this.deviceId);
-
+                this.port = XDmvc.port;
+                this.ajaxPort = XDmvc.ajaxPort;
+                this.reconnet = XDmvc.reconnect;
+                this.deviceId = XDmvc.deviceId;
 			},
 
 			domReady: function(){
-				var id = localStorage.getItem("deviceId");
-                XDmvc.init(this.reconnect);
-				XDmvc.connectToServer(this.deviceId, this.url, this.port, this.ajaxPort);
+                XDmvc.reconnect = this.reconnect;
+				XDmvc.connectToServer(this.url, this.port, this.ajaxPort);
 			},
 		  
 			changeDeviceId: function(newID){
-				if (newID !== localStorage.getItem("deviceId")){
-					localStorage.setItem("deviceId", newID);
-					this.deviceId = newID;
-					XDmvc.connectToServer(this.deviceId, this.url, this.port, this.ajaxPort);
-				}
+                XDmvc.changeDeviceId(newID);
 			}
 		});
 	</script>

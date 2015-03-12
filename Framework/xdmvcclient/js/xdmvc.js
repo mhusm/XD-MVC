@@ -16,15 +16,23 @@ var XDmvc = {
     roles: [], // roles that this peer has
     othersRoles: {}, // roles that other peers have
     availablePeers: [],
-    ajaxPort: 0,
+    ajaxPort: 9001,
+    port: 9000,
+    host: "",
 	
-	connectToServer : function (userId, host, port, ajaxPort) {
+	connectToServer : function (host, port, ajaxPort) {
+        this.port = port? port : this.port;
+        this.ajaxPort = ajaxPort? ajaxPort : this.ajaxPort;
+        this.host = host? host : this.host;
+        console.log(this.deviceId);
+        console.log(this.host);
+        console.log(host);
+
         // If not connected already
         if (!this.peer) {
-            this.deviceId = userId;
-            this.peer = new Peer(userId, {
-                host: host,
-                port: port,
+            this.peer = new Peer(this.deviceId, {
+                host: this.host,
+                port: this.port,
                 //           debug: 3,
                 config: {
                     'iceServers': [
@@ -44,9 +52,6 @@ var XDmvc = {
 
             // Check periodically who is connected.
             window.setInterval(this.requestAvailablePeers, 5000);
-        }
-        if (ajaxPort) {
-            this.ajaxPort = ajaxPort;
         }
 	},
 
@@ -406,12 +411,17 @@ var XDmvc = {
 
 	
 	// TODO set configs such as server etc here
-	init : function (reconnect) {
+	init : function () {
 		XDmvc.loadPeers();
-		XDmvc.reconnect = reconnect;
         XDmvc.detectDevice();
+        XDmvc.host = document.location.hostname;
 
-	},
+        // Check if there is an id, otherwise generate ones
+        var id = localStorage.getItem("deviceId");
+        this.deviceId = id? id:  "Id"+Date.now();
+        localStorage.setItem("deviceId", this.deviceId);
+    },
+
 	
 	addConnection: function (conn) {
         console.log("adding connection" + conn.peer);
@@ -518,6 +528,21 @@ var XDmvc = {
         conn.send({type: "role",  operation: isAdd ? "add" : "remove", role: role});
     },
 
+    changeDeviceId(newId){
+        if (newId !== this.deviceId) {
+            this.deviceId = newId;
+            localStorage.deviceId = newId;
+            // If connected, disconnect and reconnect
+            console.log(this.peer);
+            if (this.peer) {
+                this.peer.destroy();
+                this.cleanUpConnections();
+                this.peer = null;
+                this.connectToServer();
+            }
+        }
+    },
+
     sendDevice: function () {
         this.sendToAll('device', this.device);
     },
@@ -530,6 +555,7 @@ var XDmvc = {
         var smaller = Math.min(width, height);
         this.device.width = width;
         this.device.height = height;
+        this.device.name = "deviceName";
 
         if (smaller <= 500 ) {
             this.device.type = "small";
