@@ -306,18 +306,8 @@ var XDmvc = {
 			}
 		}
 
-        var url = window.location.protocol +"//" +window.location.hostname +":" +XDmvc.ajaxPort;
-        if (XDmvc.ajaxPort > 0 &&  XDmvc.syncData[id].updateServer) {
-
-             ajax.postJSON(url, msg,
-                function(reply){
-                    console.log(reply);
-                },
-                true
-            );
-            console.log("sending ajax");
-            console.log(msg);
-
+        if (XDmvc.syncData[id].updateServer) {
+            XDmvc.sendToServer(msg);
         }
 
         if (XDmvc.syncData[id].callback){
@@ -326,7 +316,14 @@ var XDmvc = {
 		
 	},
 
-    updateServer: function(){
+    sendToServer: function(msg){
+        var url = window.location.protocol +"//" +window.location.hostname +":" +XDmvc.ajaxPort;
+        ajax.postJSON(url, msg,
+            function(reply){
+                console.log(reply);
+            },
+            true
+        );
 
     },
 
@@ -515,7 +512,7 @@ var XDmvc = {
         conn.send({type: "role",  operation: isAdd ? "add" : "remove", role: role});
     },
 
-    changeDeviceId(newId){
+    changeDeviceId: function (newId){
         if (newId !== this.deviceId) {
             this.deviceId = newId;
             localStorage.deviceId = newId;
