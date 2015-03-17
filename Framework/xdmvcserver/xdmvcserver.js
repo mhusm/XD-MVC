@@ -80,11 +80,12 @@ XDmvcServer.prototype.handleAjaxRequest = function(req, res, next, xdmvcServer){
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.statusCode = 200;
 
-    if (query.listAllPeers != null) {
+    if (query.type && query.type === "listAllPeers") {
         // return list of all peers
-        res.write('{"peers": ' + JSON.stringify(xdmvcServer.peers) + ', "sessions": ' + JSON.stringify(xdmvcServer.sessions) + '}');
+        var peersArray = Object.keys(xdmvcServer.peers).map(function (key) {return xdmvcServer.peers[key]});
+        res.write('{"peers": ' + JSON.stringify(peersArray) + ', "sessions": ' + JSON.stringify(xdmvcServer.sessions) + '}');
         res.end();
-
+/*
     } else if (query.changeName != null && query.id != null && query.name != null) {
         // change name of peer
         xdmvcServer.peers[query.id].name = query.name;
@@ -97,7 +98,6 @@ XDmvcServer.prototype.handleAjaxRequest = function(req, res, next, xdmvcServer){
         xdmvcServer.peers[query.id].role = query.role;
         res.end();
         console.info("Changed role of " + query.id + " to " + xdmvcServer.peers[query.id].role);
-
 
     } else if (query.addRole != null && query.id != null && query.role != null) {
         // add role to peer
@@ -114,6 +114,7 @@ XDmvcServer.prototype.handleAjaxRequest = function(req, res, next, xdmvcServer){
         }
         res.end();
         console.info("Removed role of " + query.id + ", role: " + xdmvcServer.peers[query.id].role);
+ */
 
     } else if (query.joinSession != null && query.id != null && query.session != null) {
         // Join Session
@@ -146,13 +147,18 @@ XDmvcServer.prototype.handleAjaxRequest = function(req, res, next, xdmvcServer){
         xdmvcServer.emit("restore", query.sessionId, query.id, res);
  //       storageModule.restoreSession(query.sessionId, query.id, res);
     } else if (query.type && query.type === "sync") {
-        //TODO implement
-        // TODO or maybe also implement a post request for this to a specified server on the client side
-        xdmvcServer.emit("objectChanged", query);
+        xdmvcServer.emit("objectChanged", query.data);
+        res.end();
+    } else if (query.type && query.type === "roles") {
+        xdmvcServer.peers[query.id].roles = query.data;
+        res.end();
+    } else if (query.type && query.type === "device") {
+        xdmvcServer.peers[query.id].device = query.data;
         res.end();
     } else {
         // someone tried to call a not supported method
         // answer with 404
+        console.log(query);
         res.setHeader("Content-Type", "text/html");
   //      res.statusCode = 404;
         res.write('<h1>404 - File not found</h1>');

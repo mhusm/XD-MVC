@@ -147,6 +147,17 @@
                             }
                         }
 
+                        var observer = new ObjectObserver(this.$.roles.isselected);
+                        observer.open(function(changes){
+                            that.updateViews();
+                        });
+
+                        var observer = new ObjectObserver(this.$.roles.othersRoles);
+                        observer.open(function(changes){
+                            that.updateViews();
+                        });
+
+                        /*
                         Object.observe(this.$.roles.isselected, function(){
                             that.updateViews();
                         });
@@ -154,7 +165,7 @@
                         Object.observe(this.$.roles.othersRoles, function(){
                            that.updateViews();
                         });
-                        
+                        */
                   }
 
                 });
