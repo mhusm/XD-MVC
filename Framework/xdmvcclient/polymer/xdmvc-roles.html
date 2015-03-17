@@ -17,9 +17,16 @@
             ready: function(){
                 XDmvc.roles = this.selected;
                 var self = this;
+                var observer = new ObjectObserver(XDmvc.roles);
+                observer.open(function(changes){
+                    self.updateIsselected();
+                });
+
+     /*
                 Object.observe(XDmvc.roles, function(changes){
                     self.updateIsselected();
                 });
+       */
             },
             
             updateIsselected: function() {
