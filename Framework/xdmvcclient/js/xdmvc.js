@@ -180,8 +180,6 @@ var XDmvc = {
         var removed = oldRoles ? oldRoles.filter(function (r) { return newRoles.indexOf(r) === -1; }) : [];
         var roles = XDmvc.othersRoles;
         var event;
-        
-        
         added.forEach(function (a) {
             roles[a] = roles[a] ? roles[a] + 1 : 1;
         });
@@ -244,7 +242,6 @@ var XDmvc = {
             XDmvc.attemptedConnections.splice(index, 1);
         }
 
-	    console.table(XDmvc.attemptedConnections, ["peer", "open"]);
 	},
 	
 	connectTo : function (clientId) {
@@ -354,13 +351,13 @@ var XDmvc = {
 
         } else {
             var key;
-            // TODO handle properties that were deleted
-            // New properties
-            for (key in newObj) {
-                if (observed.data.hasOwnProperty(key) && newObj.hasOwnProperty(key)) {
+            // Deleted properties
+            for (key in observed.data) {
+                if (observed.data.hasOwnProperty(key) && !newObj.hasOwnProperty(key)) {
                     delete observed.data[key];
                 }
             }
+            // New and changed properties
             for (key in newObj) {
                 if (newObj.hasOwnProperty(key)) {
                     observed.data[key] = newObj[key];
@@ -371,23 +368,7 @@ var XDmvc = {
         observed.observer.discardChanges();
 
 	},
-    
-	loadNew : function (oldObj, newObj, id) {
-        var key;
-		for (key in newObj) {
-            // TODO what about properties that were deleted?
-            if (oldObj.hasOwnProperty(key) && newObj.hasOwnProperty(key)) {
-                delete oldObj[key];
-            }
-		}
-		for (key in newObj) {
-            if (newObj.hasOwnProperty(key)) {
-                oldObj[key] = newObj[key];
-            }
-		}
-	},
 
-	
     // TODO set configs such as server etc here
     init : function () {
         // Check if there is an id, otherwise generate ones
