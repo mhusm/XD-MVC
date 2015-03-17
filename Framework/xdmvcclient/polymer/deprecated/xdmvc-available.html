@@ -1,11 +1,11 @@
-<link rel="import" href="../../polymer/polymer.html">
-<script src="../js/xdmvc.js"></script>
+<link rel="import" href="../../../polymer/polymer.html">
+<script src="../../js/xdmvc.js"></script>
 <polymer-element name="xdmvc-available" >
 	<template>
         <h2>Available devices</h2>
         <ul>
 			<template repeat="{{p in peers}}">
-				<li>{{p}} <button on-click="{{connect}}">Connect</button></li>
+				<li>{{p.device.name}} <button on-click="{{connect}}">Connect</button></li>
  			</template>
         
         </ul>
@@ -17,7 +17,7 @@
  			},
              
             connect: function(event, detail, sender){
-                XDmvc.connectTo(sender.parentNode.templateInstance.model.p);
+                XDmvc.connectTo(sender.parentNode.templateInstance.model.p.id);
                 console.log(sender.parentNode.templateInstance.model.p);
             }
 	  

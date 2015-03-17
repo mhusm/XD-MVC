@@ -55,7 +55,6 @@ var XDmvc = {
         }
 	},
 
-    // TODO integrate this from Fabian
     requestAvailablePeers: function () {
         XDmvc.sendToServer("listAllPeers", null, function(msg){
             var peers = JSON.parse(msg).peers;
