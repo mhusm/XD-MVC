@@ -48,7 +48,9 @@ var XDmvc = {
             }
 
             // Check periodically who is connected.
+            this.requestAvailablePeers();
             window.setInterval(this.requestAvailablePeers, 5000);
+
             this.sendToServer('device', this.device);
             this.sendToServer('roles', this.roles);
 
@@ -59,6 +61,7 @@ var XDmvc = {
         XDmvc.sendToServer("listAllPeers", null, function(msg){
             var peers = JSON.parse(msg).peers;
             XDmvc.availablePeers.length = 0;
+            // Filter out self and peers that we are connected to already
             peers.filter(function (p) {
                 return p.id !== XDmvc.deviceId && !XDmvc.connections.some(function (el) {return el.peer === p.id; });
             })
@@ -66,18 +69,6 @@ var XDmvc = {
                 XDmvc.availablePeers.push(peer);
             });
         });
-/*
-
-		XDmvc.peer.listAllPeers(function (peers) {
-            XDmvc.availablePeers.length = 0;
-            peers.filter(function (p) {
-                return p !== XDmvc.deviceId && !XDmvc.connections.some(function (el) {return el.peer === p; });
-            })
-            .forEach(function (peer) {
-                XDmvc.availablePeers.push(peer);
-            });
-        });
-  */
     },
 	
 	connectToStoredPeers: function () {
@@ -147,7 +138,6 @@ var XDmvc = {
 	
 	handleData : function (msg) {
         var old, event, ids;
-		console.log(this);
 		if (Object.prototype.toString.call(msg) === "[object Object]") {
 			// Connect to the ones we are not connected to yet
 			if (msg.type === 'connections') {
@@ -168,7 +158,6 @@ var XDmvc = {
                 event = new CustomEvent('XDdevice', {'detail': msg.data});
                 document.dispatchEvent(event);
             } else if (msg.type === 'sync') {
-				console.log(msg);
 				XDmvc.update(msg.data, msg.id, msg.arrayDelta);
 				if (XDmvc.syncData[msg.id].callback) {
 					XDmvc.syncData[msg.id].callback.apply(undefined, [msg.data, msg.id]);
@@ -240,7 +229,6 @@ var XDmvc = {
 	
 	removeConnection: function (connection) {
 		var index = XDmvc.connections.indexOf(connection);
-		console.log("removed " + connection.peer);
 		if (index > -1) {
 			XDmvc.connections.splice(index, 1);
 			XDmvc.sortConnections(XDmvc.compareConnections);
@@ -261,7 +249,6 @@ var XDmvc = {
 	
 	connectTo : function (clientId) {
 		// Check if connection exists already
-        console.log("connecting to " + clientId);
 		if (!XDmvc.connections.concat(XDmvc.attemptedConnections)
                 .some(function (el) {return el.peer === clientId; })) {
 			var conn = XDmvc.peer.connect(clientId, {serialization : 'binary', reliable: true});
@@ -275,7 +262,6 @@ var XDmvc = {
 	
     
     sendToAll : function (msgType, data) {
-        console.log("send to all");
 		var len = XDmvc.connections.length,
             i;
 		for (i = 0; i < len; i++) {
@@ -416,7 +402,6 @@ var XDmvc = {
 
 
     addConnection: function (conn) {
-        console.log("adding connection" + conn.peer);
         XDmvc.connections.push(conn);
         XDmvc.sortConnections(XDmvc.compareConnections);
         var index = XDmvc.attemptedConnections.indexOf(conn);
@@ -455,12 +440,10 @@ var XDmvc = {
     },
 
     removeRole: function (role) {
-        console.log("removing role " + role);
         var index = this.roles.indexOf(role);
         if (index > -1) {
             this.roles.splice(index, 1);
             this.sendRoles();
-            console.log("sending roles to others");
         }
     },
 
@@ -495,9 +478,6 @@ var XDmvc = {
 
     disconnect: function (peerId) {
         var conn = XDmvc.getConnection(peerId);
-        console.log(peerId);
-        console.log(conn);
-        console.log("disconnecting...");
         if (conn) {
             conn.close();
             XDmvc.removeConnection(conn);
