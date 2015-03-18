@@ -72,15 +72,17 @@ XDmvcServer.prototype.handleAjaxRequest = function(req, res, next, xdmvcServer){
     var parameters = url.parse(req.url, true);
     var query = parameters.query;
 
+    res.statusCode = 200;
+
+
     if (req.method == "POST") {
         query = req.body;
     } else if (req.method == "OPTIONS"){
         res.end();
         return;
     }
-
     res.setHeader("Content-Type", "text/json");
-    res.statusCode = 200;
+
 
     if (query.type && query.type === "listAllPeers") {
         // return list of all peers
