@@ -72,12 +72,14 @@ XDmvcServer.prototype.handleAjaxRequest = function(req, res, next, xdmvcServer){
     var parameters = url.parse(req.url, true);
     var query = parameters.query;
 
-    if (req.method = "POST") {
+    if (req.method == "POST") {
         query = req.body;
+    } else if (req.method == "OPTIONS"){
+        res.end();
+        return;
     }
 
     res.setHeader("Content-Type", "text/json");
-    res.setHeader('Access-Control-Allow-Origin', '*');
     res.statusCode = 200;
 
     if (query.type && query.type === "listAllPeers") {
@@ -158,7 +160,7 @@ XDmvcServer.prototype.handleAjaxRequest = function(req, res, next, xdmvcServer){
     } else {
         // someone tried to call a not supported method
         // answer with 404
-        console.log(query);
+        console.log("not found");
         res.setHeader("Content-Type", "text/html");
   //      res.statusCode = 404;
         res.write('<h1>404 - File not found</h1>');
