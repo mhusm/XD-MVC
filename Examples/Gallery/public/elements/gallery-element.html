@@ -29,9 +29,7 @@
  			},
 		  
 			imageHandler: function(event, detail, sender){
-    //            console.log(sender.templateInstance);
 				this.current = sender.templateInstance.model.idx;
-                console.log(this.current)
                 this.fire('image');
  			}
 		});

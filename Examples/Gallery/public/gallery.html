@@ -8,9 +8,11 @@
         <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-connection.html">
         <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-roles.html">
         <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-devices.html">
+        <link rel="import" href="bower_components/paper-button/paper-button.html">
         <link rel="import" href="elements/image-element.html">
         <link rel="import" href="elements/gallery-element.html">
         <link rel="import" href="elements/gallery-overview.html">
+        <link href="css/app.css" rel="stylesheet" >
 
         <meta name="viewport" content="width=device-width, user-scalable=no">
     </head>
@@ -35,10 +37,10 @@
                                    albums="{{albums}}">
                 </gallery-overview>
                 <template bind if="{{albumVisible}}">
-                    <button on-click="{{showAlbums}}"
-                            hidden?="{{albumsVisible  || !$.roles.isselected.owner}}">
+                    <paper-button on-click="{{showAlbums}}"
+                            hidden?="{{albumsVisible  || !$.roles.isselected.owner}}" raised>
                         Back to Albums
-                    </button>
+                    </paper-button>
                     <gallery-element id='gallery'
                                       images="{{albums[$.sync.objects.gallery.currentAlbum].thumbs}}"
                                       current="{{$.sync.objects.gallery.currentImage}}"
@@ -46,15 +48,16 @@
                  </template>
 
                 <template bind if="{{$.sync.objects.gallery.currentAlbum >=0 && imageVisible}}">
-                    <button on-click="{{showAlbum}}"
-                            hidden?="{{!$.roles.isselected.owner}}">
+                    <paper-button on-click="{{showAlbum}}"
+                            hidden?="{{!$.roles.isselected.owner}}" raised>
                         Back to Album
-                    </button>
+                    </paper-button>
                     <image-element id="image"
                                     images="{{albums[$.sync.objects.gallery.currentAlbum].large}}"
                                     current="{{$.sync.objects.gallery.currentImage}}"
                                     cursor="{{$.sync.objects.cursor}}"
                                     showControls="{{$.roles.isselected.owner}}"
+                                    showCover="{{$.roles.isselected.owner}}"
                                     on-cover="{{handleCoverChange}}"/>
                 </template>
                 <xdmvc-roles id="roles"
@@ -65,8 +68,8 @@
                 <xdmvc-devices id="devices"></xdmvc-devices>
 
                 <style>
-                    button {
-                        margin-bottom: 8px;
+                    gallery-element,gallery-overview,image-element {
+                        margin-top: 10px;
                     }
 
                 </style>
