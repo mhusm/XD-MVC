@@ -151,13 +151,13 @@ XDmvcServer.prototype.handleAjaxRequest = function(req, res, next, xdmvcServer){
         xdmvcServer.emit("restore", query.sessionId, query.id, res);
  //       storageModule.restoreSession(query.sessionId, query.id, res);
     } else if (query.type && query.type === "sync") {
-        // only store role information, if the peer is already connected
-        if (xdmvcServer.peers[query.id]){
-            xdmvcServer.emit("objectChanged", query.data);
-        }
+        xdmvcServer.emit("objectChanged", query.data);
         res.end();
     } else if (query.type && query.type === "roles") {
-        xdmvcServer.peers[query.id].roles = query.data;
+        // only store role information, if the peer is already connected
+        if (xdmvcServer.peers[query.id]){
+            xdmvcServer.peers[query.id].roles = query.data;
+        }
         res.end();
     } else if (query.type && query.type === "device") {
         // only store device information, if the peer is already connected
