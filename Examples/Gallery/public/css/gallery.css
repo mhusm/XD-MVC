@@ -7,3 +7,7 @@ img.current {
 img {
 	margin: 8px;
 }
+
+:host {
+    display: inline-block;
+}

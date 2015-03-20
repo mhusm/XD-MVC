@@ -11,6 +11,11 @@
         <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-roles.html">
         <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-devices.html">
         <link rel="import" href="elements/gallery-element.html">
+        <link rel="import"
+              href="bower_components/font-roboto/roboto.html">
+        <link rel="import" href="bower_components/paper-input/paper-input-decorator.html">
+        <link rel="import" href="bower_components/paper-input/paper-input.html">
+        <link href="css/app.css" rel="stylesheet" >
         <meta name="viewport" content="width=device-width, user-scalable=no">
 
     </head>
@@ -29,13 +34,15 @@
                 </xdmvc-roles>
 
                 <template bind if="{{$.roles.isselected.owner}}">
-                    <input type="file" multiple accept="image/*" on-change="{{handleFiles}}"/>
+                    <paper-input-decorator label="Choose photos">
+                        <input is="core-input" type="file" multiple accept="image/*" on-change="{{handleFiles}}"/>
+                    </paper-input-decorator>
                     <gallery-element id='gallery'
                                      images="{{$.sync.objects.images}}"
                                      current="{{$.sync.objects.current.index}}">
                     </gallery-element>
                 </template>
-                <template bind if="{{!($.roles.isselected.owner && $.devices.othersDevices.large > 0)}}">
+                <template bind if="{{!($.roles.isselected.owner && $.devices.othersDevices.large > 0) && $.sync.objects.images.length > 0 }}">
                     <image-element images="{{$.sync.objects.images}}"
                                     current="{{$.sync.objects.current.index}}"
                                     cursor="{{$.sync.objects.cursor}}"

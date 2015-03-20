@@ -153,6 +153,10 @@ var XDmvc = {
                 this.roles = msg.data;
                 XDmvc.updateOthersRoles(old, this.roles);
             } else if (msg.type === 'device') {
+                // Device type changed (due to window resize usually)
+                if (this.device && this.device.type) {
+                    XDmvc.othersDevices[this.device.type] -=1;
+                }
                 this.device = msg.data;
                 XDmvc.othersDevices[msg.data.type] +=1;
                 event = new CustomEvent('XDdevice', {'detail': msg.data});
@@ -232,6 +236,8 @@ var XDmvc = {
 			XDmvc.sortConnections(XDmvc.compareConnections);
 		}
         XDmvc.updateOthersRoles(connection.roles, []);
+        XDmvc.othersDevices[connection.device.type] -=1;
+
 
         if (connection.device) {
             XDmvc.othersDevices[connection.device.type] -=1;
@@ -376,9 +382,14 @@ var XDmvc = {
         this.deviceId = id? id:  "Id"+Date.now();
         localStorage.setItem("deviceId", this.deviceId);
 
+
         XDmvc.loadPeers();
         XDmvc.detectDevice();
         XDmvc.host = document.location.hostname;
+        window.addEventListener('resize', function(event){
+            XDmvc.detectDevice();
+            XDmvc.sendDevice();
+        });
     },
 
 

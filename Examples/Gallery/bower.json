@@ -10,6 +10,8 @@
     "tests"
   ],
   "dependencies": {
-    "xdmvcclient": "../../Framework/xdmvcclient"
+    "xdmvcclient": "../../Framework/xdmvcclient",
+    "core-elements": "Polymer/core-elements#~0.5.5",
+    "paper-elements": "Polymer/paper-elements#~0.5.5"
   }
 }

@@ -1,13 +1,18 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
 <link rel="import" href="pointer-element.html">
-<polymer-element name="image-element" attributes="images current cursor showControls" >
+<link rel="import" href="../bower_components/core-icon-button/core-icon-button.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+
+<polymer-element name="image-element" attributes="images current cursor showControls showCover" >
 	<template>
             <pointer-element  position="{{cursor}}" >
                 <img  src="{{images[current]}}" />
             </pointer-element>
-            <button on-click="{{previous}}" hidden?="{{!showControls}}" disabled?="{{current == 0}}" >Previous</button>
-            <button on-click="{{next}}" hidden?="{{!showControls}}" disabled?="{{current >= images.length -1}}" >Next</button>
-            <button on-click="{{setAsCover}}"  hidden?="{{!showControls}}" >Set as cover</button>
+            <div>
+                <core-icon-button icon="arrow-back" on-click="{{previous}}" hidden?="{{!showControls}}" disabled?="{{current == 0}}" ></core-icon-button>
+                <core-icon-button icon="arrow-forward" on-click="{{next}}" hidden?="{{!showControls}}" disabled?="{{current >= images.length -1}}" ></core-icon-button>
+                <paper-button on-click="{{setAsCover}}"  hidden?="{{!showCover}}" raised="" >Set as cover</paper-button>
+            </div>
     		<link rel="stylesheet" href="../css/image.css" />
 	</template>
 	<script>
@@ -17,6 +22,7 @@
                 this.current = 0;
                 this.index = 0;
                 this.showControls = true;
+                this.showCover = false;
 			},
                     
             next: function () {
