@@ -15,6 +15,7 @@ var XDmvc = {
 	myPosition: {value: -1},
     roles: [], // roles that this peer has
     othersRoles: {}, // roles that other peers have
+    configuredRoles: {}, // roles that have been configured in the system
     availablePeers: [],
     ajaxPort: 9001,
     port: 9000,
@@ -170,41 +171,49 @@ var XDmvc = {
         var old, event, ids;
 		if (Object.prototype.toString.call(msg) === "[object Object]") {
 			// Connect to the ones we are not connected to yet
-			if (msg.type === 'connections') {
-				ids = XDmvc.connections.map(function (el) {return el.peer; });
-				msg.data.filter(function (el) { return ids.indexOf(el) < 0; }).forEach(function (el) {
-					XDmvc.connectTo(el);
-				});
-			} else if (msg.type === 'data') {
-				event = new CustomEvent('XDdata', {'detail': msg.data});
-				document.dispatchEvent(event);
-			} else if (msg.type === 'roles') {
-                old = this.roles;
-                this.roles = msg.data;
-                XDmvc.updateOthersRoles(old, this.roles);
-            } else if (msg.type === 'device') {
-                // Device type changed (due to window resize usually)
-                if (this.device && this.device.type) {
-                    XDmvc.othersDevices[this.device.type] -=1;
-                }
-                this.device = msg.data;
-                XDmvc.othersDevices[msg.data.type] +=1;
-                event = new CustomEvent('XDdevice', {'detail': msg.data});
-                document.dispatchEvent(event);
-            } else if (msg.type === 'sync') {
-				XDmvc.update(msg.data, msg.id, msg.arrayDelta);
-				if (XDmvc.syncData[msg.id].callback) {
-					XDmvc.syncData[msg.id].callback.apply(undefined, [msg.data, msg.id]);
-				}
-			} else if (msg.type === 'role') {
-                if (msg.operation === "add") {
-                    XDmvc.addRole(msg.role);
-                } else {
-                    XDmvc.removeRole(msg.role);
-                }
-			} else {
-                console.warn("received unhandled msg type");
-                console.warn(msg);
+
+            switch (msg.type) {
+                case 'connections':
+                    ids = XDmvc.connections.map(function (el) {return el.peer; });
+                    msg.data.filter(function (el) { return ids.indexOf(el) < 0; }).forEach(function (el) {
+                        XDmvc.connectTo(el);
+                    });
+                    break;
+                case 'data':
+                    event = new CustomEvent('XDdata', {'detail': msg.data});
+                    document.dispatchEvent(event);
+                    break;
+                case 'roles':
+                    old = this.roles;
+                    this.roles = msg.data;
+                    XDmvc.updateOthersRoles(old, this.roles);
+                    break;
+                case 'device':
+                    // Device type changed (due to window resize usually)
+                    if (this.device && this.device.type) {
+                        XDmvc.othersDevices[this.device.type] -=1;
+                    }
+                    this.device = msg.data;
+                    XDmvc.othersDevices[msg.data.type] +=1;
+                    event = new CustomEvent('XDdevice', {'detail': msg.data});
+                    document.dispatchEvent(event);
+                    break;
+                case 'sync':
+                    XDmvc.update(msg.data, msg.id, msg.arrayDelta);
+                    if (XDmvc.syncData[msg.id].callback) {
+                        XDmvc.syncData[msg.id].callback.apply(undefined, [msg.data, msg.id]);
+                    }
+                    break;
+                case 'role':
+                    if (msg.operation === "add") {
+                        XDmvc.addRole(msg.role);
+                    } else {
+                        XDmvc.removeRole(msg.role);
+                    }
+                    break;
+                default :
+                    console.warn("received unhandled msg type");
+                    console.warn(msg);
             }
 		}
 	},
@@ -255,8 +264,6 @@ var XDmvc = {
 			XDmvc.sortConnections(XDmvc.compareConnections);
 		}
         XDmvc.updateOthersRoles(connection.roles, []);
-        XDmvc.othersDevices[connection.device.type] -=1;
-
 
         if (connection.device) {
             XDmvc.othersDevices[connection.device.type] -=1;
@@ -435,6 +442,11 @@ var XDmvc = {
     Roles
     -----------
      */
+    configureRole: function(role, configurations){
+        this.configuredRoles[role] = configurations;
+        this.sendToAll("roleConfigurations", {role: role, configurations : configurations});
+    },
+
     addRole: function (role) {
         if (!this.hasRole(role)) {
             this.roles.push(role);
