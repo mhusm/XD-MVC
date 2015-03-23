@@ -19,11 +19,19 @@ var XDmvc = {
     ajaxPort: 9001,
     port: 9000,
     host: "",
+    iceServers :  [
+        {url: 'stun:stun.l.google.com:19302'},
+        {url: 'stun:stun1.l.google.com:19302'},
+        {url: 'stun:stun2.l.google.com:19302'},
+        {url: 'stun:stun3.l.google.com:19302'},
+        {url: 'stun:stun4.l.google.com:19302'}
+    ],
 	
-	connectToServer : function (host, port, ajaxPort) {
+	connectToServer : function (host, port, ajaxPort, iceServers) {
         this.port = port? port : this.port;
         this.ajaxPort = ajaxPort? ajaxPort : this.ajaxPort;
         this.host = host? host : this.host;
+        this.iceServers = iceServers? iceServers : this.iceServers;
 
         // If not connected already
         if (!this.peer) {
@@ -32,13 +40,7 @@ var XDmvc = {
                 port: this.port,
 //                           debug: 3,
                 config: {
-                    'iceServers': [
-                        {url: 'stun:stun.l.google.com:19302'},
-                        {url: 'stun:stun1.l.google.com:19302'},
-                        {url: 'stun:stun2.l.google.com:19302'},
-                        {url: 'stun:stun3.l.google.com:19302'},
-                        {url: 'stun:stun4.l.google.com:19302'}
-                    ]
+                    'iceServers': this.iceServers
                 }
             });
             this.peer.on('connection', this.handleConnection);
