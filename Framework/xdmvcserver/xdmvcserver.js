@@ -83,42 +83,48 @@ XDmvcServer.prototype.handleAjaxRequest = function(req, res, next, xdmvcServer){
     }
     res.setHeader("Content-Type", "text/json");
 
+    switch (query.type){
+        case 'listAllPeers':
+            // return list of all peers
+            var peersArray = Object.keys(xdmvcServer.peers).map(function (key) {return xdmvcServer.peers[key]});
+            res.write('{"peers": ' + JSON.stringify(peersArray) + ', "sessions": ' + JSON.stringify(xdmvcServer.sessions) + '}');
+            res.end();
+            break;
 
+        case 'sync':
+             xdmvcServer.emit("objectChanged", query.data);
+             res.end();
+             break;
+        case 'roles':
+            // only store role information, if the peer is already connected
+            if (xdmvcServer.peers[query.id]){
+                xdmvcServer.peers[query.id].roles = query.data;
+            }
+            res.end();
+            break;
+        case 'device':
+            // only store device information, if the peer is already connected
+            if (xdmvcServer.peers[query.id]){
+                xdmvcServer.peers[query.id].device = query.data;
+            }
+            res.end();
+            break;
+        default :
+            // someone tried to call a not supported method
+            // answer with 404
+            console.log("not found");
+            res.setHeader("Content-Type", "text/html");
+            //      res.statusCode = 404;
+            res.write('<h1>404 - File not found</h1>');
+            res.write(parameters.pathname);
+            res.end();
+    }
+/*
     if (query.type && query.type === "listAllPeers") {
         // return list of all peers
         var peersArray = Object.keys(xdmvcServer.peers).map(function (key) {return xdmvcServer.peers[key]});
         res.write('{"peers": ' + JSON.stringify(peersArray) + ', "sessions": ' + JSON.stringify(xdmvcServer.sessions) + '}');
         res.end();
-/*
-    } else if (query.changeName != null && query.id != null && query.name != null) {
-        // change name of peer
-        xdmvcServer.peers[query.id].name = query.name;
-        res.end();
-        console.info("Changed name of " + query.id + " to " + xdmvcServer.peers[query.id].name);
-
-    } else if (query.changeRole != null && query.id != null && query.role != null) {
-        // change role of peer
-        //TODO support multiple roles per peer
-        xdmvcServer.peers[query.id].role = query.role;
-        res.end();
-        console.info("Changed role of " + query.id + " to " + xdmvcServer.peers[query.id].role);
-
-    } else if (query.addRole != null && query.id != null && query.role != null) {
-        // add role to peer
-        if (xdmvcServer.peers[query.id].roles.indexOf(query.role) === -1) {
-            xdmvcServer.peers[query.id].roles.push(query.role);
-        }
-        res.end();
-        console.info("Added role to " + query.id + ", role: " + xdmvcServer.peers[query.id].role);
-    } else if (query.addRole != null && query.id != null && query.role != null) {
-        // remove role from peer
-        var index = xdmvcServer.peers[query.id].roles.indexOf(query.role);
-        if (index > 0) {
-            xdmvcServer.peers[query.id].roles.slice(index, 1);
-        }
-        res.end();
-        console.info("Removed role of " + query.id + ", role: " + xdmvcServer.peers[query.id].role);
- */
 
     } else if (query.joinSession != null && query.id != null && query.session != null) {
         // Join Session
@@ -175,6 +181,7 @@ XDmvcServer.prototype.handleAjaxRequest = function(req, res, next, xdmvcServer){
         res.write(parameters.pathname);
         res.end();
     }
+    */
 };
 
 XDmvcServer.prototype.start = function(portPeer, portAjax) {
