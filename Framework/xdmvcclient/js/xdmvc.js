@@ -143,16 +143,6 @@ var XDmvc = {
 
         XDmvc.sendRoles();
         XDmvc.sendDevice();
-
-        // Send the current state the newly connected device
-        if (conn.sendSync) {
-            Object.keys(XDmvc.syncData).forEach(function (element) {
-                var msg = {type: 'sync', data: XDmvc.syncData[element].data, id: element};
-                conn.send(msg);
-            });
-            conn.sendSync = false;
-        }
-
 	},
 	
 	handleConnection : function (conn) {
@@ -184,9 +174,7 @@ var XDmvc = {
                     document.dispatchEvent(event);
                     break;
                 case 'roles':
-                    old = this.roles;
-                    this.roles = msg.data;
-                    XDmvc.updateOthersRoles(old, this.roles);
+                    this.handleRoles(msg.data);
                     break;
                 case 'device':
                     // Device type changed (due to window resize usually)
@@ -201,7 +189,7 @@ var XDmvc = {
                 case 'sync':
                     XDmvc.update(msg.data, msg.id, msg.arrayDelta);
                     if (XDmvc.syncData[msg.id].callback) {
-                        XDmvc.syncData[msg.id].callback.apply(undefined, [msg.data, msg.id]);
+                        XDmvc.syncData[msg.id].callback.apply(undefined, [msg.id, msg.data, this.peer]);
                     }
                     break;
                 case 'role':
@@ -368,7 +356,7 @@ var XDmvc = {
             i;
 		for (i = 0; i < len; i++) {
 			var con = XDmvc.connections[i];
-			if (con.open) {
+ 			if (con.open &&  con.isInterested(id)){
  				con.send(msg);
 			}
 		}
@@ -447,8 +435,21 @@ var XDmvc = {
     Roles
     -----------
      */
+
+    /*
+    Configurations should contain either strings or objects:
+    ["albums", "images"] or [{"albums": albumCallback}]
+     */
     configureRole: function(role, configurations){
-        this.configuredRoles[role] = configurations;
+        this.configuredRoles[role] = {};
+        configurations.forEach(function(config){
+            if (typeof config == 'string' || config instanceof String) {
+                this.configuredRoles[role][config] = null;
+            } else {
+                this.configuredRoles[role] = config;
+            }
+        }, this);
+
         this.sendToAll("roleConfigurations", {role: role, configurations : configurations});
     },
 
@@ -540,6 +541,9 @@ var XDmvc = {
             XDmvc.detectDevice();
             XDmvc.sendDevice();
         });
+
+        // default role
+        this.addRole("sync-all");
     },
 
 
@@ -592,5 +596,37 @@ var XDmvc = {
         this.device.name = name? name : this.deviceId;
         localStorage.setItem("deviceName", this.device.name);
     }
-
 };
+
+/*
+Extensions to PeerJS DataConnection
+-----------------------------------
+ */
+function ConnectedDevice(connection){
+    this.connection = connection()
+}
+
+DataConnection.prototype.isInterested = function(dataId){
+    return this.roles.indexOf("sync-all") > -1 || this.roles.some(function(role){
+            return typeof XDmvc.configuredRoles[role][dataId] !== "undefined" ;
+        }) ;
+};
+
+DataConnection.prototype.handleRoles = function(roles){
+    var old = this.roles;
+    this.roles = roles;
+    XDmvc.updateOthersRoles(old, this.roles);
+    // sends the current state, the first time it receives roles from another device
+    // only sends them, if the other device was the one to request the connection
+    // TODO maybe this needs to be configurable?
+    if (this.sendSync) {
+        Object.keys(XDmvc.syncData).forEach(function (element) {
+            if (this.isInterested(element)){
+                var msg = {type: 'sync', data: XDmvc.syncData[element].data, id: element};
+                this.send(msg);
+            }
+        }, this);
+        this.sendSync = false;
+    }
+};
+

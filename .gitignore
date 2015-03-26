@@ -1,5 +1,8 @@
 Examples/Gallery/node_modules
+Examples/Maps/node_modules
 Framework/node_modules
 Framework/todos.txt
 Examples/Gallery/public/bower_components
+Examples/Maps/public/bower_components
+
 .idea

@@ -16,6 +16,8 @@ function initialize() {
                             "lng" : 0},
                     "sw" : {"lat" : 0,
                             "lng" : 0}};
+    var views = {};
+
 
 
     var setCenter = function setCenter(){
@@ -53,8 +55,34 @@ function initialize() {
         bounds.sw.lng = newbounds.getSouthWest().lng();
         XDmvc.forceUpdate("bounds");
      });
-    XDmvc.synchronize(bounds, function(){console.log(bounds)} ,"bounds");
+    XDmvc.synchronize(bounds, undefined ,"bounds");
 
+    var showBounds = function showBounds(id, data, sender){
+        if(views[sender] === undefined) {
+            views[sender] = new google.maps.Rectangle({
+                strokeColor: '#' + (parseInt(parseInt(sender, 36).toExponential().slice(2,-5), 10) & 0xFFFFFF).toString(16).toUpperCase(),
+                strokeOpacity: 0.8,
+                strokeWeight: 2,
+                fillColor: '#' + (parseInt(parseInt(sender, 36).toExponential().slice(2,-5), 10) & 0xFFFFFF).toString(16).toUpperCase(),
+                fillOpacity: 0.1,
+                map: map,
+                bounds: new google.maps.LatLngBounds(
+                    new google.maps.LatLng(data.sw.lat, data.sw.lng),
+                    new google.maps.LatLng(data.ne.lat, data.ne.lng)
+                )
+            });
+        } else {
+            views[sender].setBounds(new google.maps.LatLngBounds(
+                new google.maps.LatLng(data.sw.lat, data.sw.lng),
+                new google.maps.LatLng(data.ne.lat, data.ne.lng)));
+        }
+    };
+
+
+    XDmvc.configureRole("center", ["center"]);
+    XDmvc.configureRole("zoom", ["zoom"]);
+    XDmvc.configureRole("mapType", ["mapType"]);
+    XDmvc.configureRole("bounds", [{"bounds":showBounds}]);
 
     /*
 
