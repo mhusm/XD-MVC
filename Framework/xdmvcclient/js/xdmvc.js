@@ -131,7 +131,6 @@ var XDmvc = {
      */
 	handleOpen : function () {
 		var conn = this;
-
         XDmvc.addConnectedDevice(conn);
         if (XDmvc.storedPeers.indexOf(conn.peer) === -1) {
 			XDmvc.storedPeers.push(conn.peer);
@@ -161,7 +160,7 @@ var XDmvc = {
 	handleData : function (msg) {
         // PeerJS Data events sometimes fire before the open event
         // In that case we create the ConnectedDevice instance here
-        var connectedDevice = XDmvc.getConnectedDevice(this);
+        var connectedDevice = XDmvc.getConnectedDevice(this.peer);
         if (!connectedDevice) {
             connectedDevice = XDmvc.addConnectedDevice(this);
         }
@@ -197,7 +196,7 @@ var XDmvc = {
      */
 	cleanUpConnections : function () {
 		var closed = XDmvc.connectedDevices.filter(function (c) {
-			return !c.open;
+			return !c.connection.open;
 		});
 		
 		var len = closed.length,
@@ -390,8 +389,12 @@ var XDmvc = {
 
 	},
 
-    forceUpdate(objectId){
+    forceUpdate: function(objectId){
         XDmvc.sendSyncToAll(null, objectId);
+    },
+
+    discardChanges(id){
+        XDmvc.syncData[id].observer.discardChanges();
     },
 
 
@@ -642,9 +645,10 @@ ConnectedDevice.prototype.handleData = function(msg){
                 document.dispatchEvent(event);
                 break;
             case 'sync':
-                XDmvc.update(msg.data, msg.id, msg.arrayDelta);
                 if (XDmvc.syncData[msg.id].callback) {
                     XDmvc.syncData[msg.id].callback.apply(undefined, [msg.id, msg.data, this.id]);
+                } else {
+                    XDmvc.update(msg.data, msg.id, msg.arrayDelta);
                 }
                 break;
             case 'role':
