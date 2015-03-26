@@ -3,6 +3,7 @@
 /*jslint plusplus: true */
 var XDmvc = {
 	peer : null,
+    defaultRole : "sync-all",
 	connectedDevices : [],
     attemptedConnections : [],
 	deviceId : undefined,
@@ -248,17 +249,32 @@ var XDmvc = {
 
     },
 
-/*
-    addConnection: function (conn) {
-        var connDev = XDmvc.getOrCreateConnectedDevice(conn);
-        XDmvc.connectedDevices.push(connDev);
-        XDmvc.sortConnections(XDmvc.compareConnections);
-        var index = XDmvc.attemptedConnections.findIndex(function(element){ return connDev.connection === conn});
-        if (index > -1) {
-            XDmvc.attemptedConnections.splice(index, 1);
-        }
+
+    getConnectedDevice: function (peerId) {
+        return XDmvc.connectedDevices.find(function (c) {return c.id === peerId; });
     },
-*/
+
+    addConnectedDevice: function(connection){
+        var conDev =  XDmvc.connectedDevices.find(function (c) {return c.connection === connection; });
+        if (!conDev){
+            conDev = new ConnectedDevice(connection, connection.peer);
+            XDmvc.connectedDevices.push(conDev);
+            XDmvc.sortConnections(XDmvc.compareConnections);
+            var index = XDmvc.attemptedConnections.findIndex(function(element){ return conDev.connection === connection});
+            if (index > -1) {
+                XDmvc.attemptedConnections.splice(index, 1);
+            }
+
+        }
+        return conDev;
+    },
+
+    getAttemptedConnection: function (peerId) {
+        return XDmvc.attemptedConnections.find(function (c) {
+            return c.id === peerId;
+        });
+    },
+
     // TODO maybe the developer/user should be able to specify an order.
     // Order is not enough for some cases, take into account device roles?
     compareConnections: function (connection1, connection2) {
@@ -478,37 +494,26 @@ var XDmvc = {
     },
 
 
-    getConnectedDevice: function (peerId) {
-        return XDmvc.connectedDevices.find(function (c) {return c.id === peerId; });
-    },
-
-    addConnectedDevice: function(connection){
-        var conDev =  XDmvc.connectedDevices.find(function (c) {return c.connection === connection; });
-        if (!conDev){
-            conDev = new ConnectedDevice(connection, connection.peer);
-            XDmvc.connectedDevices.push(conDev);
-            XDmvc.sortConnections(XDmvc.compareConnections);
-            var index = XDmvc.attemptedConnections.findIndex(function(element){ return conDev.connection === connection});
-            if (index > -1) {
-                XDmvc.attemptedConnections.splice(index, 1);
-            }
-
-        }
-        return conDev;
-    },
-
-    getAttemptedConnection: function (peerId) {
-        return XDmvc.attemptedConnections.find(function (c) {
-            return c.id === peerId;
-        });
-    },
+   getRoleCallbacks : function (dataId) {
+       var result = [];
+       XDmvc.roles.filter(function (r) {
+           return r !== XDmvc.defaultRole
+       }).forEach(function (role) {
+           if (XDmvc.configuredRoles[role] && XDmvc.configuredRoles[role][dataId]) {
+               result.push(XDmvc.configuredRoles[role][dataId]);
+           }
+       });
+       return result;
+   },
 
 
-    /*
-    --------------------------------
-    Initialisation and configuration
-    --------------------------------
-     */
+
+
+/*
+--------------------------------
+Initialisation and configuration
+--------------------------------
+ */
 
     init : function () {
         // Check if there is an id, otherwise generate ones
@@ -526,7 +531,7 @@ var XDmvc = {
         });
 
         // default role
-        this.addRole("sync-all");
+        this.addRole(XDmvc.defaultRole);
     },
 
 
@@ -592,7 +597,7 @@ function ConnectedDevice(connection, id){
 }
 
 ConnectedDevice.prototype.isInterested = function(dataId){
-    return this.roles.indexOf("sync-all") > -1 || this.roles.some(function(role){
+    return this.roles.indexOf(XDmvc.defaultRole) > -1 || this.roles.some(function(role){
             return typeof XDmvc.configuredRoles[role][dataId] !== "undefined" ;
         }) ;
 };
@@ -645,8 +650,17 @@ ConnectedDevice.prototype.handleData = function(msg){
                 document.dispatchEvent(event);
                 break;
             case 'sync':
-                if (XDmvc.syncData[msg.id].callback) {
+                // First all role specific callbacks
+                var callbacks = XDmvc.getRoleCallbacks(msg.id);
+                if (callbacks.length > 0) {
+                    callbacks.forEach(function(callback){
+                        callback.apply(undefined, [msg.id, msg.data, this.id]);
+                    }, this);
+                }
+                // Else object specific callbacks
+                else if (XDmvc.syncData[msg.id].callback) {
                     XDmvc.syncData[msg.id].callback.apply(undefined, [msg.id, msg.data, this.id]);
+                // Else default merge behaviour
                 } else {
                     XDmvc.update(msg.data, msg.id, msg.arrayDelta);
                 }
