@@ -377,10 +377,11 @@ var XDmvc = {
             XDmvc.sendToServer("sync", msg);
         }
 
+        /*
         if (XDmvc.syncData[id].callback){
             XDmvc.syncData[id].callback.apply(undefined, [XDmvc.syncData[id].data, id]); // notify for local changes
         }
-		
+		*/
 	},
 
 
@@ -435,6 +436,10 @@ var XDmvc = {
         observed.observer.discardChanges();
 
 	},
+
+    forceUpdate(objectId){
+        XDmvc.sendSyncToAll(null, objectId);
+    },
 
 
     /*
