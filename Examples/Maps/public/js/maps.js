@@ -18,32 +18,40 @@ function initialize() {
                             "lng" : 0}};
     var views = {};
 
-
-
-    var setCenter = function setCenter(){
-        map.setCenter(new google.maps.LatLng(center.lat, center.lng));
+    var setCenter = function setCenter(id, newcenter){
+        center.lat = newcenter.lat;
+        center.lng = newcenter.lng;
+        map.setCenter(new google.maps.LatLng(newcenter.lat, newcenter.lng));
+        XDmvc.discardChanges(id);
     };
 
     google.maps.event.addListener(map, 'center_changed', function() {
         center.lat = map.center.lat();
         center.lng = map.center.lng();
+        console.log("center changed");
+        console.log(center);
     });
     XDmvc.synchronize(center,setCenter ,"center");
 
 
-    var setMapType = function setMapType(){
-        map.setMapTypeId(mapType.type);
+    var setMapType = function setMapType(id, newmapType){
+        map.setMapTypeId(newmapType.type);
+        mapType.type = newmapType.type;
+        XDmvc.discardChanges(id);
     };
     google.maps.event.addListener(map, 'maptypeid_changed', function() {
         mapType.type =  map.getMapTypeId();
     });
     XDmvc.synchronize(mapType,setMapType ,"mapType");
 
-    var setZoom = function setZoom(){
-        map.setZoom(zoom.level);
+    var setZoom = function setZoom(id, newzoom){
+        map.setZoom(newzoom.level);
+        zoom.level = newzoom.level;
+        XDmvc.discardChanges(id);
     };
     google.maps.event.addListener(map, 'zoom_changed', function() {
         zoom.level = map.getZoom();
+        console.log("zoom changed " +zoom.level );
     });
     XDmvc.synchronize(zoom,setZoom ,"zoom");
 
@@ -83,39 +91,6 @@ function initialize() {
     XDmvc.configureRole("zoom", ["zoom"]);
     XDmvc.configureRole("mapType", ["mapType"]);
     XDmvc.configureRole("bounds", [{"bounds":showBounds}]);
-
-    /*
-
-        XDClient.registerRole("sync all", ["center", "zoom", "mapType"]);
-        XDClient.registerRole("center-only", ["center"]);
-
-        var views = [];
-        XDClient.registerRole(
-            "show other's bounds",
-            ["bounds"],
-            function(sender, args) {
-                if(views[sender] === undefined) {
-                    views[sender] = new google.maps.Rectangle({
-                        strokeColor: '#' + (parseInt(parseInt(sender, 36).toExponential().slice(2,-5), 10) & 0xFFFFFF).toString(16).toUpperCase(),
-                        strokeOpacity: 0.8,
-                        strokeWeight: 2,
-                        fillColor: '#' + (parseInt(parseInt(sender, 36).toExponential().slice(2,-5), 10) & 0xFFFFFF).toString(16).toUpperCase(),
-                        fillOpacity: 0.1,
-                        map: map,
-                        bounds: new google.maps.LatLngBounds(
-                            new google.maps.LatLng(args.bounds.sw.lat, args.bounds.sw.lng),
-                            new google.maps.LatLng(args.bounds.ne.lat, args.bounds.ne.lng)
-                        )
-                    });
-                } else {
-                    views[sender].setBounds(new google.maps.LatLngBounds(
-                        new google.maps.LatLng(args.bounds.sw.lat, args.bounds.sw.lng),
-                        new google.maps.LatLng(args.bounds.ne.lat, args.bounds.ne.lng)));
-                }
-            });
-        XDClient.registerRole("zoom-only", ["zoom"]);
-        XDClient.registerRole("zoom and center", ["center", "zoom"]);
-        */
 }
 
 google.maps.event.addDomListener(window, 'load', initialize);
