@@ -34,6 +34,7 @@ var XDmvc = {
     Server communication
     --------------------
      */
+    // TODO create a server object
 	connectToServer : function (host, port, ajaxPort, iceServers) {
         this.port = port? port : this.port;
         this.ajaxPort = ajaxPort? ajaxPort : this.ajaxPort;
@@ -150,10 +151,11 @@ var XDmvc = {
 		conn.on('data', XDmvc.handleData);
 		conn.on('open', XDmvc.handleOpen);
 		conn.on('close', XDmvc.handleClose);
-        XDmvc.attemptedConnections.push(conn);
+        var conDev = XDmvc.addConnectedDevice(conn);
+        XDmvc.attemptedConnections.push(conDev);
 
         // Flag that this peer should receive state on open
-        conn.sendSync = true;
+        conDev.sendSync = true;
 
 	},
 
@@ -598,7 +600,7 @@ function ConnectedDevice(connection, id){
 
 ConnectedDevice.prototype.isInterested = function(dataId){
     return this.roles.indexOf(XDmvc.defaultRole) > -1 || this.roles.some(function(role){
-            return typeof XDmvc.configuredRoles[role][dataId] !== "undefined" ;
+            return XDmvc.configuredRoles[role] && typeof XDmvc.configuredRoles[role][dataId] !== "undefined" ;
         }) ;
 };
 
@@ -679,3 +681,6 @@ ConnectedDevice.prototype.handleData = function(msg){
     }
 
 };
+
+// TODO add a sen
+// d function?

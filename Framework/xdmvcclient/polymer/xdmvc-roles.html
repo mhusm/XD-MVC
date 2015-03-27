@@ -15,19 +15,14 @@
             },
             
             ready: function(){
-                XDmvc.roles = this.selected;
                 var self = this;
                 var observer = new ObjectObserver(XDmvc.roles);
                 observer.open(function(changes){
                     self.updateIsselected();
+                    self.selected = XDmvc.roles;
                 });
 
-     /*
-                Object.observe(XDmvc.roles, function(changes){
-                    self.updateIsselected();
-                });
-       */
-            },
+              },
             
             updateIsselected: function() {
                 var self = this;
@@ -47,6 +42,8 @@
             },
             
            rolesChanged: function(e){
+               console.log("roles changed");
+               console.log(this.roles);
                 var sel = this.isselected;
                 this.roles.forEach(function(r) {
                     // Initialize to false
@@ -69,6 +66,8 @@
             },
   
             selectedChanged: function(){
+                console.log("selected changed");
+                console.log(this.selected);
                 var sel = this.isselected;
                 this.selected.forEach(function(r) {
                     XDmvc.addRole(r);
