@@ -18,10 +18,11 @@ function initialize() {
                             "lng" : 0}};
     var views = {};
 
-
-
-    var setCenter = function setCenter(){
-        map.setCenter(new google.maps.LatLng(center.lat, center.lng));
+    var setCenter = function setCenter(id, newcenter){
+        center.lat = newcenter.lat;
+        center.lng = newcenter.lng;
+        XDmvc.discardChanges(id);
+        map.setCenter(new google.maps.LatLng(newcenter.lat, newcenter.lng));
     };
 
     google.maps.event.addListener(map, 'center_changed', function() {
@@ -31,7 +32,7 @@ function initialize() {
     XDmvc.synchronize(center,setCenter ,"center");
 
 
-    var setMapType = function setMapType(){
+    var setMapType = function setMapType(id, mapType){
         map.setMapTypeId(mapType.type);
     };
     google.maps.event.addListener(map, 'maptypeid_changed', function() {
@@ -39,7 +40,7 @@ function initialize() {
     });
     XDmvc.synchronize(mapType,setMapType ,"mapType");
 
-    var setZoom = function setZoom(){
+    var setZoom = function setZoom(id, zoom){
         map.setZoom(zoom.level);
     };
     google.maps.event.addListener(map, 'zoom_changed', function() {
