@@ -604,7 +604,6 @@ ConnectedDevice.prototype.handleRoles = function(roles){
 
 
 ConnectedDevice.prototype.handleData = function(msg){
-    console.log(msg);
     var old, event, ids;
     if (Object.prototype.toString.call(msg) === "[object Object]") {
         // Connect to the ones we are not connected to yet
@@ -690,14 +689,9 @@ ConnectedDevice.prototype.handleClose = function handleClose (){
 };
 
 ConnectedDevice.prototype.send = function send (msgType, data){
-    console.log("sending " +msgType);
-    console.log(data);
     if (this.connection && this.connection.open) {
         this.connection.send({type: msgType, data: data });
     } else {
         console.warn("Can not send message to device. Not connected to " +this.id );
     }
 };
-
-
-// TODO add a send function?
