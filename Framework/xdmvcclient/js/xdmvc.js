@@ -17,81 +17,27 @@ var XDmvc = {
     roles: [], // roles that this peer has
     othersRoles: {}, // roles that other peers have
     configuredRoles: {}, // roles that have been configured in the system
-    availablePeers: [],
-    ajaxPort: 9001,
-    port: 9000,
-    host: "",
-    iceServers :  [
-        {url: 'stun:stun.l.google.com:19302'},
-        {url: 'stun:stun1.l.google.com:19302'},
-        {url: 'stun:stun2.l.google.com:19302'},
-        {url: 'stun:stun3.l.google.com:19302'},
-        {url: 'stun:stun4.l.google.com:19302'}
-    ],
-
+    availableDevices: [],
+    server : null,
     /*
     --------------------
     Server communication
     --------------------
      */
-    // TODO create a server object
+
 	connectToServer : function (host, port, ajaxPort, iceServers) {
-        this.port = port? port : this.port;
-        this.ajaxPort = ajaxPort? ajaxPort : this.ajaxPort;
-        this.host = host? host : this.host;
-        this.iceServers = iceServers? iceServers : this.iceServers;
-
-        // If not connected already
-        if (!this.peer) {
-            this.peer = new Peer(this.deviceId, {
-                host: this.host,
-                port: this.port,
-//                           debug: 3,
-                config: {
-                    'iceServers': this.iceServers
-                }
-            });
-            this.peer.on('connection', this.handleConnection);
-            this.peer.on('error', this.handleError);
-            if (this.reconnect) {
-                this.connectToStoredPeers();
-            }
-
-            // Check periodically who is connected.
-            this.requestAvailablePeers();
-            window.setInterval(this.requestAvailablePeers, 5000);
-
-            this.sendToServer('device', this.device);
-            this.sendToServer('roles', this.roles);
-
+        if (!this.server) {
+            this.server = new XDmvcServer(host, port, ajaxPort, iceServers);
         }
-	},
-
-    requestAvailablePeers: function () {
-        XDmvc.sendToServer("listAllPeers", null, function(msg){
-            var peers = JSON.parse(msg).peers;
-            XDmvc.availablePeers.length = 0;
-            // Filter out self and peers that we are connected to already
-            peers.filter(function (p) {
-                return p.id !== XDmvc.deviceId && !XDmvc.connectedDevices.some(function (el) {return el.peer === p.id; });
-            })
-            .forEach(function (peer) {
-                XDmvc.availablePeers.push(peer);
-            });
-        });
-    },
+        this.server.connect();
+ 	},
 
     sendToServer: function(type, data, callback){
-        var url = window.location.protocol +"//" +window.location.hostname +":" +XDmvc.ajaxPort;
-        ajax.postJSON(url, {type: type, data:data, id: XDmvc.deviceId},
-            function(reply){
-                if (callback){
-                    callback(reply);
-                }
-            },
-            true
-        );
-
+        if (this.server) {
+            this.server.send(type, data, callback);
+        } else {
+            console.warn("Send to server failed. Not connected to server");
+        }
     },
 
     /*
@@ -124,72 +70,6 @@ var XDmvc = {
                 XDmvc.storedPeers.push(peer);
             });
 		}
-    },
-
-    /*
-    -------------
-    PeerJS Events
-    -------------
-     */
-	handleOpen : function () {
-		var conn = this;
-        XDmvc.addConnectedDevice(conn);
-        if (XDmvc.storedPeers.indexOf(conn.peer) === -1) {
-			XDmvc.storedPeers.push(conn.peer);
-			XDmvc.storePeers();
-		}
-		var others = XDmvc.connectedDevices.filter(function (el) {return el.id !== conn.peer; })
-                    .map(function (el) {return el.id; });
-		this.send({type: 'connections', data: others });
-
-        XDmvc.sendRoles();
-        XDmvc.sendDevice();
-	},
-	
-	handleConnection : function (conn) {
-		conn.on('error', XDmvc.handleError);
-		conn.on('data', XDmvc.handleData);
-		conn.on('open', XDmvc.handleOpen);
-		conn.on('close', XDmvc.handleClose);
-        var conDev = XDmvc.addConnectedDevice(conn);
-        XDmvc.attemptedConnections.push(conDev);
-
-        // Flag that this peer should receive state on open
-        conDev.sendSync = true;
-
-	},
-
-
-	handleData : function (msg) {
-        // PeerJS Data events sometimes fire before the open event
-        // In that case we create the ConnectedDevice instance here
-        var connectedDevice = XDmvc.getConnectedDevice(this.peer);
-        if (!connectedDevice) {
-            connectedDevice = XDmvc.addConnectedDevice(this);
-        }
-        connectedDevice.handleData(msg);
- 	},
-
-
-	handleError : function (err) {
-		console.warn(err);
-		XDmvc.cleanUpConnections();
-		var event = new Event('XDerror');
-		document.dispatchEvent(event);
-        
-        var peerError = "Could not connect to peer ";
-        if (err.message.indexOf(peerError) === 0) {
-            var peer = err.message.substring(peerError.length);
-            var conn = XDmvc.getAttemptedConnection(peer);
-            var index = XDmvc.attemptedConnections.indexOf(conn);
-            if (index > -1) {
-                XDmvc.attemptedConnections.splice(index, 1);
-            }
-        }
-	},
-
-    handleClose : function () {
-        XDmvc.removeConnection(XDmvc.getConnectedDevice(this.peer));
     },
 
     /*
@@ -227,19 +107,10 @@ var XDmvc = {
         }
 
 	},
-	
-	connectTo : function (clientId) {
-		// Check if connection exists already
-		if (!XDmvc.connectedDevices.concat(XDmvc.attemptedConnections)
-                .some(function (el) {return el.id === clientId; })) {
-			var conn = XDmvc.peer.connect(clientId, {serialization : 'binary', reliable: true});
-			conn.on('error', XDmvc.handleError);
-			conn.on('open', XDmvc.handleOpen);
-			conn.on('data', XDmvc.handleData);
-			conn.on('close', XDmvc.handleClose);
-            var connDev= new ConnectedDevice(conn, clientId);
-            XDmvc.attemptedConnections.push(connDev);
-		}
+
+
+	connectTo : function (deviceId) {
+		XDmvc.server.connectToDevice(deviceId);
 	},
 
     disconnect: function (peerId) {
@@ -262,11 +133,10 @@ var XDmvc = {
             conDev = new ConnectedDevice(connection, connection.peer);
             XDmvc.connectedDevices.push(conDev);
             XDmvc.sortConnections(XDmvc.compareConnections);
-            var index = XDmvc.attemptedConnections.findIndex(function(element){ return conDev.connection === connection});
+            var index = XDmvc.attemptedConnections.findIndex(function(element){ return conDev.id === connection.peer});
             if (index > -1) {
                 XDmvc.attemptedConnections.splice(index, 1);
             }
-
         }
         return conDev;
     },
@@ -304,10 +174,7 @@ var XDmvc = {
 		var len = XDmvc.connectedDevices.length,
             i;
 		for (i = 0; i < len; i++) {
-			var con = XDmvc.connectedDevices[i].connection;
-			if (con.open) {
-				con.send({type: msgType, data: data });
-			}
+			XDmvc.connectedDevices[i].send(msgType, data);
 		}
 	},
 
@@ -347,14 +214,7 @@ var XDmvc = {
             XDmvc.sendToServer("sync", msg);
         }
 
-        /*
-        if (XDmvc.syncData[id].callback){
-            XDmvc.syncData[id].callback.apply(undefined, [XDmvc.syncData[id].data, id]); // notify for local changes
-        }
-		*/
-	},
-
-
+ 	},
 
 	synchronize : function (data, callback, id, updateServer) {
         // if no id given, generate one. Though this may not always work. It could be better to enforce IDs.
@@ -366,14 +226,11 @@ var XDmvc = {
             XDmvc.syncData[id].observer.open(sync);
         } else {
             // TODO this only observes one level. should observe nested objects as well?
-            // TODO use observeJS also for objects?
             XDmvc.syncData[id].observer = new ObjectObserver(data);
             XDmvc.syncData[id].observer.open(sync);
-//            Object.observe(data, sync);
         }
     },
 
-	
 	update : function (newObj, id, arrayDelta) {
         var observed =  XDmvc.syncData[id];
         if (Array.isArray(observed.data)) {
@@ -589,8 +446,131 @@ Initialisation and configuration
 };
 
 /*
-Extensions to PeerJS DataConnection
------------------------------------
+ Server (Peer and Ajax)
+ ---------------------
+ */
+function XDmvcServer(host, port, ajaxPort, iceServers){
+    this.ajaxPort = ajaxPort ? ajaxPort: 9001;
+    this.port = port? port: 9000;
+    this.host = host? host: document.location.hostname;
+    this.peer = null;
+    this.iceServers =  [
+        {url: 'stun:stun.l.google.com:19302'},
+        {url: 'stun:stun1.l.google.com:19302'},
+        {url: 'stun:stun2.l.google.com:19302'},
+        {url: 'stun:stun3.l.google.com:19302'},
+        {url: 'stun:stun4.l.google.com:19302'}
+    ];
+}
+
+XDmvcServer.prototype.connect = function connect (){
+    // If not connected already
+    var server = this;
+    if (!this.peer) {
+        this.peer = new Peer(XDmvc.deviceId, {
+            host: this.host,
+            port: this.port,
+//                           debug: 3,
+            config: {
+                'iceServers': this.iceServers
+            }
+        });
+        this.peer.on('connection', function(conn){server.handleConnection(conn);});
+        this.peer.on('error', function(err){server.handleError(err);});
+        if (XDmvc.reconnect) {
+            XDmvc.connectToStoredPeers();
+        }
+
+        // Check periodically who is connected.
+        this.requestAvailableDevices();
+        window.setInterval(function(){
+            server.requestAvailableDevices();}, 5000);
+
+        this.send('device', this.device);
+        this.send('roles', this.roles);
+    } else{
+        console.warn("Already connected.")
+    }
+};
+
+XDmvcServer.prototype.send = function send (type, data, callback){
+    var url = window.location.protocol +"//" +this.host +":" +this.ajaxPort;
+    ajax.postJSON(url, {type: type, data:data, id: XDmvc.deviceId},
+        function(reply){
+            if (callback){
+                callback(reply);
+            }
+        },
+        true
+    );
+};
+
+XDmvcServer.prototype.requestAvailableDevices = function requestAvailableDevices (){
+    this.send("listAllPeers", null, function(msg){
+        var peers = JSON.parse(msg).peers;
+        XDmvc.availableDevices.length = 0;
+        // Filter out self and peers that we are connected to already
+        peers.filter(function (p) {
+            return p.id !== XDmvc.deviceId && !XDmvc.connectedDevices.some(function (el) {return el.id === p.id; });
+        })
+        .forEach(function (peer) {
+            XDmvc.availableDevices.push(peer);
+        });
+    });
+};
+
+XDmvcServer.prototype.connectToDevice = function connectToDevice (deviceId) {
+    // Check if connection exists already
+    if (!XDmvc.connectedDevices.concat(XDmvc.attemptedConnections)
+            .some(function (el) {return el.id === deviceId; })) {
+        var conn = this.peer.connect(deviceId, {serialization : 'binary', reliable: true});
+        var connDev = XDmvc.addConnectedDevice(conn);
+        conn.on('error', function (err) { connDev.handleError(err, this)});
+        conn.on('open', function () { connDev.handleOpen(this)});
+        conn.on('data', function (msg) { connDev.handleData(msg)});
+        conn.on('close', function () { connDev.handleClose(this)});
+        XDmvc.attemptedConnections.push(connDev);
+    } else {
+        console.warn("already connected");
+    }
+};
+
+XDmvcServer.prototype.handleError = function handleError (err){
+    XDmvc.cleanUpConnections();
+    var event = new CustomEvent('XDerror');
+    document.dispatchEvent(event);
+
+    if (err.type === "peer-unavailable") {
+        var peerError = "Could not connect to peer ";
+        var peer = err.message.substring(peerError.length);
+        var conn = XDmvc.getAttemptedConnection(peer);
+        var index = XDmvc.attemptedConnections.indexOf(conn);
+        if (index > -1) {
+            XDmvc.attemptedConnections.splice(index, 1);
+        }
+        console.info(err.message);
+    } else {
+        console.warn(err);
+    }
+};
+
+XDmvcServer.prototype.handleConnection = function handleConnection (connection){
+    var conDev = XDmvc.addConnectedDevice(connection);
+    connection.on('error', function (err) { conDev.handleError(err, this)});
+    connection.on('open', function () { conDev.handleOpen(this)});
+    connection.on('data', function (msg) { conDev.handleData(msg)});
+    connection.on('close', function () { conDev.handleClose(this)});
+
+    XDmvc.attemptedConnections.push(conDev);
+
+    // Flag that this peer should receive state on open
+    conDev.sendSync = true;
+
+};
+
+/*
+Connected Devices
+-----------------
  */
 function ConnectedDevice(connection, id){
     this.connection = connection;
@@ -682,5 +662,36 @@ ConnectedDevice.prototype.handleData = function(msg){
 
 };
 
-// TODO add a sen
-// d function?
+ConnectedDevice.prototype.handleError = function handleError (err, connection){
+    console.warn("Error in PeerConnection:" +connection.id );
+    console.warn(err);
+    XDmvc.cleanUpConnections();
+    var event = new CustomEvent('XDerror', {"detail": err});
+    document.dispatchEvent(event);
+};
+
+ConnectedDevice.prototype.handleOpen = function handleOpen (conn){
+    XDmvc.addConnectedDevice(conn);
+    if (XDmvc.storedPeers.indexOf(conn.peer) === -1) {
+        XDmvc.storedPeers.push(conn.peer);
+        XDmvc.storePeers();
+    }
+    var others = XDmvc.connectedDevices.filter(function (el) {return el.id !== conn.peer; })
+        .map(function (el) {return el.id; });
+    this.send('connections', others);
+
+    this.send("roles", XDmvc.roles);
+    this.send("device", XDmvc.device);
+};
+
+ConnectedDevice.prototype.handleClose = function handleClose (){
+    XDmvc.removeConnection(this);
+};
+
+ConnectedDevice.prototype.send = function send (msgType, data){
+    if (this.connection && this.connection.open) {
+        this.connection.send({type: msgType, data: data });
+    } else {
+        console.warn("Can not send message to device. Not connected to " +this.id );
+    }
+};
