@@ -28,8 +28,6 @@ function initialize() {
     google.maps.event.addListener(map, 'center_changed', function() {
         center.lat = map.center.lat();
         center.lng = map.center.lng();
-        console.log("center changed");
-        console.log(center);
     });
     XDmvc.synchronize(center,setCenter ,"center");
 
@@ -51,7 +49,6 @@ function initialize() {
     };
     google.maps.event.addListener(map, 'zoom_changed', function() {
         zoom.level = map.getZoom();
-        console.log("zoom changed " +zoom.level );
     });
     XDmvc.synchronize(zoom,setZoom ,"zoom");
 
