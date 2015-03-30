@@ -268,7 +268,7 @@ var XDmvc = {
         XDmvc.sendSyncToAll(null, objectId);
     },
 
-    discardChanges(id){
+    discardChanges: function(id){
         XDmvc.syncData[id].observer.discardChanges();
     },
 
