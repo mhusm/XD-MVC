@@ -122,6 +122,7 @@ var XDmvc = {
 
     },
 
+// TEST COMMENT
 
     getConnectedDevice: function (peerId) {
         return XDmvc.connectedDevices.find(function (c) {return c.id === peerId; });
