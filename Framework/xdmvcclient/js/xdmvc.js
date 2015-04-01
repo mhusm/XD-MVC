@@ -289,7 +289,8 @@ var XDmvc = {
             if (typeof config == 'string' || config instanceof String) {
                 this.configuredRoles[role][config] = null;
             } else {
-                this.configuredRoles[role] = config;
+                var keys  = Object.keys(config);
+                this.configuredRoles[role][keys[0]] =config[keys[0]];
             }
         }, this);
 
