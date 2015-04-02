@@ -9,7 +9,7 @@ function initialize() {
         center: new google.maps.LatLng(-34.397, 150.644)
     };
     map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
-    var center = {"lat": map.center.lat(), "lng": map.center.lng()}
+    var center = {"lat": map.center.lat(), "lng": map.center.lng()};
     var zoom = {"level": map.getZoom()};
     var mapType = {"type" : map.getMapTypeId()};
     var bounds =   {"ne" : {"lat" : 0,
@@ -83,11 +83,22 @@ function initialize() {
         }
     };
 
+    var mirrorZoom = function mirrorZoom(id, data, sender){
+        if (XDmvc.getConnectedDevice(sender).roles.indexOf("mirror") > -1){
+            setZoom(id, data);
+        }
+    };
 
-    XDmvc.configureRole("center", ["center"]);
-    XDmvc.configureRole("zoom", ["zoom"]);
-    XDmvc.configureRole("mapType", ["mapType"]);
-    XDmvc.configureRole("bounds", [{"bounds":showBounds}]);
+    var mirrorCenter = function mirrorCenter(id, data, sender){
+        if (XDmvc.getConnectedDevice(sender).roles.indexOf("mirror") > -1){
+            setCenter(id, data);
+        }
+    };
+
+
+    XDmvc.configureRole("mirror", [{"center":mirrorCenter}, {"zoom":mirrorZoom}]);
+    XDmvc.configureRole("viewer", []);
+    XDmvc.configureRole("overview", [{"bounds":showBounds}]);
 }
 
 google.maps.event.addDomListener(window, 'load', initialize);
