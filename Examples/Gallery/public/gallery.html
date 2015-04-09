@@ -143,8 +143,18 @@
                             this.$.roles.addRole('owner');   
                         } else{
                             if (connect !==  XDmvc.deviceId) {
-                                XDmvc.connectTo(getQueryParams(window.location.search).connect);
-                                this.$.roles.addRole('visitor');   
+                                if (XDmvc.server) {
+                                    XDmvc.connectTo(getQueryParams(window.location.search).connect);
+                                } else { // not yet connected to server, try again a bit later
+                                    // This is a bit of a hack and a better solution should be found.
+                                    // Maybe the framework should have a connected to server event and then these things could be triggered there.
+                                    setInterval(function(){
+                                        if (XDmvcServer) {
+                                            XDmvc.connectTo(getQueryParams(window.location.search).connect);
+                                        }
+                                    }, 5000);
+                                }
+                                this.$.roles.addRole('visitor');
                             } else {
                                 this.$.roles.addRole('owner');   
                             }
