@@ -11,6 +11,7 @@
   ],
   "dependencies": {
     "xdmvcclient": "../../Framework/xdmvcclient",
-    "observe-js": "~0.5.5"
+    "observe-js": "~0.5.5",
+    "bootstrap": "~3.3.4"
   }
 }
