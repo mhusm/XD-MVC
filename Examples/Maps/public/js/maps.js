@@ -1,8 +1,13 @@
 var map;
 function initialize() {
     XDmvc.init();
-    XDmvc.reconnect = true;
+    XDmvc.reconnect = false;
     XDmvc.connectToServer();
+    $("#myDeviceId").text(XDmvc.deviceId);
+    $("#inputDeviceId").val(XDmvc.deviceId);
+    XDmvc.removeRole("sync-all");
+    XDmvc.addRole("Viewer");
+
 
     var mapOptions = {
         zoom: 8,
@@ -99,7 +104,47 @@ function initialize() {
     XDmvc.configureRole("mirror", [{"center":mirrorCenter}, {"zoom":mirrorZoom}]);
     XDmvc.configureRole("viewer", []);
     XDmvc.configureRole("overview", [{"bounds":showBounds}]);
+
+    $("#menu-button").on("click", function(){
+        $("#menu").toggle();
+    });
+
+    $("#changeId").on("click", function(){
+        $("#deviceId").toggle();
+        $("#deviceId").removeClass("has-error");
+        return false;
+    });
+
+
+    $("#deviceIdButton").on("click", function(){
+        var newId = $("#inputDeviceId").val();
+        if (newId) {
+            XDmvc.changeDeviceId(newId);
+            $("#deviceId").toggle();
+            $("#myDeviceId").text(XDmvc.deviceId);
+        } else {
+            $("#deviceId").addClass("has-error");
+        }
+        return false;
+    });
+
+    $("#connect").on("click", function(){
+        var otherDevice = $("#inputOtherDevice").val();
+        if (otherDevice) {
+            XDmvc.connectTo(otherDevice);
+        } else {
+            $("#inputOtherDevice").addClass("has-error");
+        }
+        return false;
+    });
+
+    $("#roles input:radio").on("change", function(event){
+        var role = event.target.value;
+        XDmvc.removeRole(XDmvc.roles[0]);
+        XDmvc.addRole(role);
+    });
+
 }
 
-google.maps.event.addDomListener(window, 'load', initialize);
 
+google.maps.event.addDomListener(window, 'load', initialize);
