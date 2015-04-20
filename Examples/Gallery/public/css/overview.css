@@ -4,8 +4,8 @@ img {
 }
 
 .album {
-    float: left;
-    margin: 2px;
+	display: inline-block;
+    margin: 8px;
 }
 
 
