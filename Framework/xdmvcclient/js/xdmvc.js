@@ -113,16 +113,22 @@ var XDmvc = {
 		XDmvc.server.connectToDevice(deviceId);
 	},
 
-    disconnect: function (peerId) {
+    disconnect: function disconnect(peerId) {
         var conn = XDmvc.getConnectedDevice(peerId);
         if (conn) {
-            conn.connection.close();
-            XDmvc.removeConnection(conn);
+            conn.disconnect();
         }
+    },
 
+    disconnectAll: function disconnectAll() {
+        XDmvc.connectedDevices.forEach(function(device){
+            device.disconnect();
+        });
     },
 
 // TEST COMMENT
+
+
 
     getConnectedDevice: function (peerId) {
         return XDmvc.connectedDevices.find(function (c) {return c.id === peerId; });
@@ -290,7 +296,8 @@ var XDmvc = {
             if (typeof config == 'string' || config instanceof String) {
                 this.configuredRoles[role][config] = null;
             } else {
-                this.configuredRoles[role] = config;
+                var keys  = Object.keys(config);
+                this.configuredRoles[role][keys[0]] =config[keys[0]];
             }
         }, this);
 
@@ -398,15 +405,16 @@ Initialisation and configuration
 
     changeDeviceId: function (newId){
         if (newId !== this.deviceId) {
-            this.deviceId = newId;
+            XDmvc.deviceId = newId;
             localStorage.deviceId = newId;
-            this.device.id = this.deviceId;
+            XDmvc.device.id = XDmvc.deviceId;
             // If connected, disconnect and reconnect
-            if (this.peer) {
-                this.peer.destroy();
-                this.cleanUpConnections();
-                this.peer = null;
-                this.connectToServer();
+            if (XDmvc.server) {
+                XDmvc.server.disconnect();
+                XDmvc.server = null;
+                XDmvc.disconnectAll();
+                XDmvc.connectToServer();
+                // TODO reconnect previous connections?
             }
         }
     },
@@ -569,6 +577,11 @@ XDmvcServer.prototype.handleConnection = function handleConnection (connection){
 
 };
 
+XDmvcServer.prototype.disconnect = function disconnect (){
+    this.peer.destroy();
+    this.peer = null;
+};
+
 /*
 Connected Devices
 -----------------
@@ -695,4 +708,10 @@ ConnectedDevice.prototype.send = function send (msgType, data){
     } else {
         console.warn("Can not send message to device. Not connected to " +this.id );
     }
+};
+
+ConnectedDevice.prototype.disconnect = function disconnect (){
+    this.connection.close();
+    XDmvc.removeConnection(this);
+
 };

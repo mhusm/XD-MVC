@@ -1,25 +1,91 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp"></script>
-    <script src="bower_components/observe-js/src/observe.js"></script>
-    <script src="bower_components/peerjs/peer.js"></script>
-    <script src="bower_components/xdmvcclient/js/find-polyfill.js"></script>
-    <script src="bower_components/xdmvcclient/js/ajax.js"></script>
-    <script src="bower_components/xdmvcclient/js/xdmvc.js"></script>
-    <script src="js/maps.js"></script>
-    <style>
-      html, body, #map-canvas {
-        height: 100%;
-        margin: 0px;
-        padding: 0px;
-		font-family: Helvetica Neue;
-      }
-    </style>
-</head>
-<body>
-<h1>Welcome to XDMapp</h1>
-<hr />
-<div id="map-canvas"></div>
-</body>
+    <head>
+        <script src="https://maps.googleapis.com/maps/api/js?v=3.exp"></script>
+        <script src="bower_components/observe-js/src/observe.js"></script>
+        <script src="bower_components/peerjs/peer.js"></script>
+        <script src="bower_components/xdmvcclient/js/find-polyfill.js"></script>
+        <script src="bower_components/xdmvcclient/js/ajax.js"></script>
+        <script src="bower_components/xdmvcclient/js/xdmvc.js"></script>
+        <script src="js/maps.js"></script>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+        <link href="bower_components/bootstrap/dist/css/bootstrap.css" rel="stylesheet">
+        <style>
+            html, body, #map-canvas {
+                height: 100%;
+                margin: 0px;
+                padding: 0px;
+            }
+            #menu-button {
+                margin-right: 10px;
+            }
+            #menu {
+                margin: 20px;
+            }
+
+
+        </style>
+    </head>
+    <body>
+        <button id = "menu-button" type="button" class="btn btn-default pull-right" aria-label="Toggle Menu">
+            <span class= "glyphicon glyphicon-menu-hamburger" aria-hidden="true"></span>
+        </button>
+
+
+        <h1>Welcome to XDMap</h1>
+        <div class="panel panel-default" id="menu" hidden >
+            <div class="panel-heading">Configuration</div>
+            <div class="panel-body">
+                <form class="form-horizontal">
+                    <div class="form-group">
+                        <label for="inputDeviceId" class="col-sm-2 control-label">Device ID</label>
+                        <div class="col-sm-3">
+                            <p class="form-control-static "><span id="myDeviceId">MyId</span> <button id="changeId" class="btn btn-default btn-xs"> <span class= "glyphicon glyphicon-pencil" aria-hidden="true"></span> </button></p>
+                        </div>
+                        <div class="col-sm-4" id="deviceId" hidden>
+                            <div class="input-group" >
+                                <input type="text" class="form-control" id="inputDeviceId" placeholder="MyDeviceID"/>
+                                <span class="input-group-btn">
+                                    <button id="deviceIdButton" class="btn btn-default">Change</button>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="inputOtherDevice" class="control-label col-sm-2">Connect to</label>
+
+                        <div class="col-sm-6">
+                            <div class="input-group">
+                                <input id="inputOtherDevice" type="text" class="form-control" placeholder="OtherDeviceID">
+                                <span class="input-group-btn">
+                                    <button class="btn btn-default" id="connect" type="button">Connect!</button>
+                                </span>
+                            </div><!-- /input-group -->
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label col-sm-2">Roles</label>
+                        <div class="btn-group col-sm-6" data-toggle="buttons" id="roles">
+                            <label class="btn btn-default active">
+                                <input type="radio" name="roles" id="Viewer" autocomplete="off" value="viewer">Viewer
+                            </label>
+                            <label class="btn btn-default">
+                                <input type="radio" name="roles" id="Mirror" autocomplete="off" value="mirror">Mirror
+                            </label>
+                            <label class="btn btn-default">
+                                <input type="radio" name="roles" id="Overview" autocomplete="off" value="overview">Overview
+                            </label>
+                        </div>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+        <div id="map-canvas"></div>
+        <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+        <!-- Include all compiled plugins (below), or include individual files as needed -->
+        <script src="bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+    </body>
 </html>
