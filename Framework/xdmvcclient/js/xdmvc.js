@@ -589,6 +589,7 @@ function ConnectedDevice(connection, id){
     this.connection = connection;
     this.id = id;
     this.roles = [];
+    this.device = {};
 }
 
 ConnectedDevice.prototype.isInterested = function(dataId){
