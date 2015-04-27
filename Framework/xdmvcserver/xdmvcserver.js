@@ -35,6 +35,39 @@ XDmvcServer.prototype.startPeerSever = function(port){
     httpSocketIo.listen(3000, function() {
         console.log("Socket io server started on port 3000");
     });
+
+    io.on('connection', function(socket){
+        var id = socket.id;
+        that.peers[id] = {
+            'id': id,
+            'name': undefined,
+            'role': undefined,
+            'roles': [],
+            'session': undefined
+        };
+        console.log('user connected' + socket.id);
+        that.emit("connected", id);
+
+        socket.on('disconnect', function(){
+            console.log('user disconnected ' + socket.id);
+
+            var id = socket.id;
+            if (that.peers[id].session !== undefined) {
+                var ps = that.sessions[that.peers[id].session].peers;
+                var index = ps.indexOf(id);
+                if (index > -1) {
+                    ps.splice(index, 1);
+                }
+
+                if (ps.length === 0) {
+                    // session has no more users -> delete it
+                    delete that.sessions[that.peers[id].session];
+                }
+            }
+            delete that.peers[id];
+            that.emit("disconnected", id);
+        });
+    });
     //Silvan
 
 
