@@ -5,6 +5,14 @@ var connect = require('connect'),
     http = require('http'),
     bodyParser = require('body-parser'),
     url = require('url');
+    io =  require('socket.io')();
+
+//Silvan
+var app = require('express')();
+var httpSocketIo = require('http').Server(app);
+var io = require('socket.io')(httpSocketIo);
+
+//Silvan
 
 
 //CORS middleware
@@ -23,6 +31,13 @@ function XDmvcServer() {
 util.inherits(XDmvcServer, EventEmitter);
 
 XDmvcServer.prototype.startPeerSever = function(port){
+    //Silvan
+    httpSocketIo.listen(3000, function() {
+        console.log("Socket io server started on port 3000");
+    });
+    //Silvan
+
+
     var pserver = new PeerServer({
         port: port,
         allow_discovery: true
@@ -73,7 +88,6 @@ XDmvcServer.prototype.handleAjaxRequest = function(req, res, next, xdmvcServer){
     var query = parameters.query;
 
     res.statusCode = 200;
-
 
     if (req.method == "POST") {
         query = req.body;
