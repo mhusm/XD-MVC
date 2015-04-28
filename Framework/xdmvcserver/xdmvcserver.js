@@ -5,6 +5,14 @@ var connect = require('connect'),
     http = require('http'),
     bodyParser = require('body-parser'),
     url = require('url');
+    io =  require('socket.io')();
+
+//Silvan
+var app = require('express')();
+var httpSocketIo = require('http').Server(app);
+var io = require('socket.io')(httpSocketIo);
+
+//Silvan
 
 
 //CORS middleware
@@ -23,6 +31,46 @@ function XDmvcServer() {
 util.inherits(XDmvcServer, EventEmitter);
 
 XDmvcServer.prototype.startPeerSever = function(port){
+    //Silvan
+    httpSocketIo.listen(3000, function() {
+        console.log("Socket io server started on port 3000");
+    });
+
+    io.on('connection', function(socket){
+        var id = socket.id;
+        that.peers[id] = {
+            'id': id,
+            'name': undefined,
+            'role': undefined,
+            'roles': [],
+            'session': undefined
+        };
+        console.log('user connected' + socket.id);
+        that.emit("connected", id);
+
+        socket.on('disconnect', function(){
+            console.log('user disconnected ' + socket.id);
+
+            var id = socket.id;
+            if (that.peers[id].session !== undefined) {
+                var ps = that.sessions[that.peers[id].session].peers;
+                var index = ps.indexOf(id);
+                if (index > -1) {
+                    ps.splice(index, 1);
+                }
+
+                if (ps.length === 0) {
+                    // session has no more users -> delete it
+                    delete that.sessions[that.peers[id].session];
+                }
+            }
+            delete that.peers[id];
+            that.emit("disconnected", id);
+        });
+    });
+    //Silvan
+
+
     var pserver = new PeerServer({
         port: port,
         allow_discovery: true
@@ -73,7 +121,6 @@ XDmvcServer.prototype.handleAjaxRequest = function(req, res, next, xdmvcServer){
     var query = parameters.query;
 
     res.statusCode = 200;
-
 
     if (req.method == "POST") {
         query = req.body;
