@@ -126,10 +126,6 @@ var XDmvc = {
         });
     },
 
-// TEST COMMENT
-
-
-
     getConnectedDevice: function (peerId) {
         return XDmvc.connectedDevices.find(function (c) {return c.id === peerId; });
     },
@@ -576,6 +572,7 @@ XDmvcServer.prototype.handleConnection = function handleConnection (connection){
     conDev.sendSync = true;
 
 };
+
 
 XDmvcServer.prototype.disconnect = function disconnect (){
     this.peer.destroy();
