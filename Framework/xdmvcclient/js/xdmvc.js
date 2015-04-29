@@ -484,9 +484,7 @@ function XDmvcServer(host, port, ajaxPort, iceServers){
 XDmvcServer.prototype.connect = function connect (){
     // If not connected already
     //Silvan
-    var socket = new io.Socket();
-
-    socket.connect('http://localhost:3000');
+    var socket = io.connect('http://localhost:3000');
 
     socket.on('message', function (msg) { ConnectedDevice.handleData(msg)});
 
