@@ -19,6 +19,10 @@ var XDmvc = {
     configuredRoles: {}, // roles that have been configured in the system
     availableDevices: [],
     server : null,
+
+    //Silvan
+    ioServer : null,
+    //Silvan
     /*
     --------------------
     Server communication
@@ -26,6 +30,7 @@ var XDmvc = {
      */
 
 	connectToServer : function (host, port, ajaxPort, iceServers) {
+
         if (!this.server) {
             this.server = new XDmvcServer(host, port, ajaxPort, iceServers);
         }
@@ -205,6 +210,11 @@ var XDmvc = {
         var msg = {type: 'sync', data: arrayDelta.length > 0? arrayDelta: XDmvc.syncData[id].data, id: id, arrayDelta: arrayDelta.length>0};
 		var len = XDmvc.connectedDevices.length,
             i;
+
+        //Silvan
+        this.ioServer.serverSocket.broadcast.emit('message', msg);
+        //Silvan
+
 		for (i = 0; i < len; i++) {
             var conDev = XDmvc.connectedDevices[i];
 			var con = conDev.connection;
@@ -459,6 +469,9 @@ function XDmvcServer(host, port, ajaxPort, iceServers){
     this.port = port? port: 9000;
     this.host = host? host: document.location.hostname;
     this.peer = null;
+    //Silvan
+    this.serverSocket = null;
+    //Silvan
     this.iceServers =  [
         {url: 'stun:stun.l.google.com:19302'},
         {url: 'stun:stun1.l.google.com:19302'},
@@ -470,6 +483,14 @@ function XDmvcServer(host, port, ajaxPort, iceServers){
 
 XDmvcServer.prototype.connect = function connect (){
     // If not connected already
+    //Silvan
+    var socket = io();
+
+    socket.on('message', function (msg) { ConnectedDevice.handleData(msg)});
+
+    this.serverSocket = socket;
+
+    //Silvan
     var server = this;
     if (!this.peer) {
         this.peer = new Peer(XDmvc.deviceId, {

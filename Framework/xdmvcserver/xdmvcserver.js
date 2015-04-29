@@ -9,8 +9,8 @@ var connect = require('connect'),
 
 //Silvan
 var app = require('express')();
-var httpSocketIo = require('http').Server(app);
-var io = require('socket.io')(httpSocketIo);
+var server  = require('http').createServer(app);
+var io      = require('socket.io').listen(server);
 
 //Silvan
 
@@ -32,9 +32,9 @@ util.inherits(XDmvcServer, EventEmitter);
 
 XDmvcServer.prototype.startPeerSever = function(port){
     //Silvan
-    httpSocketIo.listen(3000, function() {
-        console.log("Socket io server started on port 3000");
-    });
+
+
+    server.listen(3000);
 
     io.on('connection', function(socket){
         var id = socket.id;
