@@ -67,6 +67,10 @@ XDmvcServer.prototype.startPeerSever = function(port){
             delete that.peers[id];
             that.emit("disconnected", id);
         });
+        socket.on('message', function(msg){
+            console.log('message: ' + msg + ' from ' + socket.id);
+            io.emit('message', msg);
+        });
     });
     //Silvan
 

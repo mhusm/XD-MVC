@@ -20,9 +20,7 @@ var XDmvc = {
     availableDevices: [],
     server : null,
 
-    //Silvan
-    ioServer : null,
-    //Silvan
+
     /*
     --------------------
     Server communication
@@ -212,7 +210,7 @@ var XDmvc = {
             i;
 
         //Silvan
-        this.ioServer.serverSocket.broadcast.emit('message', msg);
+        this.server.serverSocket.emit('message', msg);
         //Silvan
 
 		for (i = 0; i < len; i++) {
@@ -484,11 +482,16 @@ function XDmvcServer(host, port, ajaxPort, iceServers){
 XDmvcServer.prototype.connect = function connect (){
     // If not connected already
     //Silvan
-    var socket = io.connect('http://localhost:3000');
-
-    socket.on('message', function (msg) { ConnectedDevice.handleData(msg)});
+   var socket = io.connect('http://localhost:3000');
+    //  var socket = io();
+    socket.on('message', function (msg) {
+        ConnectedDevice.prototype.handleData(msg)
+        console.log('message ' + msg);
+    });
 
     this.serverSocket = socket;
+
+    socket.emit('message', 'hallo ');
 
 
     //Silvan
