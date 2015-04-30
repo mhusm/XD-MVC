@@ -1,6 +1,10 @@
 /*global console, CustomEvent, Peer, Event */
 'use strict';
 /*jslint plusplus: true */
+
+
+// hasdhfa
+
 var XDmvc = {
 	peer : null,
     defaultRole : "sync-all",

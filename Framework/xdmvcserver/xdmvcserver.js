@@ -33,7 +33,6 @@ util.inherits(XDmvcServer, EventEmitter);
 XDmvcServer.prototype.startPeerSever = function(port){
     //Silvan
 
-
     server.listen(3000);
 
     io.on('connection', function(socket){
@@ -45,7 +44,7 @@ XDmvcServer.prototype.startPeerSever = function(port){
             'roles': [],
             'session': undefined
         };
-        console.log('user connected' + socket.id);
+        console.log('user connected ' + socket.id);
         that.emit("connected", id);
 
         socket.on('disconnect', function(){
