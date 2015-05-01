@@ -34,7 +34,6 @@ util.inherits(XDmvcServer, EventEmitter);
 XDmvcServer.prototype.startPeerSever = function(port){
     //Silvan
 
-
     server.listen(3000);
 
     var xdServer = this;
