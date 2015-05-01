@@ -27,6 +27,7 @@ function XDmvcServer() {
     EventEmitter.call(this);
     this.peers = {};
     this.sessions = {};
+    this.mapping = {};
 }
 util.inherits(XDmvcServer, EventEmitter);
 
@@ -35,6 +36,8 @@ XDmvcServer.prototype.startPeerSever = function(port){
 
 
     server.listen(3000);
+
+    var xdServer = this;
 
     io.on('connection', function(socket){
         var id = socket.id;
@@ -45,7 +48,7 @@ XDmvcServer.prototype.startPeerSever = function(port){
             'roles': [],
             'session': undefined
         };
-        console.log('user connected' + socket.id);
+        console.log('user connected ' + socket.id);
         that.emit("connected", id);
 
         socket.on('disconnect', function(){
@@ -68,9 +71,21 @@ XDmvcServer.prototype.startPeerSever = function(port){
             that.emit("disconnected", id);
         });
         socket.on('message', function(msg){
-            console.log('message: ' + msg + ' from ' + socket.id);
-            io.emit('message', msg);
+            console.log('message: ' + msg + ' for ' + msg.interestedDevices);
+
+            msg.interestedDevices.forEach(function(peerId) {
+                var socketId = xdServer.mapping[peerId];
+                io.sockets.connected[socketId].emit(msg); //send message only to interestedDevice
+            });
+            //io.emit('message', msg);
         });
+
+        socket.on('id', function(msg){
+            console.log('match peerId ' + msg  + ' to socketioId ' + id);
+            xdServer.mapping[msg] = id;
+        });
+
+
     });
     //Silvan
 
