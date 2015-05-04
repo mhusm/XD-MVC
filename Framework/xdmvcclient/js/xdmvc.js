@@ -211,17 +211,23 @@ var XDmvc = {
 		var len = XDmvc.connectedDevices.length,
             i;
 
-        //Silvan
-        this.server.serverSocket.emit('message', msg);
-        //Silvan
 
+        var interestedDevices = [];
 		for (i = 0; i < len; i++) {
             var conDev = XDmvc.connectedDevices[i];
 			var con = conDev.connection;
  			if (con.open &&  conDev.isInterested(id)){
  				con.send(msg);
+                interestedDevices.push(conDev.id);
+                console.log("send sync to interested id: " + conDev.id);
 			}
 		}
+
+        msg.interestedDevices = interestedDevices;
+
+        //Silvan
+        this.server.serverSocket.emit('message', msg);
+        //Silvan
 
         if (XDmvc.syncData[id].updateServer) {
             XDmvc.sendToServer("sync", msg);
@@ -484,7 +490,7 @@ function XDmvcServer(host, port, ajaxPort, iceServers){
 XDmvcServer.prototype.connect = function connect (){
     // If not connected already
     //Silvan
-   var socket = io.connect('http://localhost:3000');
+   var socket = io.connect('localhost:3000');
     //  var socket = io();
     socket.on('message', function (msg) {
         ConnectedDevice.prototype.handleData(msg)
@@ -493,10 +499,9 @@ XDmvcServer.prototype.connect = function connect (){
 
     this.serverSocket = socket;
 
-    socket.emit('message', 'hallo ');
-
-
+    socket.emit('id', XDmvc.deviceId);
     //Silvan
+
     var server = this;
     if (!this.peer) {
         this.peer = new Peer(XDmvc.deviceId, {
