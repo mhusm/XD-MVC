@@ -54,12 +54,18 @@ XDmvcServer.prototype.startPeerSever = function(port){
 
             msg.interestedDevices.forEach(function(peerId) {
                 var socketId = xdServer.mapping[peerId];
-                io.sockets.connected[socketId].emit(msg); //send message only to interestedDevice
+                io.sockets.connected[socketId].emit('message', msg); //send message only to interestedDevice
             });
 
             for(peer in xdServer.peers) { //TODO: correct usage ???
                 if(xdServer.isInterested(peer, msg.id)){
                     console.log(peer + ' is interested on ' + msg.id);
+                    var socketId = xdServer.mapping[peer];
+                    if(socketId !== this.id) {
+                        console.log('sending update to: ' + socketId);
+                        io.sockets.connected[socketId].emit('message', msg); //send message only to interestedDevice
+                    }
+
                 }
             };
 
@@ -73,9 +79,9 @@ XDmvcServer.prototype.startPeerSever = function(port){
             xdServer.mapping[msg] = id;
         });
 
-        socket.on('roleConfigs', function(configs) {
-            console.log('configuredRoles: ' + JSON.stringify(configs, null, 4));
-            xdServer.configuredRoles = configs;
+        socket.on('roleConfigs', function(msg) {
+            console.log('configuredRoles: ' + JSON.stringify(msg.roles, null, 4));
+            xdServer.configuredRoles = msg.roles;
         });
 
 

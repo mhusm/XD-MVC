@@ -309,14 +309,16 @@ var XDmvc = {
                 this.configuredRoles[role][config] = null;
             } else {
                 var keys  = Object.keys(config);
-                this.configuredRoles[role][keys[0]] =config[keys[0]];
+                //Silvan
+                this.configuredRoles[role][keys[0]] = null; //config[keys[0]]; //TODO: why function ??
+                //Silvan
             }
         }, this);
 
         var configs = this.configuredRoles;
 
         if(this.server.serverSocket)
-            this.server.serverSocket.emit('roleConfigs', configs );
+            this.server.serverSocket.emit('roleConfigs', {roles : configs });
 
         console.log(JSON.stringify(configs));
         this.sendToAll("roleConfigurations", {role: role, configurations : configurations});
@@ -507,7 +509,7 @@ XDmvcServer.prototype.connect = function connect (){
 
     socket.emit('id', XDmvc.deviceId);
 
-    socket.emit('roleConfigs', XDmvc.configuredRoles); //if note yet configured, they will be sent in configureRoles
+    socket.emit('roleConfigs', {roles : XDmvc.configuredRoles}); //if not yet configured, they will be sent in configureRoles
 
     //Silvan
 
