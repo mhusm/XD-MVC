@@ -56,6 +56,15 @@ XDmvcServer.prototype.startPeerSever = function(port){
                 var socketId = xdServer.mapping[peerId];
                 io.sockets.connected[socketId].emit(msg); //send message only to interestedDevice
             });
+
+            for(peer in xdServer.peers) { //TODO: correct usage ???
+                if(xdServer.isInterested(peer, msg.id)){
+                    console.log(peer + ' is interested on ' + msg.id);
+                }
+            };
+
+
+
             //io.emit('message', msg);
         });
 
@@ -65,8 +74,8 @@ XDmvcServer.prototype.startPeerSever = function(port){
         });
 
         socket.on('roleConfigs', function(configs) {
-            console.log('configuredRoles: ' + JSON.stringify(configs));
-           this.configuredRoles = configs;
+            console.log('configuredRoles: ' + JSON.stringify(configs, null, 4));
+            xdServer.configuredRoles = configs;
         });
 
 
@@ -108,6 +117,15 @@ XDmvcServer.prototype.startPeerSever = function(port){
         that.emit("disconnected", id);
     });
 };
+
+//Silvan
+XDmvcServer.prototype.isInterested = function isInterested(receiver, dataId){
+    var roles = this.configuredRoles;
+    return this.peers[receiver].roles.some(function(role){
+            return roles[role] && typeof roles[role][dataId] !== "undefined" ;
+        }) ;
+};
+//Silvan
 
 XDmvcServer.prototype.startAjaxServer = function(port){
     var that = this;

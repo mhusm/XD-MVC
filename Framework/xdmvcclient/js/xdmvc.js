@@ -315,9 +315,10 @@ var XDmvc = {
 
         var configs = this.configuredRoles;
 
-        if(this.serverSocket)
+        if(this.server.serverSocket)
             this.server.serverSocket.emit('roleConfigs', configs );
 
+        console.log(JSON.stringify(configs));
         this.sendToAll("roleConfigurations", {role: role, configurations : configurations});
     },
 
