@@ -313,6 +313,11 @@ var XDmvc = {
             }
         }, this);
 
+        var configs = this.configuredRoles;
+
+        if(this.serverSocket)
+            this.server.serverSocket.emit('roleConfigs', configs );
+
         this.sendToAll("roleConfigurations", {role: role, configurations : configurations});
     },
 
@@ -500,6 +505,9 @@ XDmvcServer.prototype.connect = function connect (){
     this.serverSocket = socket;
 
     socket.emit('id', XDmvc.deviceId);
+
+    socket.emit('roleConfigs', XDmvc.configuredRoles); //if note yet configured, they will be sent in configureRoles
+
     //Silvan
 
     var server = this;
