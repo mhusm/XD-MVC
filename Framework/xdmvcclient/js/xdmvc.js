@@ -3,8 +3,6 @@
 /*jslint plusplus: true */
 
 
-// hasdhfa
-
 var XDmvc = {
 	peer : null,
     defaultRole : "sync-all",
