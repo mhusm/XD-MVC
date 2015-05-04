@@ -498,7 +498,7 @@ function XDmvcServer(host, port, ajaxPort, iceServers){
 XDmvcServer.prototype.connect = function connect (){
     // If not connected already
     //Silvan
-   var socket = io.connect('localhost:3000');
+   var socket = io.connect(this.host + ':3000');
     //  var socket = io();
     socket.on('message', function (msg) {
         ConnectedDevice.prototype.handleData(msg)
@@ -509,7 +509,7 @@ XDmvcServer.prototype.connect = function connect (){
 
     socket.emit('id', XDmvc.deviceId);
 
-    socket.emit('roleConfigs', {roles : XDmvc.configuredRoles}); //if not yet configured, they will be sent in configureRoles
+    socket.emit('roleConfigs', {roles : XDmvc.configuredRoles}); //if not yet configured, they will be sent in configureRole
 
     //Silvan
 
