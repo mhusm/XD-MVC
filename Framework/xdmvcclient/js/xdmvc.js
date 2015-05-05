@@ -232,8 +232,10 @@ var XDmvc = {
         if (XDmvc.syncData[id].updateServer) {
             XDmvc.sendToServer("sync", msg);
         }
+        var event = new CustomEvent('XDSyncData', {'detail' : id});
+        document.dispatchEvent(event);
 
- 	},
+    },
 
 	synchronize : function (data, callback, id, updateServer) {
         // if no id given, generate one. Though this may not always work. It could be better to enforce IDs.
