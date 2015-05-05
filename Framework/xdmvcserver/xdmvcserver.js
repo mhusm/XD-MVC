@@ -46,8 +46,25 @@ XDmvcServer.prototype.startPeerSever = function(port){
         that.emit("connected", id);
 
         socket.on('disconnect', function(){
+            //TODO: handle disconnect
             console.log('user disconnected ' + socket.id);
         });
+
+        socket.on('connectTo', function(msg) {
+            // store the id's in peers.connectedPeers
+
+
+            if(xdServer.peers[msg.partnerId] !== undefined) {
+                xdServer.peers[msg.myId].connectedPeers.push(msg.partnerId);
+                xdServer.peers[msg.partnerId].connectedPeers.push(msg.myId);
+            } else {
+                //TODO: send back error
+            }
+
+
+
+        });
+
 
         socket.on('message', function(msg){
 
@@ -76,7 +93,15 @@ XDmvcServer.prototype.startPeerSever = function(port){
         });
 
         socket.on('id', function(msg){
-            console.log('match peerId ' + msg  + ' to socketioId ' + id);
+            console.log('match deviceId ' + msg  + ' to socketioId ' + id);
+            xdServer.peers[msg] = {
+                'id': msg,
+                'name': undefined,
+                'role': undefined,
+                'roles': [],
+                'session': undefined,
+                'connectedPeers' : []
+            };
             xdServer.mapping[msg] = id;
         });
 
@@ -87,43 +112,12 @@ XDmvcServer.prototype.startPeerSever = function(port){
 
 
     });
-    //Silvan
 
 
-    var pserver = new PeerServer({
-        port: port,
-        allow_discovery: true
-    });
-    var that = this;
 
-	pserver.on('connection', function(id) {
-        that.peers[id] = {
-            'id': id,
-            'name': undefined,
-            'role': undefined,
-            'roles': [],
-            'session': undefined
-        };
-        that.emit("connected", id);
-    });
-
-	pserver.on('disconnect', function(id) {
-        if (that.peers[id].session !== undefined) {
-            var ps = that.sessions[that.peers[id].session].peers;
-            var index = ps.indexOf(id);
-            if (index > -1) {
-                ps.splice(index, 1);
-            }
-
-            if (ps.length === 0) {
-                // session has no more users -> delete it
-                delete that.sessions[that.peers[id].session];
-            }
-        }
-        delete that.peers[id];
-        that.emit("disconnected", id);
-    });
 };
+
+
 
 //Silvan
 XDmvcServer.prototype.isInterested = function isInterested(receiver, dataId){
