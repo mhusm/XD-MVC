@@ -116,16 +116,12 @@ var XDmvc = {
         return XDmvc.connectedDevices.find(function (c) {return c.id === peerId; });
     },
 
-    addConnectedDevice: function(connection){
-        var conDev =  XDmvc.connectedDevices.find(function (c) {return c.connection === connection; });
+    addConnectedDevice: function(partnerId){
+        var conDev =  XDmvc.connectedDevices.find(function (c) {return cid === partnerId; });
         if (!conDev){
-            conDev = new ConnectedDevice(connection, connection.peer);
+            conDev = new ConnectedDevice(partnerId);
             XDmvc.connectedDevices.push(conDev);
-            XDmvc.sortConnections(XDmvc.compareConnections);
-            var index = XDmvc.attemptedConnections.findIndex(function(element){ return conDev.id === connection.peer});
-            if (index > -1) {
-                XDmvc.attemptedConnections.splice(index, 1);
-            }
+            //XDmvc.sortConnections(XDmvc.compareConnections);
         }
         return conDev;
     },
@@ -160,11 +156,8 @@ var XDmvc = {
 
 
     sendToAll : function (msgType, data) {
-		var len = XDmvc.connectedDevices.length,
-            i;
-		for (i = 0; i < len; i++) {
-			XDmvc.connectedDevices[i].send(msgType, data);
-		}
+        if(this.server) //TODO: maybe this is overkill. only because we have to make sure we have a connection to the server (e.g. in init)
+		    this.server.sendMsg('message', {type: msgType, data: data, interestedDevices : XDmvc.connectedDevices.map(function(device) { return device.id;})});
 	},
 
     /*
@@ -196,15 +189,17 @@ var XDmvc = {
         var interestedDevices = [];
 		for (i = 0; i < len; i++) {
             var conDev = XDmvc.connectedDevices[i];
-			var con = conDev.connection;
- 			if (con.open &&  conDev.isInterested(id)){
- 				con.send(msg);
+ 			if (conDev.isInterested(id)){
                 interestedDevices.push(conDev.id);
                 console.log("send sync to interested id: " + conDev.id);
 			}
 		}
 
+        //Version 1
         msg.interestedDevices = interestedDevices;
+
+        //Version 2
+        // msg.interestedDevices =  XDmvc.connectedDevices.map(function(device) { return device.id;});
 
         //Silvan
         this.server.serverSocket.emit('message', msg);
@@ -488,6 +483,7 @@ XDmvcServer.prototype.connect = function connect (){
     }
 
     // Check periodically who is connected.
+    var server = this;
     this.requestAvailableDevices();
     window.setInterval(function(){
         server.requestAvailableDevices();}, 5000);
@@ -503,7 +499,11 @@ XDmvcServer.prototype.handleSocket = function handleSocket (socket){
         console.log('message ' + msg);
     });
 
-    socket.on('error', function(error) {
+    socket.on('connect', function(msg) {
+        socket.emit('id', XDmvc.deviceId);
+    });
+
+    socket.on('err', function(error) {
         XDmvcServer.prototype.handleError(error);
     });
 };
@@ -513,7 +513,7 @@ XDmvcServer.prototype.connectToDevice = function connectToDevice (deviceId) {
     // Check if connection exists already
     if (!XDmvc.connectedDevices.concat(XDmvc.attemptedConnections)
             .some(function (el) {return el.id === deviceId; })) {
-        XDmvc.attemptedConnections.push(connDev);
+        var connDev =  XDmvc.addConnectedDevice(deviceId)
 
         this.sendMsg('connectTo', {partnerId: deviceId, myId: XDmvc.deviceId});
 
