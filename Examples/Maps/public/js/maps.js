@@ -6,7 +6,7 @@ function initialize() {
     $("#myDeviceId").text(XDmvc.deviceId);
     $("#inputDeviceId").val(XDmvc.deviceId);
     XDmvc.removeRole("sync-all");
-    XDmvc.addRole("Viewer");
+    XDmvc.addRole("viewer");
 
 
     var mapOptions = {
@@ -103,6 +103,7 @@ function initialize() {
 
     XDmvc.configureRole("mirror", [{"center":mirrorCenter}, {"zoom":mirrorZoom}]);
     XDmvc.configureRole("viewer", []);
+    XDmvc.configureRole("all", ["center", "mapType", "zoom"]);
     XDmvc.configureRole("overview", [{"bounds":showBounds}]);
 
     $("#menu-button").on("click", function(){
