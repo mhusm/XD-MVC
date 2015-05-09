@@ -625,6 +625,45 @@ XDmvcServer.prototype.disconnect = function disconnect (){
 };
 
 /*
+Virtual Connection for Client-Server Architecture
+------------------------------------------------
+*/
+
+function VirtualConnection(serverSocket) {
+    this.server = serverSocket;
+    this.peer = null;
+    this.callbackMap = {};
+}
+
+// connect to another peer by sending an open to the other peer, via the server
+VirtualConnection.prototype.virtualConnect = function virtualConnect(remoteDeviceId) {
+    this.peer = remoteDeviceId;
+    var wrapper = new WrapperMessage(null, XDmvc.deviceId, [remoteDeviceId]);
+    server.emit('wrapMsg', wrapper);
+}
+
+
+VirtualConnection.prototype.handleEvent = function(tag, msg) {
+    this.callbackMap[tag].apply(msg);
+}
+
+VirtualConnection.prototype.on = function(tag, callback) {
+    this.callbackMap.tag = callback;
+}
+
+VirtualConnection.prototype.on = function(tag, callback) {
+    this.callbackMap.tag = callback;
+}
+
+
+function WrapperMessage(originalMsg, sender, interestedDev) {
+    this.originalMsg = originalMsg;
+    this.sender = sender;
+    this.interestedDev = interestedDev;
+}
+
+
+/*
 Connected Devices
 -----------------
  */
