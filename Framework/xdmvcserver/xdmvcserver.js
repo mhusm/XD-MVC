@@ -46,7 +46,13 @@ XDmvcServer.prototype.startPeerSever = function(port){
 
         socket.on('disconnect', function(){
             //TODO: handle disconnect
-            console.log('user disconnected ' + socket.id);
+            //console.log('user disconnected ' + socket.id);
+            var deviceId;
+            for(var peer in xdServer.peers)
+                if (xdServer.peers[peer] && xdServer.peers[peer].socketioId === socket.id){
+                    deviceId = peer;
+                }
+            console.log('user disconnected ' + deviceId);
         });
 
         socket.on('connectTo', function(msg) {
@@ -72,9 +78,12 @@ XDmvcServer.prototype.startPeerSever = function(port){
 
         });
 
+        socket.on('error', function(err){
+            console.log('socket Error: ' + err);
+        });
 
         socket.on('wrapMsg', function(msg){
-            console.log('message: ' + msg + ' for ' + msg.receiver);
+            //console.log('message: ' + msg + ' for ' + msg.receiver);
             var socketId = xdServer.peers[msg.receiver].socketioId;
             io.sockets.connected[socketId].emit('wrapMsg', msg); //send message only to interestedDevice
         });

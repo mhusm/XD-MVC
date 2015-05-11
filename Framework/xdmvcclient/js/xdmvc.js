@@ -512,6 +512,10 @@ XDmvcServer.prototype.connect = function connect () {
         server.handleConnection(conn);
     });
 
+    socket.on('error', function(err){
+        console.log('socket Error: ' + err);
+    });
+
     if (XDmvc.reconnect) {
         XDmvc.connectToStoredPeers();
     }
