@@ -27,7 +27,6 @@ function XDmvcServer() {
     EventEmitter.call(this);
     this.peers = {};
     this.sessions = {};
-    this.mapping = {};
     this.configuredRoles = {};
 }
 util.inherits(XDmvcServer, EventEmitter);
@@ -53,10 +52,13 @@ XDmvcServer.prototype.startPeerSever = function(port){
         socket.on('connectTo', function(msg) {
             // store the id's in peers.connectedPeers
 
-            if(xdServer.peers[msg.partnerId] !== undefined) {
-                xdServer.peers[msg.myId].connectedPeers.push(msg.partnerId);
-                xdServer.peers[msg.partnerId].connectedPeers.push(msg.myId);
-                console.log(msg.myId + ' tries to connect to ' + msg.partnerId+ ' : succeeded !');
+            var receiver = msg.receiver;
+            if(xdServer.peers[receiver] !== undefined) {
+                xdServer.peers[msg.sender].connectedPeers.push(receiver);
+                xdServer.peers[receiver].connectedPeers.push(msg.sender);
+                var socketId = xdServer.peers[receiver].socketioId;
+                console.log(msg.sender + ' tries to connect to ' + receiver+ ' : succeeded !');
+                io.sockets.connected[socketId].emit('connectTo', msg);
             } else {
                 var err = {
                         type : "peer-unavailable",
@@ -71,49 +73,27 @@ XDmvcServer.prototype.startPeerSever = function(port){
         });
 
 
-        socket.on('message', function(msg){
-
-            // VERSION 1
-            //console.log('message: ' + msg + ' for ' + msg.interestedDevices);
-
-            msg.interestedDevices.forEach(function(peerId) {
-                var socketId = xdServer.mapping[peerId];
-                io.sockets.connected[socketId].emit('message', msg); //send message only to interestedDevice
-            });
-
-
-            //VERSION 2
-            for(peer in xdServer.peers) { //TODO: correct usage ???
-                if(xdServer.isInterested(peer, msg.id)){
-                    console.log(peer + ' is interested on ' + msg.id);
-                    var socketId = xdServer.mapping[peer];
-                    if(socketId !== this.id) {
-                        console.log('sending update to: ' + socketId);
-                        io.sockets.connected[socketId].emit('message', msg); //send message only to interestedDevice
-                    }
-
-                }
-            };
-
+        socket.on('wrapMsg', function(msg){
+            console.log('message: ' + msg + ' for ' + msg.receiver);
+            var socketId = xdServer.peers[msg.receiver].socketioId;
+            io.sockets.connected[socketId].emit('wrapMsg', msg); //send message only to interestedDevice
         });
+
 
         socket.on('id', function(msg){
             console.log('match deviceId ' + msg  + ' to socketioId ' + id);
             xdServer.peers[msg] = {
                 'id': msg,
+                'socketioId': this.id,
                 'name': undefined,
                 'role': undefined,
                 'roles': [],
                 'session': undefined,
                 'connectedPeers' : []
             };
-            xdServer.mapping[msg] = id;
         });
 
-        socket.on('roleConfigs', function(msg) {
-            console.log('configuredRoles: ' + JSON.stringify(msg.roles));
-            xdServer.configuredRoles = msg.roles;
-        });
+
 
 
     });

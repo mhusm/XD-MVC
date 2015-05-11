@@ -497,51 +497,38 @@ function XDmvcServer(host, port, ajaxPort, iceServers){
     ];
 }
 
-XDmvcServer.prototype.connect = function connect (){
+XDmvcServer.prototype.connect = function connect () {
     // If not connected already
     //Silvan
     var socket = io.connect(this.host + ':3000');
-    //  var socket = io();
-    socket.on('message', function (msg) {
-        ConnectedDevice.prototype.handleData(msg)
-        console.log('message ' + msg);
-    });
-
     this.serverSocket = socket;
 
     socket.emit('id', XDmvc.deviceId);
 
-    socket.emit('roleConfigs', {roles : XDmvc.configuredRoles}); //if not yet configured, they will be sent in configureRole
+    var server = this;
+    // another Peer called virtualConnect(...)
+    socket.on('connectTo', function (msg) {
+        var conn = new VirtualConnection(this, msg.sender);
+        server.handleConnection(conn);
+    });
+
+    if (XDmvc.reconnect) {
+        XDmvc.connectToStoredPeers();
+    }
+
+    // Check periodically who is connected.
+    this.requestAvailableDevices();
+    window.setInterval(function () {
+        server.requestAvailableDevices();
+    }, 5000);
+
+    this.send('device', this.device);
+    this.send('roles', this.roles);
 
     //Silvan
 
-    var server = this;
-    if (!this.peer) {
-        this.peer = new Peer(XDmvc.deviceId, {
-            host: this.host,
-            port: this.port,
-//                           debug: 3,
-            config: {
-                'iceServers': this.iceServers
-            }
-        });
-        this.peer.on('connection', function(conn){server.handleConnection(conn);});
-        this.peer.on('error', function(err){server.handleError(err);});
-        if (XDmvc.reconnect) {
-            XDmvc.connectToStoredPeers();
-        }
 
-        // Check periodically who is connected.
-        this.requestAvailableDevices();
-        window.setInterval(function(){
-            server.requestAvailableDevices();}, 5000);
-
-        this.send('device', this.device);
-        this.send('roles', this.roles);
-    } else{
-        console.warn("Already connected.")
-    }
-};
+}
 
 XDmvcServer.prototype.send = function send (type, data, callback){
     var url = window.location.protocol +"//" +this.host +":" +this.ajaxPort;
@@ -573,7 +560,9 @@ XDmvcServer.prototype.connectToDevice = function connectToDevice (deviceId) {
     // Check if connection exists already
     if (!XDmvc.connectedDevices.concat(XDmvc.attemptedConnections)
             .some(function (el) {return el.id === deviceId; })) {
-        var conn = this.peer.connect(deviceId, {serialization : 'binary', reliable: true});
+        //var conn = this.peer.connect(deviceId, {serialization : 'binary', reliable: true});
+        var conn = new VirtualConnection(this.serverSocket, deviceId);
+        conn.virtualConnect(deviceId);
         var connDev = XDmvc.addConnectedDevice(conn);
         conn.on('error', function (err) { connDev.handleError(err, this)});
         conn.on('open', function () { connDev.handleOpen(this)});
@@ -629,38 +618,60 @@ XDmvcServer.prototype.disconnect = function disconnect (){
  ------------------------------------------------
  */
 
-function VirtualConnection(serverSocket) {
+function VirtualConnection(serverSocket, peerId) {
+    var vConn = this;
+
+    serverSocket.on('wrapMsg', function (msg) {
+        var sender = XDmvc.getConnectedDevice(msg.sender);
+        sender.connection.handleEvent(msg.eventTag, msg);
+    });
+
+    serverSocket.on('error', function(err) {
+        vConn.handleEvent('error', err);
+    });
+
     this.server = serverSocket;
-    this.peer = null;
+    this.peer = peerId;
     this.callbackMap = {};
+}
+
+
+
+VirtualConnection.prototype.send = function send(msg) {
+    this.virtualSend(msg,'data');
+}
+
+VirtualConnection.prototype.virtualSend = function virtualSend( originalMsg, eventTag) {
+    originalMsg.receiver = this.peer;
+    originalMsg.sender =XDmvc.deviceId;
+    originalMsg.eventTag = eventTag;
+    this.server.emit('wrapMsg', originalMsg);
 }
 
 // connect to another peer by sending an open to the other peer, via the server
 VirtualConnection.prototype.virtualConnect = function virtualConnect(remoteDeviceId) {
-    this.peer = remoteDeviceId;
-    var wrapper = new WrapperMessage(null, XDmvc.deviceId, [remoteDeviceId]);
-    server.emit('wrapMsg', wrapper);
+    this.server.emit('connectTo', {receiver:remoteDeviceId, sender:XDmvc.deviceId});
 }
 
+
+VirtualConnection.prototype.on = function on(eventTag, callback){
+    this.callbackMap[eventTag] = callback;
+}
 
 VirtualConnection.prototype.handleEvent = function(tag, msg) {
-    this.callbackMap[tag].apply(msg);
+    this.callbackMap[tag].apply(undefined,[msg]); //call the handler that was set in the on(...) method
 }
 
-VirtualConnection.prototype.on = function(tag, callback) {
-    this.callbackMap.tag = callback;
+VirtualConnection.prototype.open = function() {
+    return true; //TODO: handle appropriately
 }
 
-VirtualConnection.prototype.on = function(tag, callback) {
-    this.callbackMap.tag = callback;
+VirtualConnection.prototype.close = function() {
+    this.server.emit('close');
 }
 
 
-function WrapperMessage(originalMsg, sender, interestedDev) {
-    this.originalMsg = originalMsg;
-    this.sender = sender;
-    this.interestedDev = interestedDev;
-}
+
 
 
 /*
