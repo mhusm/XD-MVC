@@ -211,23 +211,14 @@ var XDmvc = {
         var len = XDmvc.connectedDevices.length,
             i;
 
-
-        var interestedDevices = [];
         for (i = 0; i < len; i++) {
             var conDev = XDmvc.connectedDevices[i];
             var con = conDev.connection;
             if (con.open &&  conDev.isInterested(id)){
-                con.send(msg);
-                interestedDevices.push(conDev.id);
                 console.log("send sync to interested id: " + conDev.id);
+                con.send(msg);
             }
         }
-
-        msg.interestedDevices = interestedDevices;
-
-        //Silvan
-        this.server.serverSocket.emit('message', msg);
-        //Silvan
 
         if (XDmvc.syncData[id].updateServer) {
             XDmvc.sendToServer("sync", msg);
