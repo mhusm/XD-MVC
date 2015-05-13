@@ -302,9 +302,7 @@ var XDmvc = {
                 this.configuredRoles[role][config] = null;
             } else {
                 var keys  = Object.keys(config);
-                //Silvan
-                this.configuredRoles[role][keys[0]] = null; //config[keys[0]]; //TODO: why function ??
-                //Silvan
+                this.configuredRoles[role][keys[0]] = config[keys[0]];
             }
         }, this);
 
