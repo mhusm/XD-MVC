@@ -4,11 +4,11 @@
 var XDmvc = {
 	peer : null,
     defaultRole : "sync-all",
-	connectedDevices : [],
+	connectedDevices : [], // TODO maybe rename?
     attemptedConnections : [],
 	deviceId : undefined,
     device: {},
-    othersDevices: {small:0, medium:0, large:0},
+    othersDevices: {small:0, medium:0, large:0}, //TODO deviceTypes
 	syncData : {},
 	lastSyncId : 0,
 	storedPeers: [],
@@ -655,6 +655,8 @@ ConnectedDevice.prototype.handleData = function(msg){
                 } else {
                     XDmvc.update(msg.data, msg.id, msg.arrayDelta);
                 }
+                event = new CustomEvent('XDsync', {'detail': {data: msg.data, sender: this.id}});
+                document.dispatchEvent(event);
                 break;
             case 'role':
                 if (msg.operation === "add") {
