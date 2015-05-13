@@ -535,10 +535,7 @@ XDmvcServer.prototype.connectToDevice = function connectToDevice (deviceId) {
             .some(function (el) {return el.id === deviceId; })) {
         var conn = this.peer.connect(deviceId, {serialization : 'binary', reliable: true});
         var connDev = XDmvc.addConnectedDevice(conn);
-        conn.on('error', function (err) { connDev.handleError(err, this)});
-        conn.on('open', function () { connDev.handleOpen(this)});
-        conn.on('data', function (msg) { connDev.handleData(msg)});
-        conn.on('close', function () { connDev.handleClose(this)});
+        connDev.installHandlers(conn);
         XDmvc.attemptedConnections.push(connDev);
     } else {
         console.warn("already connected");
@@ -566,11 +563,7 @@ XDmvcServer.prototype.handleError = function handleError (err){
 
 XDmvcServer.prototype.handleConnection = function handleConnection (connection){
     var conDev = XDmvc.addConnectedDevice(connection);
-    connection.on('error', function (err) { conDev.handleError(err, this)});
-    connection.on('open', function () { conDev.handleOpen(this)});
-    connection.on('data', function (msg) { conDev.handleData(msg)});
-    connection.on('close', function () { conDev.handleClose(this)});
-
+    conDev.installHandlers(connection);
     XDmvc.attemptedConnections.push(conDev);
 
     // Flag that this peer should receive state on open
@@ -686,13 +679,13 @@ ConnectedDevice.prototype.handleError = function handleError (err, connection){
     document.dispatchEvent(event);
 };
 
-ConnectedDevice.prototype.handleOpen = function handleOpen (conn){
-    XDmvc.addConnectedDevice(conn);
-    if (XDmvc.storedPeers.indexOf(conn.peer) === -1) {
-        XDmvc.storedPeers.push(conn.peer);
+ConnectedDevice.prototype.handleOpen = function handleOpen (){
+    if (XDmvc.storedPeers.indexOf(this.id) === -1) {
+        XDmvc.storedPeers.push(this.id);
         XDmvc.storePeers();
     }
-    var others = XDmvc.connectedDevices.filter(function (el) {return el.id !== conn.peer; })
+    var thisDevice = this;
+    var others = XDmvc.connectedDevices.filter(function (el) {return el.id !== thisDevice.id; })
         .map(function (el) {return el.id; });
     this.send('connections', others);
 
@@ -717,3 +710,11 @@ ConnectedDevice.prototype.disconnect = function disconnect (){
     XDmvc.removeConnection(this);
 
 };
+
+ConnectedDevice.prototype.installHandlers = function installHandlers(conn){
+    var that = this;
+    conn.on('error', function (err) { that.handleError(err)});
+    conn.on('open', function () { that.handleOpen()});
+    conn.on('data', function (msg) { that.handleData(msg)});
+    conn.on('close', function () { that.handleClose()});
+}
