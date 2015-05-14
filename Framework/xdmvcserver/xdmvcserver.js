@@ -78,6 +78,19 @@ XDmvcServer.prototype.startPeerSever = function(port){
 
         });
 
+        socket.on('readyForOpen', function(msg) {
+            //one of both is identical to this.id
+            var socketidA = xdServer.peers[msg.recA].socketioId;
+            var socketidB = xdServer.peers[msg.recB].socketioId;
+            // send open Event to both peers
+            var msgA = {sender:msg.recB, eventTag:'open'};
+            var msgB = {sender:msg.recA, eventTag:'open'};
+
+            //TODO:maybe check if really connected
+            io.sockets.connected[socketidA].emit('wrapMsg', msgA);
+            io.sockets.connected[socketidB].emit('wrapMsg', msgB);
+        });
+
         socket.on('error', function(err){
             console.log('socket Error: ' + err);
         });

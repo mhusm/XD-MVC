@@ -499,6 +499,9 @@ XDmvcServer.prototype.connect = function connect () {
     socket.on('connectTo', function (msg) {
         var conn = new VirtualConnection(this, msg.sender);
         server.handleConnection(conn);
+        //send readyForOpen
+        socket.emit('readyForOpen', {recA: XDmvc.deviceId, recB: msg.sender});
+
     });
 
     socket.on('error', function(err){
@@ -555,13 +558,13 @@ XDmvcServer.prototype.connectToDevice = function connectToDevice (deviceId) {
             .some(function (el) {return el.id === deviceId; })) {
         //var conn = this.peer.connect(deviceId, {serialization : 'binary', reliable: true});
         var conn = new VirtualConnection(this.serverSocket, deviceId);
-        conn.virtualConnect(deviceId);
         var connDev = XDmvc.addConnectedDevice(conn);
-        conn.on('error', function (err) { connDev.handleError(err, this)});
-        conn.on('open', function () { connDev.handleOpen(this)});
+        conn.on('error', function (err) { connDev.handleError(err)});
+        conn.on('open', function () { connDev.handleOpen(conn)});
         conn.on('data', function (msg) { connDev.handleData(msg)});
-        conn.on('close', function () { connDev.handleClose(this)});
+        conn.on('close', function () { connDev.handleClose()});
         XDmvc.attemptedConnections.push(connDev);
+        conn.virtualConnect(deviceId);
     } else {
         console.warn("already connected");
     }
@@ -589,7 +592,7 @@ XDmvcServer.prototype.handleError = function handleError (err){
 XDmvcServer.prototype.handleConnection = function handleConnection (connection){
     var conDev = XDmvc.addConnectedDevice(connection);
     connection.on('error', function (err) { conDev.handleError(err, this)});
-    connection.on('open', function () { conDev.handleOpen(this)});
+    connection.on('open', function () { conDev.handleOpen(connection)});
     connection.on('data', function (msg) { conDev.handleData(msg)});
     connection.on('close', function () { conDev.handleClose(this)});
 
@@ -619,15 +622,10 @@ function VirtualConnection(serverSocket, peerId) {
         sender.connection.handleEvent(msg.eventTag, msg);
     });
 
-    serverSocket.on('error', function(err) {
-        vConn.handleEvent('error', err);
-    });
-
     this.server = serverSocket;
     this.peer = peerId;
     this.callbackMap = {};
 }
-
 
 
 VirtualConnection.prototype.send = function send(msg) {
