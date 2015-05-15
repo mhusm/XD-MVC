@@ -585,6 +585,7 @@ function ConnectedDevice(connection, id){
     this.id = id;
     this.roles = [];
     this.device = {};
+    this.latestData = {};
 }
 
 ConnectedDevice.prototype.isInterested = function(dataId){
@@ -655,6 +656,7 @@ ConnectedDevice.prototype.handleData = function(msg){
                 } else {
                     XDmvc.update(msg.data, msg.id, msg.arrayDelta);
                 }
+                this.latestData[msg.id] = msg.data; //TODO maybe handle array deltas?
                 event = new CustomEvent('XDsync', {'detail': {data: msg.data, sender: this.id}});
                 document.dispatchEvent(event);
                 break;
