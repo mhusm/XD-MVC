@@ -473,22 +473,10 @@ function XDmvcServer(host, port, ajaxPort, iceServers){
     this.ajaxPort = ajaxPort ? ajaxPort: 9001;
     this.port = port? port: 9000;
     this.host = host? host: document.location.hostname;
-    this.peer = null;
-    //Silvan
     this.serverSocket = null;
-    //Silvan
-    this.iceServers =  [
-        {url: 'stun:stun.l.google.com:19302'},
-        {url: 'stun:stun1.l.google.com:19302'},
-        {url: 'stun:stun2.l.google.com:19302'},
-        {url: 'stun:stun3.l.google.com:19302'},
-        {url: 'stun:stun4.l.google.com:19302'}
-    ];
 }
 
 XDmvcServer.prototype.connect = function connect () {
-    // If not connected already
-    //Silvan
     var socket = io.connect(this.host + ':3000');
     this.serverSocket = socket;
 
@@ -518,10 +506,6 @@ XDmvcServer.prototype.connect = function connect () {
 
     this.send('device', this.device);
     this.send('roles', this.roles);
-
-    //Silvan
-
-
 }
 
 XDmvcServer.prototype.send = function send (type, data, callback){
@@ -580,12 +564,6 @@ XDmvcServer.prototype.handleConnection = function handleConnection (connection){
     // Flag that this peer should receive state on open
     conDev.sendSync = true;
 
-};
-
-
-XDmvcServer.prototype.disconnect = function disconnect (){
-    this.peer.destroy(); //TODO:change for SocketIo
-    this.peer = null;
 };
 
 /*
