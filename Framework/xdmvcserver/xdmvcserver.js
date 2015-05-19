@@ -55,16 +55,25 @@ XDmvcServer.prototype.startPeerSever = function(port){
                     deviceId = peer;
                     connPeers =xdServer.peers[deviceId].connectedPeers;
                 }
-            var arrayLength = connPeers.length;
-            var msg = {sender:deviceId, eventTag:'close'};
-            for (var i = 0; i < arrayLength; i++) {
-                var peerObject= xdServer.peers[connPeers[i]]
-                if(peerObject) // otherwise the other one disconnected nearly simultaneously
-                    io.sockets.connected[peerObject.socketioId].emit('wrapMsg', msg); //send message only to interestedDevice
-            }
+            if(deviceId) {
+                var arrayLength = connPeers.length;
+                var msg = {sender:deviceId, eventTag:'close'};
+                for (var i = 0; i < arrayLength; i++) {
+                    var peerObject= xdServer.peers[connPeers[i]]
+                    if(peerObject){// otherwise the other one disconnected nearly simultaneously
+                        io.sockets.connected[peerObject.socketioId].emit('wrapMsg', msg); //send message only to interestedDevice
+                        var removeDeviceId = peerObject.connectedPeers.filter(
+                            function(thisDevice){ return thisDevice !== deviceId;}
+                        ); // splice the array at index of deviceId
+                        peerObject.connectedPeers = removeDeviceId;
+                    }
 
-            delete xdServer.peers[deviceId]; //delete peer that disconnected
-            console.log('user disconnected ' + deviceId);
+                }
+                delete xdServer.peers[deviceId]; //delete peer that disconnected
+            } else
+                console.log('peer was not in peers --> TODO:check logic');
+
+            console.log('user '+ deviceId + ' disconnected --> server sent close event to connected peers: ' + connPeers);
         });
 
         socket.on('connectTo', function(msg) {
