@@ -66,11 +66,14 @@ XDmvcServer.prototype.startPeerSever = function(port){
                 console.log(msg.sender + ' tries to connect to ' + receiver+ ' : succeeded !');
                 io.sockets.connected[socketId].emit('connectTo', msg);
             } else {
+
                 var err = {
+                        eventTag : 'error',
+                        sender : msg.receiver, //
                         type : "peer-unavailable",
                         message : "the peer you wanted to connect to is not available"
                 };
-                io.sockets.connected[this.id].emit('err', err);
+                io.sockets.connected[this.id].emit('wrapMsg', err);
                 console.log(msg.myId + ' tries to connect to ' + msg.partnerId + ' : failed ! (peer not available)');
             }
 
@@ -125,15 +128,6 @@ XDmvcServer.prototype.startPeerSever = function(port){
 };
 
 
-
-//Silvan
-XDmvcServer.prototype.isInterested = function isInterested(receiver, dataId){
-    var roles = this.configuredRoles;
-    return this.peers[receiver].roles.some(function(role){
-            return roles[role] && typeof roles[role][dataId] !== "undefined" ;
-        }) ;
-};
-//Silvan
 
 XDmvcServer.prototype.startAjaxServer = function(port){
     var that = this;

@@ -506,10 +506,6 @@ XDmvcServer.prototype.connect = function connect () {
 
     });
 
-    socket.on('error', function(err){
-        console.log('socket Error: ' + err);
-    });
-
     if (XDmvc.reconnect) {
         XDmvc.connectToStoredPeers();
     }
