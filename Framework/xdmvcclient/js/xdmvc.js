@@ -557,7 +557,7 @@ XDmvcServer.prototype.connectToDevice = function connectToDevice (deviceId) {
         //var conn = this.peer.connect(deviceId, {serialization : 'binary', reliable: true});
         var conn = new VirtualConnection(this.serverSocket, deviceId);
         var connDev = XDmvc.addConnectedDevice(conn);
-        conn.on('error', function (err) { connDev.handleError(err)});
+        conn.on('error', function (err) { connDev.handleError(err,conn)});
         conn.on('open', function () { connDev.handleOpen(conn)});
         conn.on('data', function (msg) { connDev.handleData(msg)});
         conn.on('close', function () { connDev.handleClose()});
@@ -568,31 +568,12 @@ XDmvcServer.prototype.connectToDevice = function connectToDevice (deviceId) {
     }
 };
 
-XDmvcServer.prototype.handleError = function handleError (err){
-    XDmvc.cleanUpConnections();
-    var event = new CustomEvent('XDerror');
-    document.dispatchEvent(event);
-
-    if (err.type === "peer-unavailable") {
-        var peerError = "Could not connect to peer ";
-        var peer = err.message.substring(peerError.length);
-        var conn = XDmvc.getAttemptedConnection(peer);
-        var index = XDmvc.attemptedConnections.indexOf(conn);
-        if (index > -1) {
-            XDmvc.attemptedConnections.splice(index, 1);
-        }
-        console.info(err.message);
-    } else {
-        console.warn(err);
-    }
-};
-
 XDmvcServer.prototype.handleConnection = function handleConnection (connection){
     var conDev = XDmvc.addConnectedDevice(connection);
-    connection.on('error', function (err) { conDev.handleError(err, this)});
+    connection.on('error', function (err) { conDev.handleError(err, connection)});
     connection.on('open', function () { conDev.handleOpen(connection)});
     connection.on('data', function (msg) { conDev.handleData(msg)});
-    connection.on('close', function () { conDev.handleClose(this)});
+    connection.on('close', function () { conDev.handleClose()});
 
     XDmvc.attemptedConnections.push(conDev);
 
@@ -603,7 +584,7 @@ XDmvcServer.prototype.handleConnection = function handleConnection (connection){
 
 
 XDmvcServer.prototype.disconnect = function disconnect (){
-    this.peer.destroy();
+    this.peer.destroy(); //TODO:change for SocketIo
     this.peer = null;
 };
 
@@ -649,11 +630,12 @@ VirtualConnection.prototype.on = function on(eventTag, callback){
 }
 
 VirtualConnection.prototype.handleEvent = function(tag, msg) {
-    if(eventTag === 'open')
-        this.open = true;
-    else if(eventTag === 'close')
-        this.open = false;
-
+    if(tag !== 'data'){
+        if(tag === 'open')
+            this.open = true;
+        else // close or error
+            this.open = false;
+    }
     this.callbackMap[tag].apply(undefined,[msg]); //call the handler that was set in the on(...) method
 }
 
