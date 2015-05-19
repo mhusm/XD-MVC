@@ -239,7 +239,7 @@ var XDmvc = {
         }
     },
 
-	update : function (newObj, id, arrayDelta) {
+	update : function (newObj, id, arrayDelta, keepChanges) {
         var observed =  XDmvc.syncData[id];
         if (Array.isArray(observed.data)) {
              if (arrayDelta) {
@@ -268,7 +268,9 @@ var XDmvc = {
             }
         }
         // Discard changes that were caused by the update
-        observed.observer.discardChanges();
+        if (!keepChanges) {
+            observed.observer.discardChanges();
+        }
 
 	},
 
