@@ -492,7 +492,9 @@ XDmvcServer.prototype.connect = function connect () {
     var socket = io.connect(this.host + ':3000');
     this.serverSocket = socket;
 
-    socket.emit('id', XDmvc.deviceId);
+    socket.on('connect', function() {
+        socket.emit('id', XDmvc.deviceId);
+    });
 
     var server = this;
     // another Peer called virtualConnect(...)
@@ -625,6 +627,7 @@ function VirtualConnection(serverSocket, peerId) {
     this.server = serverSocket;
     this.peer = peerId;
     this.callbackMap = {};
+    this.open = false;
 }
 
 
@@ -650,15 +653,16 @@ VirtualConnection.prototype.on = function on(eventTag, callback){
 }
 
 VirtualConnection.prototype.handleEvent = function(tag, msg) {
+    if(eventTag === 'open')
+        this.open = true;
+    else if(eventTag === 'close')
+        this.open = false;
+
     this.callbackMap[tag].apply(undefined,[msg]); //call the handler that was set in the on(...) method
 }
 
-VirtualConnection.prototype.open = function() {
-    return true; //TODO: handle appropriately
-}
-
 VirtualConnection.prototype.close = function() {
-    this.server.emit('close');
+    this.virtualSend(null, 'close');
 }
 
 
