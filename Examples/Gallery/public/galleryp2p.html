@@ -22,7 +22,7 @@
     <body>
         <polymer-element name="my-app"  >
             <template>
-                <xdmvc-connection reconnect="true"></xdmvc-connection>
+                <xdmvc-connection reconnect="true" port="9005" ajaxPort="9006"></xdmvc-connection>
 
                 <xdmvc-synchronised id="sync"
                                     objects='{"current": { "index":0}, "images": [],

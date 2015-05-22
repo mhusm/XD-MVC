@@ -414,9 +414,10 @@ Initialisation and configuration
             // If connected, disconnect and reconnect
             if (XDmvc.server) {
                 XDmvc.server.disconnect();
+                var oldServer = XDmvc.server;
                 XDmvc.server = null;
                 XDmvc.disconnectAll();
-                XDmvc.connectToServer();
+                XDmvc.connectToServer(oldServer.host, oldServer.port, oldServer.ajaxPort, oldServer.iceServers);
                 // TODO reconnect previous connections?
             }
         }
@@ -466,7 +467,7 @@ function XDmvcServer(host, port, ajaxPort, iceServers){
     this.port = port? port: 9000;
     this.host = host? host: document.location.hostname;
     this.peer = null;
-    this.iceServers =  [
+    this.iceServers = iceServers ? iceServers :  [
         {url: 'stun:stun.l.google.com:19302'},
         {url: 'stun:stun1.l.google.com:19302'},
         {url: 'stun:stun2.l.google.com:19302'},
