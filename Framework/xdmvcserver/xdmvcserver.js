@@ -49,18 +49,22 @@ XDmvcServer.prototype.startPeerSever = function(port){
             //console.log('user disconnected ' + socket.id);
             var deviceId;
             var connPeers;
+
             //There should be exactly one object in peers with socketioId === socket.id
             for(var peer in xdServer.peers)
                 if (xdServer.peers[peer] && xdServer.peers[peer].socketioId === socket.id){
                     deviceId = peer;
                     connPeers =xdServer.peers[deviceId].connectedPeers;
                 }
+            
+            delete xdServer.peers[deviceId]; //delete peer that disconnected
+
             if(deviceId) {
                 var arrayLength = connPeers.length;
                 var msg = {sender:deviceId, eventTag:'close'};
                 for (var i = 0; i < arrayLength; i++) {
                     var peerObject= xdServer.peers[connPeers[i]]
-                    if(peerObject){// otherwise the other one disconnected nearly simultaneously
+                    if(peerObject){// otherwise the other one disconnected nearly simultaneously or was connected to himself
                         io.sockets.connected[peerObject.socketioId].emit('wrapMsg', msg); //send message only to interestedDevice
                         var removeDeviceId = peerObject.connectedPeers.filter(
                             function(thisDevice){ return thisDevice !== deviceId;}
@@ -69,7 +73,7 @@ XDmvcServer.prototype.startPeerSever = function(port){
                     }
 
                 }
-                delete xdServer.peers[deviceId]; //delete peer that disconnected
+
             } else
                 console.log('peer was not in peers --> TODO:check logic');
 
@@ -121,9 +125,21 @@ XDmvcServer.prototype.startPeerSever = function(port){
         });
 
         socket.on('wrapMsg', function(msg){
-            //console.log('message: ' + msg + ' for ' + msg.receiver);
-            var socketId = xdServer.peers[msg.receiver].socketioId;
-            io.sockets.connected[socketId].emit('wrapMsg', msg); //send message only to interestedDevice
+            console.log('message: ' + msg + ' for ' + msg.receiver);
+            var connRec = xdServer.peers[msg.receiver];
+            if(connRec !== undefined)
+                io.sockets.connected[connRec.socketioId].emit('wrapMsg', msg); //send message only to interestedDevice
+            else {
+                var err = {
+                    eventTag : 'error',
+                    sender : msg.receiver,
+                    type : "peer-unavailable",
+                    message : "the peer you wanted to connect to is not available"
+                };
+                //Could also send close...
+                io.sockets.connected[this.id].emit('wrapMsg', err);
+                console.log(msg.sender + ' tried to send a message to ' + msg.receiver + ' which is not connected -> error');
+            }
         });
 
 

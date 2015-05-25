@@ -576,7 +576,8 @@ function VirtualConnection(serverSocket, peerId) {
 
     serverSocket.on('wrapMsg', function (msg) {
         var sender = XDmvc.getConnectedDevice(msg.sender);
-        sender.connection.handleEvent(msg.eventTag, msg);
+        if(sender !== undefined)
+            sender.connection.handleEvent(msg.eventTag, msg);
     });
 
     this.server = serverSocket;
@@ -600,6 +601,7 @@ VirtualConnection.prototype.virtualSend = function virtualSend( originalMsg, eve
 // connect to another peer by sending an open to the other peer, via the server
 VirtualConnection.prototype.virtualConnect = function virtualConnect(remoteDeviceId) {
     this.server.emit('connectTo', {receiver:remoteDeviceId, sender:XDmvc.deviceId});
+    this.open = true;
 }
 
 
@@ -611,7 +613,7 @@ VirtualConnection.prototype.handleEvent = function(tag, msg) {
     if(tag !== 'data'){
         if(tag === 'open')
             this.open = true;
-        else // close or error
+        else if(tag === 'close')// close or error
             this.open = false;
     }
     this.callbackMap[tag].apply(undefined,[msg]); //call the handler that was set in the on(...) method
@@ -721,9 +723,11 @@ ConnectedDevice.prototype.handleData = function(msg){
 };
 
 ConnectedDevice.prototype.handleError = function handleError (err, connection){
-    console.warn("Error in PeerConnection:" +connection.id );
+    console.warn("Error in PeerConnection:" + err.message );
     console.warn(err);
-    XDmvc.cleanUpConnections();
+    if(err.type === 'peer-unavailable')
+        XDmvc.removeConnection(this);
+
     var event = new CustomEvent('XDerror', {"detail": err});
     document.dispatchEvent(event);
 };
