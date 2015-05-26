@@ -8,7 +8,7 @@ var XDmvc = {
     attemptedConnections : [],
 	deviceId : undefined,
     device: {},
-    othersDevices: {small:0, medium:0, large:0}, //TODO deviceTypes
+    othersDevices: {small:0, medium:0, large:0, xlarge:0}, //TODO deviceTypes
 	syncData : {},
 	lastSyncId : 0,
 	storedPeers: [],
@@ -437,19 +437,42 @@ Initialisation and configuration
     },
 
     detectDevice: function(){
-        // TODO this is not optimal. Would be nice to detect physical size. But also type, such as tablet, TV etc.
-        var width = document.documentElement.clientWidth;
-        var height = document.documentElement.clientHeight;
-        var smaller = Math.min(width, height);
+        /* Device detection by Marko Živkovi?
+
+        Distinguishes between
+        Small => smartphones, medium => tablets, large => laptops, xlarge => desktop pcs
+        And it also works for accordingly sized browser windows.
+        see http://www.quirksmode.org/blog/archives/2012/07/more_about_devi.html
+         */
+
+        const MAX_SMALL_DIAM = 500;
+        const MAX_MEDIUM_DIAM = 1150;
+        const MAX_LARGE_DIAM = 1800;
+
+        var parser = new UAParser();
+        var scale = 1;
+        if (parser.getOS() !== 'Mac OS' && parser.getOS() !== 'iOS'){
+            scale = devicePixelRatio;
+        }
+
+        var width = window.innerWidth / scale;
+        var height = window.innerHeight / scale;
+
+        var diameter = Math.sqrt(width*width + height*height);
+
         this.device.width = width;
         this.device.height = height;
+        this.device.diam = diameter;
         this.device.id = this.deviceId;
-        if (smaller <= 500 ) {
-            this.device.type = "small";
-        } else if (smaller > 500 && smaller <= 800) {
+
+        if (diameter > MAX_LARGE_DIAM){
+            this.device.type = "xlarge";
+        } else if (diameter > MAX_MEDIUM_DIAM){
+            this.device.type = "large";
+        } else if (diameter > MAX_SMALL_DIAM){
             this.device.type = "medium";
         } else {
-            this.device.type = "large";
+            this.device.type = "small";
         }
 
         var name = localStorage.getItem("deviceName");
@@ -505,6 +528,9 @@ XDmvcServer.prototype.connect = function connect (){
         this.requestAvailableDevices();
         window.setInterval(function(){
             server.requestAvailableDevices();}, 5000);
+
+        var event = new CustomEvent('XDServer');
+        document.dispatchEvent(event);
 
         this.send('device', this.device);
         this.send('roles', this.roles);

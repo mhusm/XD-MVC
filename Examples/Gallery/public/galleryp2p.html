@@ -51,11 +51,6 @@
 
                 <xdmvc-devices id="devices"></xdmvc-devices>
 
-                <style>
-                    img {
-                        max-width: 50px;
-                    }
-                </style>
             </template>
  
             <script>
@@ -113,7 +108,13 @@
                             this.$.roles.addRole('owner');
                         } else {
                             if (connect !== XDmvc.deviceId) {
-                                XDmvc.connectTo(getQueryParams(window.location.search).connect);
+                                if (XDmvc.server) {
+                                    XDmvc.connectTo(getQueryParams(window.location.search).connect);
+                                } else { // not yet connected to server, wait for the connection event
+                                    document.addEventListener("XDServer", function(){
+                                        XDmvc.connectTo(getQueryParams(window.location.search).connect);
+                                    });
+                                }
                                 this.$.roles.addRole('visitor');
                             } else {
                                 this.$.roles.addRole('owner');
@@ -129,15 +130,6 @@
                         observer.open(function(changes){
                             that.updateViews();
                         });
-/*
-                        Object.observe(this.$.roles.isselected, function (changes) {
-                            that.updateViews();
-                        });
-
-                        Object.observe(this.$.roles.othersRoles, function (changes) {
-                            that.updateViews();
-                        });
-*/
                     }
 
                 });

@@ -145,14 +145,11 @@
                             if (connect !==  XDmvc.deviceId) {
                                 if (XDmvc.server) {
                                     XDmvc.connectTo(getQueryParams(window.location.search).connect);
-                                } else { // not yet connected to server, try again a bit later
-                                    // This is a bit of a hack and a better solution should be found.
-                                    // Maybe the framework should have a connected to server event and then these things could be triggered there.
-                                    setInterval(function(){
-                                        if (XDmvcServer) {
-                                            XDmvc.connectTo(getQueryParams(window.location.search).connect);
-                                        }
-                                    }, 5000);
+                                } else { // not yet connected to server, wait for the connection event
+                                    document.addEventListener("XDServer", function(){
+                                        console.log("server connected");
+                                        XDmvc.connectTo(getQueryParams(window.location.search).connect);
+                                    });
                                 }
                                 this.$.roles.addRole('visitor');
                             } else {
@@ -169,17 +166,7 @@
                         observer.open(function(changes){
                             that.updateViews();
                         });
-
-                        /*
-                        Object.observe(this.$.roles.isselected, function(){
-                            that.updateViews();
-                        });
-
-                        Object.observe(this.$.roles.othersRoles, function(){
-                           that.updateViews();
-                        });
-                        */
-                  }
+                    }
 
                 });
             </script>
