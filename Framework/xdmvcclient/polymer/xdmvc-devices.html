@@ -1,7 +1,7 @@
 <link rel="import" href="../../polymer/polymer.html">
 <link rel="import" href="xdmvc.html">
 
-<polymer-element name="xdmvc-devices" attributes="device othersDevices" >
+<polymer-element name="xdmvc-devices" attributes="device othersDevices connectedDevices availableDevices" >
     <template>
     </template>
  	<script>
@@ -9,6 +9,8 @@
 			created: function() {
                 this.othersDevices = XDmvc.othersDevices;
                 this.device = XDmvc.device;
+                this.connectedDevices = XDmvc.connectedDevices;
+                this.availableDevices = XDmvc.availableDevices;
             }
 		});
 	</script>

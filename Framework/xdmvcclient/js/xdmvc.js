@@ -532,8 +532,9 @@ XDmvcServer.prototype.connect = function connect (){
         var event = new CustomEvent('XDServer');
         document.dispatchEvent(event);
 
-        this.send('device', this.device);
-        this.send('roles', this.roles);
+        // TODO the server may not have the peer yet. This should be sent a bit later
+        this.send('device', XDmvc.device);
+        this.send('roles', XDmvc.roles);
     } else{
         console.warn("Already connected.")
     }
