@@ -563,8 +563,12 @@ XDmvcServer.prototype.handleConnection = function handleConnection (connection){
 
     // Flag that this peer should receive state on open
     conDev.sendSync = true;
-
 };
+
+XDmvcServer.prototype.disconnect = function disconnect (){
+   //TODO:how to handle (disconnect ?)
+};
+
 
 /*
  Virtual Connection for Client-Server Architecture
@@ -613,7 +617,7 @@ VirtualConnection.prototype.handleEvent = function(tag, msg) {
     if(tag !== 'data'){
         if(tag === 'open')
             this.open = true;
-        else if(tag === 'close')// close or error
+        else// close or error
             this.open = false;
     }
     this.callbackMap[tag].apply(undefined,[msg]); //call the handler that was set in the on(...) method
