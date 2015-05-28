@@ -21,6 +21,27 @@ var XDmvc = {
     configuredRoles: {}, // roles that have been configured in the system
     availableDevices: [],
     server : null,
+    
+    /*
+    ---------
+    Constants
+    ---------
+     */
+    peerToPeer : 'peer-to-peer',
+    clientServer : 'client-server',
+
+    /*
+    --------------------
+    Network Architecture
+    --------------------
+     */
+    network_architecture : this.peerToPeer, //default peerToPeer
+
+    setClientServer : function() { this.network_architecture = this.peerToPeer; },
+    setPeerToPeer : function() { this.network_architecture = this.clientServer; },
+
+    isClientServer : function() { return this.network_architecture === this.clientServer; },
+    isPeerToPeer : function() { return this.network_architecture === this.peerToPeer; },
 
 
     /*
