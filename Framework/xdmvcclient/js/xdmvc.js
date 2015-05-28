@@ -21,7 +21,7 @@ var XDmvc = {
     configuredRoles: {}, // roles that have been configured in the system
     availableDevices: [],
     server : null,
-    
+
     /*
     ---------
     Constants
@@ -37,8 +37,8 @@ var XDmvc = {
      */
     network_architecture : this.peerToPeer, //default peerToPeer
 
-    setClientServer : function() { this.network_architecture = this.peerToPeer; },
-    setPeerToPeer : function() { this.network_architecture = this.clientServer; },
+    setClientServer : function() { this.network_architecture = this.clientServer; },
+    setPeerToPeer : function() { this.network_architecture = this.peerToPeer; },
 
     isClientServer : function() { return this.network_architecture === this.clientServer; },
     isPeerToPeer : function() { return this.network_architecture === this.peerToPeer; },
@@ -420,7 +420,7 @@ var XDmvc = {
         this.deviceId = id? id:  "Id"+Date.now();
         localStorage.setItem("deviceId", this.deviceId);
 
-
+        XDmvc.setClientServer();
         XDmvc.loadPeers();
         XDmvc.detectDevice();
         XDmvc.host = document.location.hostname;
@@ -494,26 +494,63 @@ function XDmvcServer(host, port, ajaxPort, iceServers){
     this.ajaxPort = ajaxPort ? ajaxPort: 9001;
     this.port = port? port: 9000;
     this.host = host? host: document.location.hostname;
-    this.serverSocket = null;
+    this.peer = null;
+    this.serverSocket = null; // for Client-Server
+
+    this.iceServers = iceServers ? iceServers :  [
+        {url: 'stun:stun.l.google.com:19302'},
+        {url: 'stun:stun1.l.google.com:19302'},
+        {url: 'stun:stun2.l.google.com:19302'},
+        {url: 'stun:stun3.l.google.com:19302'},
+        {url: 'stun:stun4.l.google.com:19302'},
+        {url:'stun:stun01.sipphone.com'},
+        {url:'stun:stun.ekiga.net'},
+        {url:'stun:stun.fwdnet.net'},
+        {url:'stun:stun.ideasip.com'},
+        {url:'stun:stun.iptel.org'},
+        {url:'stun:stun.rixtelecom.se'},
+        {url:'stun:stun.schlund.de'}
+    ];
+
 }
 
 XDmvcServer.prototype.connect = function connect () {
-    var socket = io.connect(this.host + ':3000');
-    this.serverSocket = socket;
+    if(XDmvc.isPeerToPeer()) {
+        // If not connected already
+        var server = this;
+        if (!this.peer) {
+            this.peer = new Peer(XDmvc.deviceId, {
+                host: this.host,
+                port: this.port,
+//                           debug: 3,
+                config: {
+                    'iceServers': this.iceServers
+                }
+            });
+            this.peer.on('connection', function(conn){server.handleConnection(conn);});
+            this.peer.on('error', function(err){server.handleError(err);});
 
-    socket.on('connect', function() {
-        socket.emit('id', XDmvc.deviceId);
-    });
+        } else{
+            console.warn("Already connected.")
+        }
+    } else if(XDmvc.isClientServer()) {
+        var socket = io.connect(this.host + ':3000');
+        this.serverSocket = socket;
 
-    var server = this;
-    // another Peer called virtualConnect(...)
-    socket.on('connectTo', function (msg) {
-        var conn = new VirtualConnection(this, msg.sender);
-        server.handleConnection(conn);
-        //send readyForOpen
-        socket.emit('readyForOpen', {recA: XDmvc.deviceId, recB: msg.sender});
+        socket.on('connect', function() {
+            socket.emit('id', XDmvc.deviceId);
+        });
 
-    });
+        var server = this;
+        // another Peer called virtualConnect(...)
+        socket.on('connectTo', function (msg) {
+            var conn = new VirtualConnection(this, msg.sender);
+            server.handleConnection(conn);
+            //send readyForOpen
+            socket.emit('readyForOpen', {recA: XDmvc.deviceId, recB: msg.sender});
+        });
+    }
+
 
     if (XDmvc.reconnect) {
         XDmvc.connectToStoredPeers();
@@ -521,12 +558,15 @@ XDmvcServer.prototype.connect = function connect () {
 
     // Check periodically who is connected.
     this.requestAvailableDevices();
-    window.setInterval(function () {
-        server.requestAvailableDevices();
-    }, 5000);
+    window.setInterval(function(){
+        server.requestAvailableDevices();}, 5000);
 
-    this.send('device', this.device);
-    this.send('roles', this.roles);
+    var event = new CustomEvent('XDServer');
+    document.dispatchEvent(event);
+
+    // TODO the server may not have the peer yet. This should be sent a bit later
+    this.send('device', XDmvc.device);
+    this.send('roles', XDmvc.roles);
 }
 
 XDmvcServer.prototype.send = function send (type, data, callback){
@@ -559,7 +599,6 @@ XDmvcServer.prototype.connectToDevice = function connectToDevice (deviceId) {
     // Check if connection exists already
     if (!XDmvc.connectedDevices.concat(XDmvc.attemptedConnections)
             .some(function (el) {return el.id === deviceId; })) {
-        //var conn = this.peer.connect(deviceId, {serialization : 'binary', reliable: true});
         var conn = new VirtualConnection(this.serverSocket, deviceId);
         var connDev = XDmvc.addConnectedDevice(conn);
         conn.on('error', function (err) { connDev.handleError(err,conn)});
