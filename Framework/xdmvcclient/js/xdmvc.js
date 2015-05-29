@@ -549,6 +549,8 @@ XDmvcServer.prototype.connect = function connect () {
             //send readyForOpen
             socket.emit('readyForOpen', {recA: XDmvc.deviceId, recB: msg.sender});
         });
+
+        //TODO: Add socket.on('error', server.handleError()
     }
 
 
@@ -599,12 +601,14 @@ XDmvcServer.prototype.connectToDevice = function connectToDevice (deviceId) {
     // Check if connection exists already
     if (!XDmvc.connectedDevices.concat(XDmvc.attemptedConnections)
             .some(function (el) {return el.id === deviceId; })) {
-        var conn = new VirtualConnection(this.serverSocket, deviceId);
+        var conn = null;
+        if(XDmvc.isPeerToPeer())
+            conn = this.peer.connect(deviceId, {serialization : 'binary', reliable: true});
+        else if(XDmvc.isClientServer())
+            conn = new VirtualConnection(this.serverSocket, deviceId);
+
         var connDev = XDmvc.addConnectedDevice(conn);
-        conn.on('error', function (err) { connDev.handleError(err,conn)});
-        conn.on('open', function () { connDev.handleOpen(conn)});
-        conn.on('data', function (msg) { connDev.handleData(msg)});
-        conn.on('close', function () { connDev.handleClose()});
+        connDev.installHandlers(conn);
         XDmvc.attemptedConnections.push(connDev);
         conn.virtualConnect(deviceId);
     } else {
@@ -612,13 +616,29 @@ XDmvcServer.prototype.connectToDevice = function connectToDevice (deviceId) {
     }
 };
 
+//TODO: not used by ClientServer yet
+XDmvcServer.prototype.handleError = function handleError (err){
+    XDmvc.cleanUpConnections();
+    var event = new CustomEvent('XDerror');
+    document.dispatchEvent(event);
+
+    if (err.type === "peer-unavailable") {
+        var peerError = "Could not connect to peer ";
+        var peer = err.message.substring(peerError.length);
+        var conn = XDmvc.getAttemptedConnection(peer);
+        var index = XDmvc.attemptedConnections.indexOf(conn);
+        if (index > -1) {
+            XDmvc.attemptedConnections.splice(index, 1);
+        }
+        console.info(err.message);
+    } else {
+        console.warn(err);
+    }
+};
+
 XDmvcServer.prototype.handleConnection = function handleConnection (connection){
     var conDev = XDmvc.addConnectedDevice(connection);
-    connection.on('error', function (err) { conDev.handleError(err, connection)});
-    connection.on('open', function () { conDev.handleOpen(connection)});
-    connection.on('data', function (msg) { conDev.handleData(msg)});
-    connection.on('close', function () { conDev.handleClose()});
-
+    conDev.installHandlers(connection);
     XDmvc.attemptedConnections.push(conDev);
 
     // Flag that this peer should receive state on open
@@ -626,7 +646,13 @@ XDmvcServer.prototype.handleConnection = function handleConnection (connection){
 };
 
 XDmvcServer.prototype.disconnect = function disconnect (){
-   //TODO:how to handle (disconnect ?)
+    if(XDmvc.isPeerToPeer()) {
+        this.peer.destroy();
+        this.peer = null;
+    } else if(XDmvc.isClientServer()) {
+        //TODO:how to handle (disconnect ?)
+    }
+
 };
 
 
@@ -687,10 +713,6 @@ VirtualConnection.prototype.close = function() {
     this.virtualSend(null, 'close');
 }
 
-
-
-
-
 /*
  Connected Devices
  -----------------
@@ -725,6 +747,7 @@ ConnectedDevice.prototype.handleRoles = function(roles){
         this.sendSync = false;
     }
 };
+
 
 
 ConnectedDevice.prototype.handleData = function(msg){
@@ -770,6 +793,9 @@ ConnectedDevice.prototype.handleData = function(msg){
                 } else {
                     XDmvc.update(msg.data, msg.id, msg.arrayDelta);
                 }
+                this.latestData[msg.id] = msg.data; //TODO maybe handle array deltas?
+                event = new CustomEvent('XDsync', {'detail': {data: msg.data, sender: this.id}});
+                document.dispatchEvent(event);
                 break;
             case 'role':
                 if (msg.operation === "add") {
@@ -786,23 +812,34 @@ ConnectedDevice.prototype.handleData = function(msg){
 
 };
 
-ConnectedDevice.prototype.handleError = function handleError (err, connection){
-    console.warn("Error in PeerConnection:" + err.message );
-    console.warn(err);
-    if(err.type === 'peer-unavailable')
-        XDmvc.removeConnection(this);
 
-    var event = new CustomEvent('XDerror', {"detail": err});
-    document.dispatchEvent(event);
+//TODO: make nicer e.g with different err.type
+ConnectedDevice.prototype.handleError = function handleError (err){
+    if(XDmvc.isPeerToPeer()) {
+        console.warn("Error in PeerConnection:" +connection.id );
+        console.warn(err);
+        XDmvc.cleanUpConnections();
+        var event = new CustomEvent('XDerror', {"detail": err});
+        document.dispatchEvent(event);
+    } else if(XDmvc.isClientServer) {
+        console.warn("Error in PeerConnection:" + err.message );
+        console.warn(err);
+        if(err.type === 'peer-unavailable')
+            XDmvc.removeConnection(this);
+
+        var event = new CustomEvent('XDerror', {"detail": err});
+        document.dispatchEvent(event);
+    }
+
 };
 
-ConnectedDevice.prototype.handleOpen = function handleOpen (conn){
-    XDmvc.addConnectedDevice(conn);
-    if (XDmvc.storedPeers.indexOf(conn.peer) === -1) {
-        XDmvc.storedPeers.push(conn.peer);
+ConnectedDevice.prototype.handleOpen = function handleOpen (){
+    if (XDmvc.storedPeers.indexOf(this.id) === -1) {
+        XDmvc.storedPeers.push(this.id);
         XDmvc.storePeers();
     }
-    var others = XDmvc.connectedDevices.filter(function (el) {return el.id !== conn.peer; })
+    var thisDevice = this;
+    var others = XDmvc.connectedDevices.filter(function (el) {return el.id !== thisDevice.id; })
         .map(function (el) {return el.id; });
     this.send('connections', others);
 
@@ -827,3 +864,11 @@ ConnectedDevice.prototype.disconnect = function disconnect (){
     XDmvc.removeConnection(this);
 
 };
+
+ConnectedDevice.prototype.installHandlers = function installHandlers(conn){
+    var that = this;
+    conn.on('error', function (err) { that.handleError(err)});
+    conn.on('open', function () { that.handleOpen()});
+    conn.on('data', function (msg) { that.handleData(msg)});
+    conn.on('close', function () { that.handleClose()});
+}
