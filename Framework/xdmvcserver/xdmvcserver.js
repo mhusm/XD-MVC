@@ -5,15 +5,11 @@ var connect = require('connect'),
     http = require('http'),
     bodyParser = require('body-parser'),
     url = require('url');
-    io =  require('socket.io')();
+    io =  require('socket.io')(); //TODO: remove ?
 
-//Silvan
 var app = require('express')();
 var server  = require('http').createServer(app);
 var io      = require('socket.io').listen(server);
-
-//Silvan
-
 
 //CORS middleware
 var allowCrossDomain = function(req, res, next) {
@@ -32,8 +28,42 @@ function XDmvcServer() {
 util.inherits(XDmvcServer, EventEmitter);
 
 XDmvcServer.prototype.startPeerSever = function(port){
-    //Silvan
+    //Start the PeerJS Server
+    var pserver = new PeerServer({
+        port: port,
+        allow_discovery: true
+    });
+    var that = this;
 
+    pserver.on('connection', function(id) {
+        that.peers[id] = {
+            'id': id,
+            'name': undefined,
+            'role': undefined,
+            'roles': [],
+            'session': undefined
+        };
+        that.emit("connected", id);
+    });
+
+    pserver.on('disconnect', function(id) {
+        if (that.peers[id].session !== undefined) {
+            var ps = that.sessions[that.peers[id].session].peers;
+            var index = ps.indexOf(id);
+            if (index > -1) {
+                ps.splice(index, 1);
+            }
+
+            if (ps.length === 0) {
+                // session has no more users -> delete it
+                delete that.sessions[that.peers[id].session];
+            }
+        }
+        delete that.peers[id];
+        that.emit("disconnected", id);
+    });
+
+    //Start the Socketio Server
     server.listen(3000);
 
     var xdServer = this;
