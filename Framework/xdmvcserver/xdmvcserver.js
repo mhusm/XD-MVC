@@ -28,6 +28,7 @@ function XDmvcServer() {
 util.inherits(XDmvcServer, EventEmitter);
 
 XDmvcServer.prototype.startPeerSever = function(port){
+
     //Start the PeerJS Server
     var pserver = new PeerServer({
         port: port,
@@ -101,13 +102,11 @@ XDmvcServer.prototype.startPeerSever = function(port){
                         ); // splice the array at index of deviceId
                         peerObject.connectedPeers = removeDeviceId;
                     }
-
                 }
-
+                console.log('user '+ deviceId + ' disconnected --> server sent close event to connected peers: ' + connPeers);
             } else
                 console.log('peer was not in peers --> TODO:check logic');
 
-            console.log('user '+ deviceId + ' disconnected --> server sent close event to connected peers: ' + connPeers);
         });
 
         socket.on('connectTo', function(msg) {

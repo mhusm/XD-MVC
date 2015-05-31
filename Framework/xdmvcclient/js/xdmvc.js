@@ -793,7 +793,7 @@ ConnectedDevice.prototype.handleData = function(msg){
                 } else {
                     XDmvc.update(msg.data, msg.id, msg.arrayDelta);
                 }
-                this.latestData[msg.id] = msg.data; //TODO maybe handle array deltas?
+    //            this.latestData[msg.id] = msg.data; //TODO maybe handle array deltas?
                 event = new CustomEvent('XDsync', {'detail': {data: msg.data, sender: this.id}});
                 document.dispatchEvent(event);
                 break;
