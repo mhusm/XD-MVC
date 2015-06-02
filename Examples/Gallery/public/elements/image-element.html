@@ -9,8 +9,12 @@
                 <img  src="{{images[current]}}" />
             </pointer-element>
             <div>
-                <core-icon-button icon="arrow-back" on-click="{{previous}}" hidden?="{{!showControls}}" disabled?="{{current == 0}}" ></core-icon-button>
-                <core-icon-button icon="arrow-forward" on-click="{{next}}" hidden?="{{!showControls}}" disabled?="{{current >= images.length -1}}" ></core-icon-button>
+                <paper-button  on-click="{{previous}}" disabled?="{{current == 0}}" hidden?="{{!showControls}}">
+                     <core-icon-button icon="arrow-back"></core-icon-button>
+                </paper-button>
+                <paper-button  on-click="{{next}}" disabled?="{{current >= images.length -1}}" hidden?="{{!showControls}}">
+                    <core-icon-button icon="arrow-forward"></core-icon-button>
+                </paper-button>
                 <paper-button on-click="{{setAsCover}}"  hidden?="{{!showCover}}" raised="" >Set as cover</paper-button>
             </div>
     		<link rel="stylesheet" href="../css/image.css" />

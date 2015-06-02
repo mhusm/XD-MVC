@@ -1,26 +1,66 @@
 <link rel="import" href="../../polymer/polymer.html">
 <link rel="import" href="xdmvc.html">
 
-<polymer-element name="xdmvc-connection" attributes="server reconnect port deviceId ajaxPort">
-	<script>
-		Polymer({
-			created: function() {
-                XDmvc.init(this.reconnect);
-                this.url = document.location.hostname;
-                this.port = XDmvc.port;
-                this.ajaxPort = XDmvc.ajaxPort;
-                this.reconnect = XDmvc.reconnect;
-                this.deviceId = XDmvc.deviceId;
-			},
+<dom-module id="xdmvc-connection">
+</dom-module>
 
-			domReady: function(){
-                XDmvc.reconnect = this.reconnect;
-				XDmvc.connectToServer(this.url, this.port, this.ajaxPort);
-			},
-		  
-			changeDeviceId: function(newID){
-                XDmvc.changeDeviceId(newID);
-			}
-		});
-	</script>
-</polymer-element>
+<script>
+    Polymer({
+        is: "xdmvc-connection",
+
+        properties: {
+            reconnect: {
+                type: Boolean,
+                value: XDmvc.reconnect
+            },
+            server: {
+                type: String,
+                value: document.location.hostname
+            },
+            port: {
+                type: Number,
+                value: XDmvc.defaultPort
+            } ,
+            ajaxport: {
+                type: Number,
+                value: XDmvc.defaultAjaxPort
+            } ,
+            deviceid:  {
+                type: String,
+                value: XDmvc.deviceId
+            }
+        },
+                /*
+        created: function() {
+            XDmvc.init(this.reconnect);
+
+            this.url = document.location.hostname;
+            console.log(this);
+            this.port = XDmvc.port;
+            this.ajaxPort = XDmvc.ajaxPort;
+            this.reconnect = XDmvc.reconnect;
+            this.deviceId = XDmvc.deviceId;
+        },
+
+        ready: function() {
+
+            this.url = document.location.hostname;
+            console.log(this);
+            this.port = XDmvc.port;
+            this.ajaxPort = XDmvc.ajaxPort;
+            this.reconnect = XDmvc.reconnect;
+            this.deviceId = XDmvc.deviceId;
+        },
+                 */
+
+        attached: function(){
+            XDmvc.init(this.reconnect);
+            XDmvc.reconnect = this.reconnect;
+            XDmvc.connectToServer(this.server, this.port, this.ajaxport);
+        },
+
+        changeDeviceId: function(newID){
+            XDmvc.changeDeviceId(newID);
+        }
+    });
+</script>

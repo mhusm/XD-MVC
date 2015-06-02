@@ -19,6 +19,8 @@ var XDmvc = {
     configuredRoles: {}, // roles that have been configured in the system
     availableDevices: [],
     server : null,
+    defaultPort: 9000,
+    defaultAjaxPort: 9001,
     /*
     --------------------
     Server communication
@@ -486,8 +488,8 @@ Initialisation and configuration
  ---------------------
  */
 function XDmvcServer(host, port, ajaxPort, iceServers){
-    this.ajaxPort = ajaxPort ? ajaxPort: 9001;
-    this.port = port? port: 9000;
+    this.ajaxPort = ajaxPort ? ajaxPort: XDmvc.defaultAjaxPort;
+    this.port = port? port: XDmvc.defaultPort;
     this.host = host? host: document.location.hostname;
     this.peer = null;
     this.iceServers = iceServers ? iceServers :  [
