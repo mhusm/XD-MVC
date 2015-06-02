@@ -63,9 +63,12 @@ XDmvcServer.prototype.startPeerSever = function(port){
         delete that.peers[id];
         that.emit("disconnected", id);
     });
+};
+
+XDmvcServer.prototype.startSocketIoServer = function startSocketIoServer(port) {
 
     //Start the Socketio Server
-    server.listen(3000);
+    server.listen(port);
 
     var xdServer = this;
 
@@ -87,7 +90,7 @@ XDmvcServer.prototype.startPeerSever = function(port){
                     deviceId = peer;
                     connPeers =xdServer.peers[deviceId].connectedPeers;
                 }
-            
+
             delete xdServer.peers[deviceId]; //delete peer that disconnected
 
             if(deviceId) {
@@ -118,10 +121,10 @@ XDmvcServer.prototype.startPeerSever = function(port){
                 io.sockets.connected[socketId].emit('connectTo', msg);
             } else {
                 var err = {
-                        eventTag : 'error',
-                        sender : msg.receiver,
-                        type : "peer-unavailable",
-                        message : "the peer you wanted to connect to is not available"
+                    eventTag : 'error',
+                    sender : msg.receiver,
+                    type : "peer-unavailable",
+                    message : "the peer you wanted to connect to is not available"
                 };
                 io.sockets.connected[this.id].emit('wrapMsg', err);
                 console.log(msg.sender + ' tries to connect to ' + msg.receiver + ' : failed ! (peer not available)');
@@ -184,14 +187,7 @@ XDmvcServer.prototype.startPeerSever = function(port){
                 'connectedPeers' : []
             };
         });
-
-
-
-
     });
-
-
-
 };
 
 
@@ -321,11 +317,13 @@ XDmvcServer.prototype.handleAjaxRequest = function(req, res, next, xdmvcServer){
     */
 };
 
-XDmvcServer.prototype.start = function(portPeer, portAjax) {
+XDmvcServer.prototype.start = function(portPeer, portSocketIo, portAjax) {
     portPeer = portPeer? portPeer : 9000;
     portAjax = portAjax? portAjax : 9001;
+    portSocketIo = portSocketIo? portSocketIo : 3000;
 
     this.startPeerSever(portPeer);
+    this.startSocketIoServer(portSocketIo);
     this.startAjaxServer(portAjax);
 };
 

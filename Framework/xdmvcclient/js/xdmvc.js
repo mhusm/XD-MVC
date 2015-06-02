@@ -50,10 +50,10 @@ var XDmvc = {
      --------------------
      */
 
-    connectToServer : function (host, port, ajaxPort, iceServers) {
+    connectToServer : function (host, portPeer, portSocketIo, ajaxPort, iceServers) {
 
         if (!this.server) {
-            this.server = new XDmvcServer(host, port, ajaxPort, iceServers);
+            this.server = new XDmvcServer(host, portPeer, portSocketIo, ajaxPort, iceServers);
         }
         this.server.connect();
     },
@@ -490,14 +490,15 @@ var XDmvc = {
  Server (Peer and Ajax)
  ---------------------
  */
-function XDmvcServer(host, port, ajaxPort, iceServers){
+function XDmvcServer(host, portPeer, portSocketIo, ajaxPort, iceServers){
     this.ajaxPort = ajaxPort ? ajaxPort: 9001;
-    this.port = port? port: 9000;
+    this.portPeer = portPeer? portPeer: 9000;
     this.host = host? host: document.location.hostname;
     this.peer = null;
 
     // for Client-Server
-    this.socketIoAddress = this.host + ':3000';
+    this.portSocketio = portSocketIo ? portSocketIo : 3000;
+    this.socketIoAddress = this.host + ':' + this.portSocketio;
     this.serverSocket = null;
 
     this.iceServers = iceServers ? iceServers :  [
@@ -524,7 +525,7 @@ XDmvcServer.prototype.connect = function connect () {
         if (!this.peer) {
             this.peer = new Peer(XDmvc.deviceId, {
                 host: this.host,
-                port: this.port,
+                port: this.portPeer,
 //                           debug: 3,
                 config: {
                     'iceServers': this.iceServers
@@ -555,7 +556,10 @@ XDmvcServer.prototype.connect = function connect () {
                 socket.emit('readyForOpen', {recA: XDmvc.deviceId, recB: msg.sender});
             });
 
-            //TODO: Add socket.on('error', server.handleError()
+            socket.on('error', function(err) {
+                console.warn(err);
+            });
+
         } else{
             console.warn("Already connected.")
         }
@@ -662,7 +666,7 @@ XDmvcServer.prototype.disconnect = function disconnect (){
         this.serverSocket.disconnect();
         delete io.sockets[this.socketIoAddress];
         io.j = [];
-        
+
         this.serverSocket = null;
     }
 
