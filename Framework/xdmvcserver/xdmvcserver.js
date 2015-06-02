@@ -5,11 +5,9 @@ var connect = require('connect'),
     http = require('http'),
     bodyParser = require('body-parser'),
     url = require('url');
-    io =  require('socket.io')(); //TODO: remove ?
 
-var app = require('express')();
-var server  = require('http').createServer(app);
-var io      = require('socket.io').listen(server);
+//for socketIo
+var io =  require('socket.io')();
 
 //CORS middleware
 var allowCrossDomain = function(req, res, next) {
@@ -68,7 +66,7 @@ XDmvcServer.prototype.startPeerSever = function(port){
 XDmvcServer.prototype.startSocketIoServer = function startSocketIoServer(port) {
 
     //Start the Socketio Server
-    server.listen(port);
+    io.listen(port);
 
     var xdServer = this;
 
