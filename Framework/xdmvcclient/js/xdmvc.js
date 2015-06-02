@@ -496,11 +496,6 @@ function XDmvcServer(host, portPeer, portSocketIo, ajaxPort, iceServers){
     this.host = host? host: document.location.hostname;
     this.peer = null;
 
-    // for Client-Server
-    this.portSocketio = portSocketIo ? portSocketIo : 3000;
-    this.socketIoAddress = this.host + ':' + this.portSocketio;
-    this.serverSocket = null;
-
     this.iceServers = iceServers ? iceServers :  [
         {url: 'stun:stun.l.google.com:19302'},
         {url: 'stun:stun1.l.google.com:19302'},
@@ -516,6 +511,10 @@ function XDmvcServer(host, portPeer, portSocketIo, ajaxPort, iceServers){
         {url:'stun:stun.schlund.de'}
     ];
 
+    // for Client-Server
+    this.portSocketio = portSocketIo ? portSocketIo : 3000;
+    this.socketIoAddress = this.host + ':' + this.portSocketio;
+    this.serverSocket = null;
 }
 
 XDmvcServer.prototype.connect = function connect () {
