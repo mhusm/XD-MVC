@@ -420,7 +420,7 @@ var XDmvc = {
         this.deviceId = id? id:  "Id"+Date.now();
         localStorage.setItem("deviceId", this.deviceId);
 
-        XDmvc.setClientServer();
+        XDmvc.setClientServer()
         XDmvc.loadPeers();
         XDmvc.detectDevice();
         XDmvc.host = document.location.hostname;
@@ -495,7 +495,10 @@ function XDmvcServer(host, port, ajaxPort, iceServers){
     this.port = port? port: 9000;
     this.host = host? host: document.location.hostname;
     this.peer = null;
-    this.serverSocket = null; // for Client-Server
+
+    // for Client-Server
+    this.socketIoAddress = this.host + ':3000';
+    this.serverSocket = null;
 
     this.iceServers = iceServers ? iceServers :  [
         {url: 'stun:stun.l.google.com:19302'},
@@ -534,25 +537,29 @@ XDmvcServer.prototype.connect = function connect () {
             console.warn("Already connected.")
         }
     } else if(XDmvc.isClientServer()) {
-        var socket = io.connect(this.host + ':3000');
-        this.serverSocket = socket;
+        if(!this.serverSocket) {
+            var socket = io.connect(this.socketIoAddress); //TODO:make port editable
 
-        socket.on('connect', function() {
-            socket.emit('id', XDmvc.deviceId);
-        });
+            this.serverSocket = socket;
 
-        var server = this;
-        // another Peer called virtualConnect(...)
-        socket.on('connectTo', function (msg) {
-            var conn = new VirtualConnection(this, msg.sender);
-            server.handleConnection(conn);
-            //send readyForOpen
-            socket.emit('readyForOpen', {recA: XDmvc.deviceId, recB: msg.sender});
-        });
+            socket.on('connect', function() {
+                socket.emit('id', XDmvc.deviceId);
+            });
 
-        //TODO: Add socket.on('error', server.handleError()
+            var server = this;
+            // another Peer called virtualConnect(...)
+            socket.on('connectTo', function (msg) {
+                var conn = new VirtualConnection(this, msg.sender);
+                server.handleConnection(conn);
+                //send readyForOpen
+                socket.emit('readyForOpen', {recA: XDmvc.deviceId, recB: msg.sender});
+            });
+
+            //TODO: Add socket.on('error', server.handleError()
+        } else{
+            console.warn("Already connected.")
+        }
     }
-
 
     if (XDmvc.reconnect) {
         XDmvc.connectToStoredPeers();
@@ -610,7 +617,8 @@ XDmvcServer.prototype.connectToDevice = function connectToDevice (deviceId) {
         var connDev = XDmvc.addConnectedDevice(conn);
         connDev.installHandlers(conn);
         XDmvc.attemptedConnections.push(connDev);
-        conn.virtualConnect(deviceId);
+        if(XDmvc.isClientServer())
+          conn.virtualConnect(deviceId);
     } else {
         console.warn("already connected");
     }
@@ -650,7 +658,12 @@ XDmvcServer.prototype.disconnect = function disconnect (){
         this.peer.destroy();
         this.peer = null;
     } else if(XDmvc.isClientServer()) {
-        //TODO:how to handle (disconnect ?)
+        //ugly hack https://github.com/Automattic/socket.io-client/issues/251
+        this.serverSocket.disconnect();
+        delete io.sockets[this.socketIoAddress];
+        io.j = [];
+        
+        this.serverSocket = null;
     }
 
 };
@@ -793,7 +806,7 @@ ConnectedDevice.prototype.handleData = function(msg){
                 } else {
                     XDmvc.update(msg.data, msg.id, msg.arrayDelta);
                 }
-    //            this.latestData[msg.id] = msg.data; //TODO maybe handle array deltas?
+//                this.latestData[msg.id] = msg.data; //TODO maybe handle array deltas?
                 event = new CustomEvent('XDsync', {'detail': {data: msg.data, sender: this.id}});
                 document.dispatchEvent(event);
                 break;
@@ -816,13 +829,13 @@ ConnectedDevice.prototype.handleData = function(msg){
 //TODO: make nicer e.g with different err.type
 ConnectedDevice.prototype.handleError = function handleError (err){
     if(XDmvc.isPeerToPeer()) {
-        console.warn("Error in PeerConnection:" +connection.id );
+        console.warn("Error in PeerConnection:");
         console.warn(err);
         XDmvc.cleanUpConnections();
         var event = new CustomEvent('XDerror', {"detail": err});
         document.dispatchEvent(event);
     } else if(XDmvc.isClientServer) {
-        console.warn("Error in PeerConnection:" + err.message );
+        console.warn("Error in Socketio Connection:" + err.message );
         console.warn(err);
         if(err.type === 'peer-unavailable')
             XDmvc.removeConnection(this);

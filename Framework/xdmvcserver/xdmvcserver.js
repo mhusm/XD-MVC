@@ -124,7 +124,7 @@ XDmvcServer.prototype.startPeerSever = function(port){
                         message : "the peer you wanted to connect to is not available"
                 };
                 io.sockets.connected[this.id].emit('wrapMsg', err);
-                console.log(msg.myId + ' tries to connect to ' + msg.partnerId + ' : failed ! (peer not available)');
+                console.log(msg.sender + ' tries to connect to ' + msg.receiver + ' : failed ! (peer not available)');
             }
 
 
