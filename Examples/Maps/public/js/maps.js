@@ -2,6 +2,7 @@ var map;
 function initialize() {
     XDmvc.init();
     XDmvc.reconnect = false;
+    XDmvc.setClientServer();
     XDmvc.connectToServer();
     $("#myDeviceId").text(XDmvc.deviceId);
     $("#inputDeviceId").val(XDmvc.deviceId);
@@ -33,6 +34,7 @@ function initialize() {
     google.maps.event.addListener(map, 'center_changed', function() {
         center.lat = map.center.lat();
         center.lng = map.center.lng();
+        Platform.performMicrotaskCheckpoint();
     });
     XDmvc.synchronize(center,setCenter ,"center");
 
@@ -44,6 +46,7 @@ function initialize() {
     };
     google.maps.event.addListener(map, 'maptypeid_changed', function() {
         mapType.type =  map.getMapTypeId();
+        Platform.performMicrotaskCheckpoint();
     });
     XDmvc.synchronize(mapType,setMapType ,"mapType");
 
@@ -54,6 +57,7 @@ function initialize() {
     };
     google.maps.event.addListener(map, 'zoom_changed', function() {
         zoom.level = map.getZoom();
+        Platform.performMicrotaskCheckpoint();
     });
     XDmvc.synchronize(zoom,setZoom ,"zoom");
 
@@ -64,6 +68,7 @@ function initialize() {
         bounds.sw.lat = newbounds.getSouthWest().lat();
         bounds.sw.lng = newbounds.getSouthWest().lng();
         XDmvc.forceUpdate("bounds");
+        Platform.performMicrotaskCheckpoint();
      });
     XDmvc.synchronize(bounds, undefined ,"bounds");
 

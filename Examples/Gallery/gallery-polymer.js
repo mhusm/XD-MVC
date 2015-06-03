@@ -59,7 +59,7 @@ function handleGallery(req, res, next){
 }
 
 createModel();
-xdmvc.start(9000, 9001);
+xdmvc.start(9000, 3000, 9001);
 xdmvc.on("objectChanged", function(msg){
     console.log(msg);
     albums[msg.data.id].url = msg.data.cover;

@@ -1,7 +1,7 @@
 <link rel="import" href="../../polymer/polymer.html">
 <link rel="import" href="xdmvc.html">
 
-<polymer-element name="xdmvc-connection" attributes="server reconnect port deviceId ajaxPort">
+<polymer-element name="xdmvc-connection" attributes="server reconnect port deviceId ajaxPort architecture">
 	<script>
 		Polymer({
 			created: function() {
@@ -11,11 +11,15 @@
                 this.ajaxPort = XDmvc.ajaxPort;
                 this.reconnect = XDmvc.reconnect;
                 this.deviceId = XDmvc.deviceId;
+                this.architecture = XDmvc.network_architecture;
 			},
 
 			domReady: function(){
+                if (this.architecture === XDmvc.clientServer) {
+                    XDmvc.setClientServer();
+                }
                 XDmvc.reconnect = this.reconnect;
-				XDmvc.connectToServer(this.url, this.port, this.ajaxPort);
+				XDmvc.connectToServer(this.url, this.port, undefined, this.ajaxPort);
 			},
 		  
 			changeDeviceId: function(newID){

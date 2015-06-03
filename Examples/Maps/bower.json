@@ -13,5 +13,8 @@
     "xdmvcclient": "../../Framework/xdmvcclient",
     "observe-js": "~0.5.5",
     "bootstrap": "~3.3.4"
+  },
+  "resolutions": {
+    "webcomponentsjs": "^0.6.0"
   }
 }
