@@ -1,6 +1,7 @@
 <link rel="import" href="../../polymer/polymer.html">
 <link rel="import" href="xdmvc.html">
 
+<<<<<<< HEAD
 <dom-module id="xdmvc-connection">
 </dom-module>
 
@@ -28,6 +29,10 @@
             deviceid:  {
                 type: String,
                 value: XDmvc.deviceId
+            },
+            architecture:  {
+                type: String,
+                value: XDmvc.network_architecture
             }
         },
                 /*
@@ -56,7 +61,11 @@
         attached: function(){
             XDmvc.init(this.reconnect);
             XDmvc.reconnect = this.reconnect;
-            XDmvc.connectToServer(this.server, this.port, this.ajaxport);
+            if (this.architecture === XDmvc.clientServer) {
+                XDmvc.setClientServer();
+            }
+            XDmvc.reconnect = this.reconnect;
+            XDmvc.connectToServer(this.url, this.port, undefined, this.ajaxPort);
         },
 
         changeDeviceId: function(newID){
