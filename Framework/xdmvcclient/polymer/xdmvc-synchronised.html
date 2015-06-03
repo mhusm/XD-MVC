@@ -1,21 +1,27 @@
 <link rel="import" href="../../polymer/polymer.html">
 <link rel="import" href="xdmvc.html">
 
-<polymer-element name="xdmvc-synchronised" attributes="objects updateServer" >
-	<script>
-		Polymer({
-            created: function() {
-                this.objects = {};
-                this.updateServer = false;
+<script>
+    Polymer({
+        is: "xdmvc-synchronised",
+
+        properties: {
+            objects: {
+                type: Object,
+                value: false
             },
-            
-           attached: function() {
-               var sync = this.objects;
-               var that = this;
-               Object.keys(this.objects).forEach(function(key){
-                   XDmvc.synchronize(sync[key], undefined, key, that.updateServer);
-               });
-			}
-		});
-	</script>
-</polymer-element>
+            updateServer: {
+                type: Boolean,
+                value: document.location.hostname
+            }
+        },
+
+        attached: function() {
+            var sync = this.objects;
+            var that = this;
+            Object.keys(this.objects).forEach(function(key){
+                XDmvc.synchronize(sync[key], undefined, key, that.updateServer);
+            });
+        }
+    });
+</script>

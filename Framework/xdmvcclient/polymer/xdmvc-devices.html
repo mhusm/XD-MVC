@@ -1,17 +1,27 @@
 <link rel="import" href="../../polymer/polymer.html">
 <link rel="import" href="xdmvc.html">
 
-<polymer-element name="xdmvc-devices" attributes="device othersDevices connectedDevices availableDevices" >
-    <template>
-    </template>
- 	<script>
-		Polymer({
-			created: function() {
-                this.othersDevices = XDmvc.othersDevices;
-                this.device = XDmvc.device;
-                this.connectedDevices = XDmvc.connectedDevices;
-                this.availableDevices = XDmvc.availableDevices;
+<script>
+    Polymer({
+        is: "xdmvc-devices",
+
+        properties: {
+            device: {
+                type: Object,
+                value: XDmvc.device
+            },
+            othersDevices: {
+                type: Object,
+                value: XDmvc.othersDevices
+            },
+            connectedDevices: {
+                type: Array,
+                value: XDmvc.connectedDevices
+            } ,
+            availableDevices: {
+                type: Array,
+                value: XDmvc.availableDevices
             }
-		});
-	</script>
-</polymer-element>
+        }
+    });
+</script>

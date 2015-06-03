@@ -1,81 +1,92 @@
 <link rel="import" href="../../polymer/polymer.html">
 <link rel="import" href="xdmvc.html">
 
-<polymer-element name="xdmvc-roles" attributes="roles selected isselected" >
-    <template>
-    </template>
-	<script>
-		Polymer({
-			created: function() {
-                this.roles = [];
-                this.selected = [];
-                this.isselected = {};
-                this.othersRoles = XDmvc.othersRoles;
-            },
-            
-            ready: function(){
-                var self = this;
-                var observer = new ObjectObserver(XDmvc.roles);
-                observer.open(function(changes){
-                    self.updateIsselected();
-                    self.selected = XDmvc.roles;
-                });
+<script>
+    Polymer({
+        is: "xdmvc-roles",
 
-              },
-            
-            updateIsselected: function() {
-                var self = this;
-                this.roles.forEach(function(r) {
-                    self.isselected[r] = self.selected.indexOf(r) > -1;
-                });
+        properties: {
+            roles: {
+                type: Array,
+                value: [],
+                observer: "rolesChanged",
+                reflectToAttribute: true
             },
-            
-            
-            selectionChanged: function(event, detail, sender){
-                var role = sender.templateInstance.model.r;
-                if (sender.checked) {
-                    this.addRole(role)
-                } else {
-                    this.removeRole(role);
-                }
+            selected: {
+                type: Array,
+                value: [],
+                observer: "selectedChanged",
+                reflectToAttribute: true
             },
-            
-           rolesChanged: function(e){
-               console.log("roles changed");
-               console.log(this.roles);
-                var sel = this.isselected;
+            isselected: {
+                type: Object,
+                readOnly: true,
+                value: {}
+            },
+            othersRoles: {
+                type: Object,
+                readOnly: true,
+                value: XDmvc.othersRoles
+            }
+        },
+
+        ready: function(){
+            var self = this;
+            var observer = new ObjectObserver(XDmvc.roles);
+            observer.open(function(changes){
+                self.updateIsselected();
+                self.selected = XDmvc.roles;
+            });
+
+        },
+
+        updateIsselected: function() {
+            var self = this;
+            this.roles.forEach(function(r) {
+                self.isselected[r] = self.selected.indexOf(r) > -1;
+            });
+        },
+
+        rolesChanged: function(newValue, oldValue){
+            console.log("roles changed");
+            console.log(this.roles);
+            console.log(this.isselected);
+            var sel = this.isselected;
+            if (sel) {
                 this.roles.forEach(function(r) {
                     // Initialize to false
                     if (!sel[r]) {
                         sel[r] = false;
                     }
                 });
-            },
-            
-            addRole: function(role) {
-                XDmvc.addRole(role);
-                this.fire('roleChanged')
-               
-            },
-            
-            removeRole: function(role){
-                XDmvc.removeRole(role);
-                this.fire('roleChanged')
-          
-            },
-  
-            selectedChanged: function(){
-                console.log("selected changed");
-                console.log(this.selected);
-                var sel = this.isselected;
-                this.selected.forEach(function(r) {
-                    XDmvc.addRole(r);
-                    if (!sel[r]) {
-                        sel[r] = true;
-                    }
-                });
             }
- 	  
-		});
-	</script>
-</polymer-element>
+        },
+
+        addRole: function(role) {
+            XDmvc.addRole(role);
+            this.fire('roleChanged')
+
+        },
+
+        removeRole: function(role){
+            XDmvc.removeRole(role);
+            this.fire('roleChanged')
+
+        },
+
+        selectedChanged: function(){
+            console.log("selected changed");
+            console.log(this.selected);
+            var sel = this.isselected;
+            this.selected.forEach(function (r) {
+                XDmvc.addRole(r);
+                if (sel) {
+                     if (!sel[r]) {
+                         sel[r] = true;
+                     }
+                }
+           });
+        }
+
+    });
+</script>
