@@ -21,7 +21,7 @@ var XDmvc = {
     configuredRoles: {}, // roles that have been configured in the system
     availableDevices: [],
     server : null,
-    defaultPort: 9000,
+    defaultPeerPort: 9000,
     defaultAjaxPort: 9001,
     defaultSocketIoPort: 3000,
 
@@ -523,7 +523,7 @@ var XDmvc = {
  */
 function XDmvcServer(host, portPeer, portSocketIo, ajaxPort, iceServers){
     this.ajaxPort = ajaxPort ? ajaxPort: XDmvc.defaultAjaxPort;
-    this.port = port? port: XDmvc.defaultPort;
+    this.portPeer = portPeer? portPeer: XDmvc.defaultPeerPort;
     this.portSocketio = portSocketIo ? portSocketIo : XDmvc.defaultSocketIoPort;
     this.host = host? host: document.location.hostname;
     this.peer = null;

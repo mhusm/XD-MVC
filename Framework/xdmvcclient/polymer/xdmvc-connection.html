@@ -1,7 +1,6 @@
 <link rel="import" href="../../polymer/polymer.html">
 <link rel="import" href="xdmvc.html">
 
-<<<<<<< HEAD
 <dom-module id="xdmvc-connection">
 </dom-module>
 
@@ -18,9 +17,9 @@
                 type: String,
                 value: document.location.hostname
             },
-            port: {
+            peerport: {
                 type: Number,
-                value: XDmvc.defaultPort
+                value: XDmvc.defaultPeerPort
             } ,
             ajaxport: {
                 type: Number,
@@ -36,26 +35,7 @@
             }
         },
                 /*
-        created: function() {
-            XDmvc.init(this.reconnect);
-
-            this.url = document.location.hostname;
-            console.log(this);
-            this.port = XDmvc.port;
-            this.ajaxPort = XDmvc.ajaxPort;
-            this.reconnect = XDmvc.reconnect;
-            this.deviceId = XDmvc.deviceId;
-        },
-
-        ready: function() {
-
-            this.url = document.location.hostname;
-            console.log(this);
-            this.port = XDmvc.port;
-            this.ajaxPort = XDmvc.ajaxPort;
-            this.reconnect = XDmvc.reconnect;
-            this.deviceId = XDmvc.deviceId;
-        },
+TODO reflect changes in XDmvc (e.g. different ports ect.) back into this element
                  */
 
         attached: function(){
@@ -64,8 +44,7 @@
             if (this.architecture === XDmvc.clientServer) {
                 XDmvc.setClientServer();
             }
-            XDmvc.reconnect = this.reconnect;
-            XDmvc.connectToServer(this.url, this.port, undefined, this.ajaxPort);
+            XDmvc.connectToServer(this.url, this.peerport, undefined, this.ajaxport);
         },
 
         changeDeviceId: function(newID){
