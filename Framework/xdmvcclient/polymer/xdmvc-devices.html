@@ -8,18 +8,22 @@
         properties: {
             device: {
                 type: Object,
+                notify: true,
                 value: XDmvc.device
             },
             othersDevices: {
                 type: Object,
+                notify: true,
                 value: XDmvc.othersDevices
             },
             connectedDevices: {
                 type: Array,
+                notify: true,
                 value: XDmvc.connectedDevices
             } ,
             availableDevices: {
                 type: Array,
+                notify: true,
                 value: XDmvc.availableDevices
             }
         }

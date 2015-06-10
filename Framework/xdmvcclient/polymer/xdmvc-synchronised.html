@@ -8,7 +8,8 @@
         properties: {
             objects: {
                 type: Object,
-                value: false
+                value: false,
+                notify: true
             },
             updateServer: {
                 type: Boolean,
@@ -16,12 +17,31 @@
             }
         },
 
-        attached: function() {
+        ready: function() {
             var sync = this.objects;
             var that = this;
-            Object.keys(this.objects).forEach(function(key){
-                XDmvc.synchronize(sync[key], undefined, key, that.updateServer);
+            Object.keys(this.objects).forEach(function (key) {
+                XDmvc.synchronize(
+                        sync[key],
+                        undefined,
+                        key, that.updateServer,
+                        function(id, key, value) {that.updateObject(id, key, value)},
+                        function(id, splices) {that.updateArray(id, splices)}
+                );
+            });
+        },
+
+        updateObject: function(id, key, value){
+            this.set(['objects', id, key], value);
+        },
+
+        updateArray: function(id, splices){
+            var that = this;
+            splices.forEach(function(spliceArgs){
+                var args= ["objects."+id].concat(spliceArgs);
+                that.splice.apply(that, args);
             });
         }
+
     });
 </script>

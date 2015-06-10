@@ -10,22 +10,26 @@
                 type: Array,
                 value: [],
                 observer: "rolesChanged",
+                notify: true,
                 reflectToAttribute: true
             },
             selected: {
                 type: Array,
                 value: [],
                 observer: "selectedChanged",
+                notify: true,
                 reflectToAttribute: true
             },
             isselected: {
                 type: Object,
                 readOnly: true,
+                notify: true,
                 value: {}
             },
             othersRoles: {
                 type: Object,
                 readOnly: true,
+                notify: true,
                 value: XDmvc.othersRoles
             }
         },

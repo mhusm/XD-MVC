@@ -218,20 +218,34 @@ var XDmvc = {
 
     sendSyncToAll : function (changes, id) {
         var arrayDelta = [];
-        if (Array.isArray(XDmvc.syncData[id].data) && changes){
-            var splices = changes;
-            splices.forEach(function(splice) {
-                var spliceArgs = [splice.index, splice.removed.length];
-                var addIndex = splice.index;
-                while (addIndex < splice.index + splice.addedCount) {
-                    spliceArgs.push(XDmvc.syncData[id].data[addIndex]);
-                    addIndex++;
-                }
-                arrayDelta.push(spliceArgs);
-            });
+        var objectDelta = [];
+        var data;
+
+        if (!changes) {
+            // No changes specified. Send whole object
+            data = XDmvc.syncData[id]
+        } else {
+            if (Array.isArray(XDmvc.syncData[id].data)){
+                var splices = changes[0];
+                splices.forEach(function(splice) {
+                    var spliceArgs = [splice.index, splice.removed.length];
+                    var addIndex = splice.index;
+                    while (addIndex < splice.index + splice.addedCount) {
+                        spliceArgs.push(XDmvc.syncData[id].data[addIndex]);
+                        addIndex++;
+                    }
+                    arrayDelta.push(spliceArgs);
+                });
+                data = arrayDelta;
+            } else {
+                objectDelta=Array.prototype.slice.call(changes, 0 ,3);
+                data = objectDelta;
+            }
         }
+
         // Send delta for array, otherwise new copy of object
-        var msg = {type: 'sync', data: arrayDelta.length > 0? arrayDelta: XDmvc.syncData[id].data, id: id, arrayDelta: arrayDelta.length>0};
+   //     var msg = {type: 'sync', data: arrayDelta.length > 0? arrayDelta: XDmvc.syncData[id].data, id: id, arrayDelta: arrayDelta.length>0};
+        var msg = {type: 'sync', data: data, id: id, arrayDelta: arrayDelta.length>0, objectDelta: objectDelta.length >0};
         var len = XDmvc.connectedDevices.length,
             i;
 
@@ -252,11 +266,23 @@ var XDmvc = {
 
     },
 
-    synchronize : function (data, callback, id, updateServer) {
+    synchronize : function (data, callback, id, updateServer, updateObjectFunction, updateArrayFunction) {
         // if no id given, generate one. Though this may not always work. It could be better to enforce IDs.
         id = typeof id !== 'undefined' ? id : 'sync' + (XDmvc.lastSyncId++);
-        var sync = function (data) {return XDmvc.sendSyncToAll(data, id); };
-        XDmvc.syncData[id] = {data: data, callback: callback, syncFunction: sync, updateServer: updateServer};
+        var sync = function (data) {return XDmvc.sendSyncToAll(arguments, id); };
+        var updateObject = updateObjectFunction?  updateObjectFunction : function(id, key, value){ XDmvc.syncData[id].data[key] = value};
+        var updateArray = updateArrayFunction?  updateArrayFunction : function(id, splices){
+            splices.forEach(function(spliceArgs){
+                Array.prototype.splice.apply(XDmvc.syncData[id].data, spliceArgs);
+            });
+        };
+        XDmvc.syncData[id] = {data: data,
+            callback: callback,
+            syncFunction: sync,
+            updateServer: updateServer,
+            updateObjectFunction: updateObject,
+            updateArrayFunction: updateArray
+        };
         if (Array.isArray(data)){
             XDmvc.syncData[id].observer = new ArrayObserver(data);
             XDmvc.syncData[id].observer.open(sync);
@@ -267,38 +293,81 @@ var XDmvc = {
         }
     },
 
-	update : function (newObj, id, arrayDelta, keepChanges) {
+	update : function (data, id, arrayDelta, objectDelta, keepChanges) {
         var observed =  XDmvc.syncData[id];
+        var changedOrAdded;
+        var removed;
+        var added = {};
+        var key;
+        var splices;
         if (Array.isArray(observed.data)) {
             if (arrayDelta) {
-                newObj.forEach(function(spliceArgs){
-                    Array.prototype.splice.apply(observed.data, spliceArgs);
-                });
+                splices = data;
             } else {
-                // No delta, replace with old
-                observed.data.splice(0, observed.data.length);
-                Array.prototype.push.apply(observed.data, newObj);
+                // No delta, replace old with new
+                var args= [0, observed.data.length].concat(data)
+                splices = [args];
             }
 
+            observed.updateArrayFunction(id, splices);
+            /*
+            splices.forEach(function(spliceArgs){
+                Array.prototype.splice.apply(observed.data, spliceArgs);
+            });
+*/
         } else {
-            var key;
+            if (objectDelta) {
+                added = data[0];
+                removed = data[1];
+                var chagned = data[2];
+                changedOrAdded = chagned;
+            }
+            else{
+                var delta = XDmvc.getDelta(observed.data, data);
+                removed = delta[0];
+                changedOrAdded = delta[1];
+
+            }
+
             // Deleted properties
-            for (key in observed.data) {
-                if (observed.data.hasOwnProperty(key) && !newObj.hasOwnProperty(key)) {
-                    delete observed.data[key];
-                }
+            for (key in removed) {
+                observed.updateObjectFunction(id, key, undefined); // TODO this is not exactly the same as delete
             }
             // New and changed properties
-            for (key in newObj) {
-                if (newObj.hasOwnProperty(key)) {
-                    observed.data[key] = newObj[key];
-                }
+            for (key in changedOrAdded) {
+                observed.updateObjectFunction(id, key, changedOrAdded[key]);
+            }
+            for (key in added) {
+                observed.updateObjectFunction(id, key, added[key]);
             }
         }
         // Discard changes that were caused by the update
         if (!keepChanges) {
             observed.observer.discardChanges();
         }
+
+        var event = new CustomEvent('XDupdate', {'detail': {dataId: id, data: observed.data}});
+        document.dispatchEvent(event);
+    },
+
+    getDelta(oldObj, newObj){
+        var addedOrChanged = {};
+        var removed = {};
+        var key;
+        // No delta, replace all old with new properties
+        // Deleted properties
+        for (key in oldObj) {
+            if (oldObj.hasOwnProperty(key) && !newObj.hasOwnProperty(key)) {
+                removed[key] = true;
+            }
+        }
+        // New and changed properties
+        for (key in newObj) {
+            if (newObj.hasOwnProperty(key)) {
+                addedOrChanged[key] = newObj[key];
+            }
+        }
+        return [removed, addedOrChanged];
 
     },
 
@@ -828,6 +897,9 @@ ConnectedDevice.prototype.handleData = function(msg){
             case 'sync':
                 // First all role specific callbacks
                 var callbacks = XDmvc.getRoleCallbacks(msg.id);
+                //TODO data can now be a delta, this must be accounted for in the callbacks. maybe the last object should be cached
+                //TODO also, initially, the complete object should always be sent. otherwise the connected device may not have all information.
+                //TODO maybe on connection each device should already send all synchronised data to all the device?
                 if (callbacks.length > 0) {
                     callbacks.forEach(function(callback){
                         callback.apply(undefined, [msg.id, msg.data, this.id]);
@@ -838,12 +910,12 @@ ConnectedDevice.prototype.handleData = function(msg){
                     XDmvc.syncData[msg.id].callback.apply(undefined, [msg.id, msg.data, this.id]);
                     // Else default merge behaviour
                 } else {
-                    XDmvc.update(msg.data, msg.id, msg.arrayDelta);
+                    XDmvc.update(msg.data, msg.id, msg.arrayDelta, msg.objectDelta);
                 }
                 //TODO find what the problem is with latest Data
 //                this.latestData[msg.id] = msg.data; //TODO maybe handle array deltas?
 
-                event = new CustomEvent('XDsync', {'detail': {data: msg.data, sender: this.id}});
+                event = new CustomEvent('XDsync', {'detail': {dataId: msg.id, data: msg.data, sender: this.id}});
                 document.dispatchEvent(event);
                 break;
             case 'role':
