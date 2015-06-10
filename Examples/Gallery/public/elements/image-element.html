@@ -1,48 +1,113 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
+<!--
 <link rel="import" href="pointer-element.html">
 <link rel="import" href="../bower_components/core-icon-button/core-icon-button.html">
+-->
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
 
-<polymer-element name="image-element" attributes="images current cursor showControls showCover" >
-	<template>
-            <pointer-element  position="{{cursor}}" >
-                <img  src="{{images[current]}}" />
-            </pointer-element>
-            <div>
-                <paper-button  on-click="{{previous}}" disabled?="{{current == 0}}" hidden?="{{!showControls}}">
-                     <core-icon-button icon="arrow-back"></core-icon-button>
-                </paper-button>
-                <paper-button  on-click="{{next}}" disabled?="{{current >= images.length -1}}" hidden?="{{!showControls}}">
-                    <core-icon-button icon="arrow-forward"></core-icon-button>
-                </paper-button>
-                <paper-button on-click="{{setAsCover}}"  hidden?="{{!showCover}}" raised="" >Set as cover</paper-button>
-            </div>
-    		<link rel="stylesheet" href="../css/image.css" />
-	</template>
-	<script>
-		Polymer( {
-			created: function() {
-                this.images = [];
-                this.current = 0;
-                this.index = 0;
-                this.showControls = true;
-                this.showCover = false;
-			},
-                    
-            next: function () {
-                this.current += 1;
+
+<dom-module id="image-element">
+    <template>
+<!--
+<pointer-element  position="{{cursor}}" >
+    <img  src="{{images[current]}}" />
+</pointer-element>
+-->
+        <img  src="{{currentImage}}" />
+        <div>
+            <paper-icon-button icon="arrow-back" on-click="previous" disabled$="{{computePreviousDisabled(current)}}" hidden$="{{!showControls}}"></paper-icon-button>
+            <paper-icon-button icon="arrow-forward" on-click="next" disabled$="{{computeNextDisabled(current, images.*)}}" hidden$="{{!showControls}}"></paper-icon-button>
+            <paper-button on-click="setAsCover"  hidden$="{{!showCover}}" raised="" >Set as cover</paper-button>
+
+        </div>
+    </template>
+    <style>
+        img {
+            display: block;
+            max-width: 100%;
+            margin: auto;
+            pointer-events: none;
+            cursor: pointer;
+        }
+
+        pointer-element {
+            display: inline-block;
+            max-width: 100%;
+        }
+
+
+        :host {
+            display: block;
+        }
+
+        paper-button[hidden] {
+            display: none;
+        }
+
+
+    </style>
+ </dom-module>
+<script>
+    Polymer( {
+        is: "image-element",
+
+        properties: {
+            images: {
+                type: Array,
+                notify: true
             },
-
-            previous: function () {
-                if (this.current > 0){
-                    this.current -= 1;                
-                }
+            current: {
+                type: Number,
+                value: 0,
+                notify: true
             },
+            cursor: {
+                type: Object,
+                value: function() { return{}; }
+            },
+            showControls: {
+                type: Boolean,
+                notify: true,
+                value: true
+            },
+            showCover: {
+                type: Boolean,
+                notify: true,
+                value: false
+            },
+            currentImage: String,
+        },
 
-            setAsCover: function() {
-                this.fire('cover', {src: this.images[this.current]});
+        observers: [
+            'updateCurrentImage(images.*, current)'
+        ],
+
+        computePreviousDisabled: function(current){
+            return current === 0;
+        },
+        computeNextDisabled: function(current){
+            return !this.images || current >= this.images.length -1;
+        },
+
+        updateCurrentImage: function(){
+            this.currentImage = this.images[this.current];
+        },
+
+        next: function () {
+            this.current += 1;
+        },
+
+        previous: function () {
+            if (this.current > 0){
+                this.current -= 1;
             }
+        },
 
-        });
-	</script>
-</polymer-element>
+        setAsCover: function() {
+            this.fire('cover', {src: this.images[this.current]});
+        }
+
+    });
+</script>

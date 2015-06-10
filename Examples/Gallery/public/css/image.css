@@ -16,3 +16,8 @@ pointer-element {
 	display: block;
 }
 
+paper-button[hidden] {
+    display: none;
+}
+
+/* TODO delete file? */

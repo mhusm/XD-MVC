@@ -1,12 +1,10 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
-<polymer-element name="gallery-element" attributes="images current">
+<dom-module id="gallery-element">
 	<template>
-        <link rel="stylesheet" href="../css/gallery.css" />
-		<div>
-			<template repeat="{{i, idx in images}}">
-				<img  on-click="{{imageHandler}}"  class="{{ {current: idx == current} | tokenList }}" src="{{i}}" />
+ 			<template is="dom-repeat" items="{{images}}" >
+				<img on-click="imageHandler" src="{{item}}" class$="{{classCurrent(current, index)}}" />
  			</template>
-		</div>
+	</template>
     <style>
         img.current {
             border: solid 2px #E6399B;
@@ -19,20 +17,38 @@
             max-height: 150px;
         }
 
+        :host {
+            display: inline-block;
+        }
+
     </style>
-	</template>
- 	<script>
-		Polymer({
-			created: function() {
-				// hint that images is an array
-				this.current = 0;
- 			},
-		  
-			imageHandler: function(event, detail, sender){
-				this.current = sender.templateInstance.model.idx;
-                this.fire('image');
- 			}
-		});
-	</script>
-</polymer-element>
+</dom-module>
+<script>
+	Polymer({
+		is: 'gallery-element',
+
+        properties: {
+            images: {
+                type: Array,
+                notify: true
+              },
+            current: {
+                type: Number,
+                value: 0,
+                notify: true
+            }
+        },
+
+
+        imageHandler: function(event){
+			this.current = event.model.index;
+			this.fire('image');
+		},
+
+        classCurrent: function(current, index){
+            return current === index? 'current' : undefined;
+        }
+
+    });
+</script>
 

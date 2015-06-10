@@ -4,142 +4,214 @@
     <head>
        <!-- 1. Load platform support before any code that touches the DOM. -->
         <script src="bower_components/webcomponentsjs/webcomponents-lite.min.js"></script>
+        <link rel="import" href="bower_components/polymer/polymer.html">
         <!-- 2. Load the component using an HTML Import -->
-        <link rel="import" href="elements/image-element.html">
+        <script src="bower_components/xdmvcclient/js/queryParams.js"></script>
+
         <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-synchronised.html">
         <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-connection.html">
         <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-roles.html">
         <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-devices.html">
+        <link rel="import" href="elements/image-element.html">
         <link rel="import" href="elements/gallery-element.html">
+
+        <!--
         <link rel="import"
               href="bower_components/font-roboto/roboto.html">
         <link rel="import" href="bower_components/paper-input/paper-input-decorator.html">
         <link rel="import" href="bower_components/paper-input/paper-input.html">
         <link href="css/app.css" rel="stylesheet" >
+        -->
         <meta name="viewport" content="width=device-width, user-scalable=no">
 
     </head>
     <body>
-        <polymer-element name="my-app"  >
+        <dom-module id="my-app">
             <template>
-                <xdmvc-connection reconnect="true" port="9005" ajaxPort="9006"></xdmvc-connection>
-
+                <xdmvc-connection reconnect="true" peerport="9005" ajaxport="9006"></xdmvc-connection>
                 <xdmvc-synchronised id="sync"
-                                    objects='{"current": { "index":0}, "images": [],
-                               "cursor" :{"x": 0, "y": 0}}'>
+                                    objects='{{synced}}' on-objects-changed="objectsChanged">
                 </xdmvc-synchronised>
                 <xdmvc-roles id="roles"
-                             roles="['owner', 'visitor', 'album', 'image']"
-                             selected="['album']">
+                             roles='["owner", "visitor", "albums", "album", "image"]'
+                             selected='["albums"]'>
                 </xdmvc-roles>
-
-                <template bind if="{{$.roles.isselected.owner}}">
-                    <paper-input-decorator label="Choose photos">
-                        <input is="core-input" type="file" multiple accept="image/*" on-change="{{handleFiles}}"/>
-                    </paper-input-decorator>
+                <template is="dom-if" if="{{roles.isselected.owner}}">
+                    <input is="core-input" type="file" multiple accept="image/*" on-change="handleFiles"  label="Choose photos"/>
                     <gallery-element id='gallery'
-                                     images="{{$.sync.objects.images}}"
-                                     current="{{$.sync.objects.current.index}}">
+                                     images="{{synced.images}}"
+                                     current="{{synced.current.index}}">
                     </gallery-element>
                 </template>
-                <template bind if="{{!($.roles.isselected.owner && $.devices.othersDevices.large > 0) && $.sync.objects.images.length > 0 }}">
-                    <image-element images="{{$.sync.objects.images}}"
-                                    current="{{$.sync.objects.current.index}}"
-                                    cursor="{{$.sync.objects.cursor}}"
-                                    showControls="{{$.roles.isselected.owner}}"></image-element>
-                </template>
+                <div>{{roles.selected.1}}</div>
+                <!--
 
-                <xdmvc-devices id="devices"></xdmvc-devices>
+                        <template is="dom-if" if="{{roles}}">
+                            <paper-input-decorator label="Choose photos">
+                                <input is="core-input" type="file" multiple accept="image/*" on-change="handleFiles"/>
+                            </paper-input-decorator>
+                            <gallery-element id='gallery'
+                                             images="{{synced.images}}"
+                                             current="{{synced.current.index}}">
+                            </gallery-element>
+                        </template>
+        -->
+                <image-element id="image" images="{{synced.images}}"
+                               current="{{synced.current.index}}"
+                               cursor="{{synced.cursor}}"
+                               showControls="{{roles.isselected.owner}}"></image-element>
 
-            </template>
- 
-            <script>
-                Polymer({
-                    created: function(){
+                <!--
+                          <template is="dom-if" if="{{showImage}}">
+                             <image-element images="{{synced.images}}"
+                                                                 current="{{synced.current.index}}"
+                                                                 cursor="{{synced.cursor}}"
+                                                                 show-controls="{{roles.isselected.owner}}"></image-element>
+                         </template>
+        -->
 
-                    },
+                         <xdmvc-devices id="devices"></xdmvc-devices>
 
-                    handleFiles: function (event, detail, sender) {
-                        var files = sender.files;
-                        for (var i = 0; i < files.length; i++) {
-                            var file = files[i];
-                            var imageType = /image.*/;
+                     </template>
 
-                            if (!file.type.match(imageType)) {
-                              continue;
-                            }
 
-                            var imgData = this.$.sync.objects.images;
-                            var reader = new FileReader();
-                            reader.onload = function(e) { 
-                                imgData.push(e.target.result);
-                            };
-                            reader.readAsDataURL(file);
-                        }
-                    },
-                    updateViews: function(){
-                        var roles = this.$.roles;
-                        var devices = this.$.devices;
+             </dom-module>
+             <script>
+                 Polymer({
 
-                        this.albumsVisible = roles.isselected.albums &&  !roles.isselected.visitor;
+                     is: "my-app",
 
-                        this.albumVisible = roles.isselected.album && !(roles.isselected.image && devices.device.type === "small") &&  !roles.isselected.visitor;
-                        this.imageVisible = (roles.isselected.image || roles.isselected.visitor) && !this.albumsVisible;
-                        if (devices.device.type === "large" && devices.othersDevices.small > 0) {
-                            this.albumsVisible = false;
-                            this.albumVisible = roles.othersRoles.albums > 0;
-                            this.imageVisible = roles.othersRoles.album > 0;
-                        }
-                        if (devices.device.type === "small" && devices.othersDevices.large > 0) {
-                            this.albumsVisible = roles.isselected.albums;
-                            this.albumVisible = roles.isselected.album;
-                            this.imageVisible = false;
-                        }
+                     _computeShowImage: function() {
+                         console.log("showimage computing...")
+                         console.log(this.showImage);
+                         console.log(this.roles);
+                         console.log(this.devices);
+                         console.log(this.synced);
+                  //       this.showImage = !(this.$.roles.isselected.owner && this.$.devices.othersDevices.large > 0) && this.$.sync.objects.images.length > 0 ;
+                         this.showImage = !(this.roles.isselected.owner && this.devices.othersDevices.large > 0) && this.synced.images.length > 0 ;
+                         console.log(this.showImage);
+                     },
 
-                    },
+                     properties: {
+                         synced: {
+                             type: Object,
+                             value: {"current": { "index":0}, "images": [],
+                                 "cursor" :{"x": 0, "y": 0}},
+                             notify: true,
+                             observer: 'syncedChanged'
+                         },
+                         showImage: {
+                             type: Boolean,
+                             value: false,
+                             notify: true
+                         },
+            /*
+                         roles: {
+                             type: Object,
+                             observer: 'rolesChanged',
+                         },
+                         */
+                         roles: Object,
+                         devices: Object
+                     },
 
-                    domReady: function() {
-                        var that = this;
+                     observers: [
+                         '_computeShowImage(roles, devices, synced.images)',
+                         'syncedChanged(synced.current.index)'
+                     ],
+                     objectsChanged: function(event){
+                         console.log("objects changed");
+                         console.log(event);
+                     },
 
-                        var connect = getQueryParams(window.location.search).connect;
-                        if (!connect) {
-                            var connectString = 'connect=' + XDmvc.deviceId
-                            window.history.pushState('', '', window.location.search.length > 0 ? window.location.search + "&" + connectString : '?' + connectString);
-                            this.$.roles.addRole('owner');
-                        } else {
-                            if (connect !== XDmvc.deviceId) {
-                                if (XDmvc.server) {
-                                    XDmvc.connectTo(getQueryParams(window.location.search).connect);
-                                } else { // not yet connected to server, wait for the connection event
-                                    document.addEventListener("XDServer", function(){
-                                        XDmvc.connectTo(getQueryParams(window.location.search).connect);
-                                    });
-                                }
-                                this.$.roles.addRole('visitor');
-                            } else {
-                                this.$.roles.addRole('owner');
-                            }
-                        }
+                     syncedChanged: function(event){
+                       console.log("sync changed");
+                         console.log(event);
+                         console.log(this.synced);
+                     },
+                     handleFiles: function (event) {
+                         var files = event.target.files;
+                         var that = this;
+                         for (var i = 0; i < files.length; i++) {
+                             var file = files[i];
+                             var imageType = /image.*/;
 
-                        var observer = new ObjectObserver(this.$.roles.isselected);
-                        observer.open(function(changes){
-                            that.updateViews();
-                        });
+                             if (!file.type.match(imageType)) {
+                                 continue;
+                             }
 
-                        var observer = new ObjectObserver(this.$.roles.othersRoles);
-                        observer.open(function(changes){
-                            that.updateViews();
-                        });
-                    }
+                             var imgData = this.$.sync.objects.images;
+                             var reader = new FileReader();
+                             reader.onload = function(e) {
+                //                 imgData.push(e.target.result);
+                                 that.push("synced.images", e.target.result);
+ //                                that.$.image.updateCurrentImage();
 
-                });
+                             };
+                             reader.readAsDataURL(file);
+                         }
+                     },
+                     updateViews: function(){
+                         this.albumsVisible = this.roles.isselected.albums &&  !this.roles.isselected.visitor;
 
-           </script>
-        
-        </polymer-element>
-        <my-app></my-app>
+                         this.albumVisible = this.roles.isselected.album && !(this.roles.isselected.image && this.devices.device.type === "small") &&  !this.roles.isselected.visitor;
+                         this.imageVisible = (this.roles.isselected.image || this.roles.isselected.visitor) && !this.albumsVisible;
+                         if (this.devices.device.type === "large" && this.devices.othersDevices.small > 0) {
+                             this.albumsVisible = false;
+                             this.albumVisible = this.roles.othersRoles.albums > 0;
+                             this.imageVisible = this.roles.othersRoles.album > 0;
+                         }
+                         if (this.devices.device.type === "small" && this.devices.othersDevices.large > 0) {
+                             this.albumsVisible = this.roles.isselected.albums;
+                             this.albumVisible = this.roles.isselected.album;
+                             this.imageVisible = false;
+                         }
 
-        <script src="bower_components/xdmvcclient/js/queryParams.js"></script>
+                     },
 
-    </body>
-</html>
+                     ready: function() {
+                         var that = this;
+                         this.devices = this.$.devices;
+                         this.roles = this.$.roles;
+
+                         var connect = getQueryParams(window.location.search).connect;
+                         if (!connect) {
+                             var connectString = 'connect=' + XDmvc.deviceId
+                             window.history.pushState('', '', window.location.search.length > 0 ? window.location.search + "&" + connectString : '?' + connectString);
+                             this.$.roles.addRole('owner');
+                         } else {
+                             if (connect !== XDmvc.deviceId) {
+                                 if (XDmvc.server) {
+                                     XDmvc.connectTo(getQueryParams(window.location.search).connect);
+                                 } else { // not yet connected to server, wait for the connection event
+                                     document.addEventListener("XDServer", function(){
+                                         XDmvc.connectTo(getQueryParams(window.location.search).connect);
+                                     });
+                                 }
+                                 this.$.roles.addRole('visitor');
+                             } else {
+                                 this.$.roles.addRole('owner');
+                             }
+                         }
+
+                         var observer = new ObjectObserver(this.$.roles.isselected);
+                         observer.open(function(changes){
+                             that.updateViews();
+                         });
+
+                         var observer = new ObjectObserver(this.$.roles.othersRoles);
+                         observer.open(function(changes){
+                             that.updateViews();
+                         });
+                     }
+
+                 });
+
+             </script>
+
+
+             <my-app></my-app>
+
+
+         </body>
+         </html>
