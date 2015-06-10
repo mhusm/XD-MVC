@@ -913,4 +913,7 @@ ConnectedDevice.prototype.installHandlers = function installHandlers(conn){
     conn.on('open', function () { that.handleOpen()});
     conn.on('data', function (msg) { that.handleData(msg)});
     conn.on('close', function () { that.handleClose()});
+
+    var event = new CustomEvent('XDNewConnection', {'detail' : conn});
+    document.dispatchEvent(event);
 }
