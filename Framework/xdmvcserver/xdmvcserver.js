@@ -77,7 +77,6 @@ XDmvcServer.prototype.startSocketIoServer = function startSocketIoServer(port) {
         xdServer.emit("connected", id);
 
         socket.on('disconnect', function(){
-            //TODO: handle disconnect
             //console.log('user disconnected ' + socket.id);
             var deviceId;
             var connPeers;

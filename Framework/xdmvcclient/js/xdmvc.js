@@ -448,7 +448,7 @@ var XDmvc = {
                 var oldServer = XDmvc.server;
                 XDmvc.server = null;
                 XDmvc.disconnectAll();
-                XDmvc.connectToServer(oldServer.host, oldServer.port, oldServer.ajaxPort, oldServer.iceServers);
+                XDmvc.connectToServer(oldServer.host, oldServer.port, oldServer.portSocketio, oldServer.ajaxPort, oldServer.iceServers);
                 // TODO reconnect previous connections?
             }
         }
@@ -566,7 +566,7 @@ XDmvcServer.prototype.connect = function connect () {
         }
     } else if(XDmvc.isClientServer()) {
         if(!this.serverSocket) {
-            var socket = io.connect(this.socketIoAddress); //TODO:make port editable
+            var socket = io.connect(this.socketIoAddress, {'forceNew':true }); //TODO:make port editable
 
             this.serverSocket = socket;
            socket.on('connect', function() {
@@ -688,11 +688,7 @@ XDmvcServer.prototype.disconnect = function disconnect (){
         this.peer.destroy();
         this.peer = null;
     } else if(XDmvc.isClientServer()) {
-        //ugly hack https://github.com/Automattic/socket.io-client/issues/251
         this.serverSocket.disconnect();
-        delete io.sockets[this.socketIoAddress];
-        io.j = [];
-
         this.serverSocket = null;
     }
 
@@ -753,7 +749,7 @@ VirtualConnection.prototype.handleEvent = function(tag, msg) {
 }
 
 VirtualConnection.prototype.close = function() {
-    this.virtualSend(null, 'close');
+    this.virtualSend({}, 'close');
 }
 
 /*
