@@ -4,7 +4,7 @@
   "author": "Silvan Egli <siegli@student.ethz.ch>",
   "description": "Cross-device Time Measuring App",
   "scripts": {
-    "start": "node perf_server.js"
+    "start": "node server.js"
   },
   "engines": {
     "node": ">=0.8.x"
