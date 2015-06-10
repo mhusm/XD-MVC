@@ -6,16 +6,16 @@
 var XDmvc = {
     peer : null,
     defaultRole : "sync-all",
-	connectedDevices : [], // TODO maybe rename?
+    connectedDevices : [], // TODO maybe rename?
     attemptedConnections : [],
     deviceId : undefined,
     device: {},
     othersDevices: {small:0, medium:0, large:0, xlarge:0}, //TODO deviceTypes
-	syncData : {},
-	lastSyncId : 0,
-	storedPeers: [],
-	reconnect: false,
-	myPosition: {value: -1},
+    syncData : {},
+    lastSyncId : 0,
+    storedPeers: [],
+    reconnect: false,
+    myPosition: {value: -1},
     roles: [], // roles that this peer has
     othersRoles: {}, // roles that other peers have
     configuredRoles: {}, // roles that have been configured in the system
@@ -23,17 +23,17 @@ var XDmvc = {
     server : null,
 
     /*
-    ---------
-    Constants
-    ---------
+     ---------
+     Constants
+     ---------
      */
     peerToPeer : 'peer-to-peer',
     clientServer : 'client-server',
 
     /*
-    --------------------
-    Network Architecture
-    --------------------
+     --------------------
+     Network Architecture
+     --------------------
      */
     network_architecture : 'peer-to-peer', //default peerToPeer
 
@@ -264,7 +264,7 @@ var XDmvc = {
         }
     },
 
-	update : function (newObj, id, arrayDelta, keepChanges) {
+    update : function (newObj, id, arrayDelta, keepChanges) {
         var observed =  XDmvc.syncData[id];
         if (Array.isArray(observed.data)) {
             if (arrayDelta) {
@@ -448,7 +448,7 @@ var XDmvc = {
                 var oldServer = XDmvc.server;
                 XDmvc.server = null;
                 XDmvc.disconnectAll();
-                XDmvc.connectToServer(oldServer.host, oldServer.port, oldServer.ajaxPort, oldServer.iceServers);
+                XDmvc.connectToServer(oldServer.host, oldServer.port, oldServer.portSocketio, oldServer.ajaxPort, oldServer.iceServers);
                 // TODO reconnect previous connections?
             }
         }
@@ -470,10 +470,10 @@ var XDmvc = {
     detectDevice: function(){
         /* Device detection by Marko Zivkovic
 
-        Distinguishes between
-        Small => smartphones, medium => tablets, large => laptops, xlarge => desktop pcs
-        And it also works for accordingly sized browser windows.
-        see http://www.quirksmode.org/blog/archives/2012/07/more_about_devi.html
+         Distinguishes between
+         Small => smartphones, medium => tablets, large => laptops, xlarge => desktop pcs
+         And it also works for accordingly sized browser windows.
+         see http://www.quirksmode.org/blog/archives/2012/07/more_about_devi.html
          */
 
         var MAX_SMALL_DIAM = 500;
@@ -566,10 +566,10 @@ XDmvcServer.prototype.connect = function connect () {
         }
     } else if(XDmvc.isClientServer()) {
         if(!this.serverSocket) {
-            var socket = io.connect(this.socketIoAddress); //TODO:make port editable
+            var socket = io.connect(this.socketIoAddress, {'forceNew':true }); //TODO:make port editable
 
             this.serverSocket = socket;
-           socket.on('connect', function() {
+            socket.on('connect', function() {
                 socket.emit('id', XDmvc.deviceId);
             });
 
@@ -648,7 +648,7 @@ XDmvcServer.prototype.connectToDevice = function connectToDevice (deviceId) {
         connDev.installHandlers(conn);
         XDmvc.attemptedConnections.push(connDev);
         if(XDmvc.isClientServer())
-          conn.virtualConnect(deviceId);
+            conn.virtualConnect(deviceId);
     } else {
         console.warn("already connected");
     }
@@ -688,11 +688,7 @@ XDmvcServer.prototype.disconnect = function disconnect (){
         this.peer.destroy();
         this.peer = null;
     } else if(XDmvc.isClientServer()) {
-        //ugly hack https://github.com/Automattic/socket.io-client/issues/251
         this.serverSocket.disconnect();
-        delete io.sockets[this.socketIoAddress];
-        io.j = [];
-
         this.serverSocket = null;
     }
 
@@ -753,7 +749,7 @@ VirtualConnection.prototype.handleEvent = function(tag, msg) {
 }
 
 VirtualConnection.prototype.close = function() {
-    this.virtualSend(null, 'close');
+    this.virtualSend({}, 'close');
 }
 
 /*
