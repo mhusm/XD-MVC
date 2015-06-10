@@ -1,16 +1,17 @@
 {
-  "name": "XDPerformance",
+  "name": "XDGallery",
   "version": "0.1.0",
-  "author": "Silvan Egli <siegli@student.ethz.ch>",
-  "description": "Cross-device Time Measuring App",
+  "author": "Maria Husmann <husmann@inf.ethz.ch>",
+  "description": "Cross-device Gallery",
   "scripts": {
-    "start": "node perf_server.js"
+    "start": "node gallery-polymer.js"
   },
   "engines": {
     "node": ">=0.8.x"
   },
   "dependencies": {
     "connect": ">=2.7.2",
+    "body-parser": ">=1.9.2",
     "serve-static": ">=1.7.1",
     "xd-mvc": "file:../../Framework/xdmvcserver"
   },

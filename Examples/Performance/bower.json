@@ -1,0 +1,20 @@
+{
+  "name": "XDPerformance",
+  "version": "0.0.0",
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "xdmvcclient": "../../Framework/xdmvcclient",
+    "observe-js": "~0.5.5",
+    "bootstrap": "~3.3.4"
+  },
+  "resolutions": {
+    "webcomponentsjs": "^0.6.0"
+  }
+}
