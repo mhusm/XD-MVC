@@ -4,8 +4,15 @@ function initialize() {
     XDmvc.reconnect = false;
     XDmvc.setClientServer();
     XDmvc.connectToServer();
+    showAvailableDevices();
     $("#myDeviceId").text(XDmvc.deviceId);
     $("#inputDeviceId").val(XDmvc.deviceId);
+
+
+    $("#showDevices").on("click", function(){
+        showAvailableDevices();
+        return false;
+    });
 
 
 
@@ -27,18 +34,27 @@ function initialize() {
         }
         return false;
     });
+}
 
-    $("#connect").on("click", function(){
-        var otherDevice = $("#inputOtherDevice").val();
-        if (otherDevice) {
-            XDmvc.connectTo(otherDevice);
-        } else {
-            $("#inputOtherDevice").addClass("has-error");
-        }
-        return false;
+function showAvailableDevices() {
+    XDmvc.server.requestAvailableDevices();
+    window.setTimeout(addDevices, 1000);
+    addDevices();
+}
+
+function addDevices() {
+    // list container
+    var listContainer = $('#deviceList');
+    listContainer.empty();
+    for (var i=0; i<XDmvc.availableDevices.length; i++) {
+        var dev = XDmvc.availableDevices[i];
+        listContainer.prepend('<a href="#" class="list-group-item">'+dev.id+'</a>');
+    }
+    // add onclick listener
+    $("#deviceList a").click(function() {
+        XDmvc.connectTo($(this).text());
+        $(this).remove();
     });
-
-
 }
 
 document.addEventListener("DOMContentLoaded", function(event) {

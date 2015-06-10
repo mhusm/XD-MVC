@@ -4,7 +4,7 @@
   "author": "Maria Husmann <husmann@inf.ethz.ch>",
   "description": "Cross-device Gallery",
   "scripts": {
-    "start": "node gallery-polymer.js"
+    "start": "node perf_server.js"
   },
   "engines": {
     "node": ">=0.8.x"
