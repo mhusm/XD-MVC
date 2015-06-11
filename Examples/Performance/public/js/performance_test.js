@@ -8,7 +8,7 @@ function initialize() {
      */
     XDmvc.init();
     XDmvc.reconnect = false;
-    XDmvc.setClientServer;
+    XDmvc.setClientServer();
     XDmvc.connectToServer();
     updateDevices();
     $("#myDeviceId").text(XDmvc.deviceId);
@@ -56,7 +56,6 @@ function initialize() {
         for(var i = 0; i < nofMessages; i++) {
             window.setTimeout(runTests, sleepInterval*i);
         }
-        window.setTimeout(generatePlotData, sleepInterval * nofMessages * 2);
         graph();
         return false;
     });
@@ -67,19 +66,6 @@ function runTests() {
     XDmvc.connectedDevices.forEach(function(device) {
         device.send('time', {});
     });
-}
-
-function generatePlotData() {
-    var min = Number.MAX_VALUE;
-    XDmvc.connectedDevices.forEach(function (dev) {
-        for(time in dev.timeStamps) {
-            if (time < min) {
-                min = time;
-            }
-        }
-        console.log('minTime for ' + dev.id + ' : ' + min);
-    });
-
 }
 
 function updateDevices() {
