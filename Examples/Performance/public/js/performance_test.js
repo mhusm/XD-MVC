@@ -47,7 +47,7 @@ function initialize() {
     /*
     Time measurement
      */
-    var nofMessages = 10; //number of time messages for each connected Device
+    var nofMessages = 1; //number of time messages for each connected Device
     var sleepIntervall = 500; //intervall between sending message to a Device
 
     $("#runTest").on("click", function(){

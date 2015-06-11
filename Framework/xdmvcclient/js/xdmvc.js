@@ -571,7 +571,7 @@ XDmvcServer.prototype.connect = function connect () {
             var socket = io.connect(this.socketIoAddress, {'forceNew':true }); //TODO:make port editable
 
             this.serverSocket = socket;
-           socket.on('connect', function() {
+            socket.on('connect', function() {
                 socket.emit('id', XDmvc.deviceId);
             });
 
@@ -583,6 +583,13 @@ XDmvcServer.prototype.connect = function connect () {
                 //send readyForOpen
                 socket.emit('readyForOpen', {recA: XDmvc.deviceId, recB: msg.sender});
             });
+
+            socket.on('wrapMsg', function (msg) {
+                var sender = XDmvc.getConnectedDevice(msg.sender);
+                if(sender !== undefined)
+                    sender.connection.handleEvent(msg.eventTag, msg);
+            });
+
 
             socket.on('error', function(err) {
                 console.warn(err);
@@ -704,13 +711,6 @@ XDmvcServer.prototype.disconnect = function disconnect (){
 
 function VirtualConnection(serverSocket, peerId) {
     var vConn = this;
-
-    serverSocket.on('wrapMsg', function (msg) {
-        var sender = XDmvc.getConnectedDevice(msg.sender);
-        if(sender !== undefined)
-            sender.connection.handleEvent(msg.eventTag, msg);
-    });
-
     this.server = serverSocket;
     this.peer = peerId;
     this.callbackMap = {};
@@ -856,7 +856,7 @@ ConnectedDevice.prototype.handleData = function(msg){
             case 'timeAnswer':
                 var timeNow = Date.now();
                 this.timeStamps[msg.data.time] = timeNow - this.timeStamps[msg.data.time];
-                console.log('received time message from ' + this.id);
+                console.log(timeNow + ' received time message from ' + this.id);
                 break;
             default :
                 console.warn("received unhandled msg type");
@@ -909,8 +909,8 @@ ConnectedDevice.prototype.send = function send (msgType, data){
     var timeNow;
     if (this.connection && this.connection.open) {
         if(msgType === 'time') {
-            console.log('sending time message to ' + this.id);
             timeNow = Date.now();
+            console.log(timeNow +' sending time message to ' + this.id);
             this.timeStamps[timeNow] = timeNow;
             data.time = timeNow;
             data.sender = XDmvc.deviceId;
