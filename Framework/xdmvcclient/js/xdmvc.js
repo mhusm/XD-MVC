@@ -582,6 +582,12 @@ XDmvcServer.prototype.connect = function connect () {
                 socket.emit('readyForOpen', {recA: XDmvc.deviceId, recB: msg.sender});
             });
 
+            socket.on('wrapMsg', function (msg) {
+                var sender = XDmvc.getConnectedDevice(msg.sender);
+                if(sender !== undefined)
+                    sender.connection.handleEvent(msg.eventTag, msg);
+            });
+
             socket.on('error', function(err) {
                 console.warn(err);
             });
@@ -702,13 +708,6 @@ XDmvcServer.prototype.disconnect = function disconnect (){
 
 function VirtualConnection(serverSocket, peerId) {
     var vConn = this;
-
-    serverSocket.on('wrapMsg', function (msg) {
-        var sender = XDmvc.getConnectedDevice(msg.sender);
-        if(sender !== undefined)
-            sender.connection.handleEvent(msg.eventTag, msg);
-    });
-
     this.server = serverSocket;
     this.peer = peerId;
     this.callbackMap = {};
