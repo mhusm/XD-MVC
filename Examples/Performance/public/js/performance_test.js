@@ -1,5 +1,8 @@
 var map;
 function initialize() {
+    /*
+    Connection handling
+     */
     XDmvc.init();
     XDmvc.reconnect = false;
     XDmvc.setClientServer();
@@ -38,6 +41,27 @@ function initialize() {
     });
     document.addEventListener('XDdevice', function(event){
         updateDevices();
+    });
+
+
+    /*
+    Time measurement
+     */
+    var nofMessages = 10; //number of time messages for each connected Device
+    var sleepIntervall = 500; //intervall between sending message to a Device
+
+    $("#runTest").on("click", function(){
+        for(var i = 0; i < nofMessages; i++) {
+            window.setTimeout(runTests, sleepIntervall*i);
+        }
+        return false;
+    });
+
+}
+
+function runTests() {
+    XDmvc.connectedDevices.forEach(function(device) {
+        device.send('time', {});
     });
 }
 
