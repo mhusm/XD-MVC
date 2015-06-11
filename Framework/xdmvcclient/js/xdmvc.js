@@ -131,7 +131,8 @@ var XDmvc = {
         if (index > -1) {
             XDmvc.attemptedConnections.splice(index, 1);
         }
-
+        var event = new CustomEvent('XDConnection', {'detail' : connection});
+        document.dispatchEvent(event);
     },
 
 
@@ -147,7 +148,8 @@ var XDmvc = {
     },
 
     disconnectAll: function disconnectAll() {
-        XDmvc.connectedDevices.forEach(function(device){
+        var deviceCopy = XDmvc.connectedDevices.slice();
+        deviceCopy.forEach(function(device){
             device.disconnect();
         });
     },
@@ -914,6 +916,6 @@ ConnectedDevice.prototype.installHandlers = function installHandlers(conn){
     conn.on('data', function (msg) { that.handleData(msg)});
     conn.on('close', function () { that.handleClose()});
 
-    var event = new CustomEvent('XDNewConnection', {'detail' : conn});
+    var event = new CustomEvent('XDConnection', {'detail' : conn});
     document.dispatchEvent(event);
 }

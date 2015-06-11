@@ -33,7 +33,7 @@ function initialize() {
         return false;
     });
 
-    document.addEventListener('XDNewConnection', function(event){
+    document.addEventListener('XDConnection', function(event){
         addConnectedDevices()
     });
     document.addEventListener('XDdevice', function(event){
