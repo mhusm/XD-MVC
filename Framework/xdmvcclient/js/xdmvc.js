@@ -764,7 +764,8 @@ function ConnectedDevice(connection, id){
     this.roles = [];
     this.device = {};
     this.latestData = {};
-    this.timeStamps = {};
+    this.timeStamps = [];
+    this.stampSize = 0;
 }
 
 ConnectedDevice.prototype.isInterested = function(dataId){
@@ -855,8 +856,16 @@ ConnectedDevice.prototype.handleData = function(msg){
                 break;
             case 'timeAnswer':
                 var timeNow = Date.now();
-                this.timeStamps[msg.data.time] = timeNow - this.timeStamps[msg.data.time];
-                console.log(timeNow + ' received time message from ' + this.id);
+                var thatTime = msg.data.time;
+                //console.log(thatTime + ' received timeAnswer message from ' + this.id);
+                this.timeStamps.push(timeNow - thatTime);
+                this.stampSize++;
+                if(this.stampSize > 2000) {
+                    this.timeStamps = this.timeStamps.slice(1001,2000);
+                    this.stampSize = 1000;
+                    console.log('timeStamp halfed');
+                }
+
                 break;
             default :
                 console.warn("received unhandled msg type");
@@ -910,8 +919,7 @@ ConnectedDevice.prototype.send = function send (msgType, data){
     if (this.connection && this.connection.open) {
         if(msgType === 'time') {
             timeNow = Date.now();
-            console.log(timeNow +' sending time message to ' + this.id);
-            this.timeStamps[timeNow] = timeNow;
+  //          console.log(timeNow +' sending time message to ' + this.id);
             data.time = timeNow;
             data.sender = XDmvc.deviceId;
         }
