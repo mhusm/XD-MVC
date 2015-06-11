@@ -1,7 +1,7 @@
 
 
-var nofMessages = 1000; //number of 'time messages' for each connected Device
-var sleepInterval = 30; //interval between sending message to the same Device
+var nofMessages = 3000; //number of 'time messages' for each connected Device
+var sleepInterval = 20; //interval between sending message to the same Device
 function initialize() {
     /*
     Connection handling
@@ -127,24 +127,28 @@ function graph(){
 
     function getData() {
 
-        var arr = XDmvc.getConnectedDevice("Pferd").timeStamps
-        var data = arr.slice(Math.max(arr.length - totalPoints, 0));
-        // Zip the generated y values with the x values
-
         var res = [];
-        for (var i = 0; i < data.length; ++i) {
-            res.push([i, data[i]])
-        }
+        XDmvc.connectedDevices.forEach(function(device) {
+            var arr = device.timeStamps;
+            var data = arr.slice(Math.max(arr.length - totalPoints, 0));
+            // Zip the generated y values with the x values
+            var resDevice = [];
+            for (var i = 0; i < data.length; ++i) {
+                resDevice.push([i, data[i]])
+            }
+            res.push({data: resDevice});
+        });
+
         return res;
     }
 
-    var plot = $.plot("#placeholder", [ getData() ], {
+    var plot = $.plot("#placeholder",  getData() , {
         series: {
             shadowSize: 0	// Drawing is faster without shadows
         },
         yaxis: {
             min: 0,
-            max: 20
+            max: 100
         },
         xaxis: {
             show: false
@@ -153,7 +157,7 @@ function graph(){
 
     function update() {
 
-        plot.setData([getData()]);
+        plot.setData(getData());
 
         // Since the axes don't change, we don't need to call plot.setupGrid()
         plot.setupGrid();
