@@ -154,7 +154,7 @@ XDmvcServer.prototype.startSocketIoServer = function startSocketIoServer(port) {
         });
 
         socket.on('wrapMsg', function(msg){
-            console.log('message: ' + msg.type + ' for ' + msg.receiver);
+            console.log('message: ' + msg.type + ' from ' + msg.sender + ' for ' + msg.receiver);
             var connRec = xdServer.peers[msg.receiver];
             if(connRec !== undefined)
                 io.sockets.connected[connRec.socketioId].emit('wrapMsg', msg); //send message only to interestedDevice
