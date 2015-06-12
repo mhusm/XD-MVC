@@ -48,8 +48,9 @@
                     <image-element id="image" images="{{synced.images}}"
                                    current="{{synced.current.index}}"
                                    cursor="{{synced.cursor}}"
-                                   showControls="{{roles.isselected.owner}}"></image-element>
+                                   show-controls="{{roles.isselected.owner}}"></image-element>
                 </template>
+                <div hidden>test</div>
 
                 <!--
                           <template is="dom-if" if="{{showImage}}">
@@ -90,10 +91,11 @@
 
                     _computeShowImage: function() {
                         this.showImage = !(this.roles.isselected.owner && this.devices.othersDevices.large > 0) && this.synced.images.length > 0 ;
+                        console.log(this.showImage);
                     },
 
                     observers: [
-                        '_computeShowImage(roles.*, devices.othersDevices.*, synced.images)'
+                        '_computeShowImage(roles.*, devices.othersDevices.*, synced.images.*)'
                     ],
 
 
