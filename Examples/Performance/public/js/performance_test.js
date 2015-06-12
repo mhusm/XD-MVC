@@ -2,13 +2,15 @@
 
 var nofMessages = 3000; //number of 'time messages' for each connected Device
 var sleepInterval = 20; //interval between sending message to the same Device
+var running = false;
+
 function initialize() {
     /*
     Connection handling
      */
     XDmvc.init();
     XDmvc.reconnect = false;
-    XDmvc.setClientServer();
+    XDmvc.setPeerToPeer();
     XDmvc.connectToServer();
     updateDevices();
     $("#myDeviceId").text(XDmvc.deviceId);
@@ -53,6 +55,7 @@ function initialize() {
 
 
     $("#runTest").on("click", function(){
+        running = true;
         for(var i = 0; i < nofMessages; i++) {
             window.setTimeout(runTests, sleepInterval*i);
         }
@@ -60,12 +63,19 @@ function initialize() {
         return false;
     });
 
+    $("#stopTest").on("click", function(){
+        running = false;
+        return false;
+    });
+
 }
 
 function runTests() {
-    XDmvc.connectedDevices.forEach(function(device) {
-        device.send('time', {});
-    });
+    if(running) {
+        XDmvc.connectedDevices.forEach(function(device) {
+            device.send('time', {});
+        });
+    }
 }
 
 function updateDevices() {
@@ -148,7 +158,8 @@ function graph(){
         // Since the axes don't change, we don't need to call plot.setupGrid()
         plot.setupGrid();
         plot.draw();
-        setTimeout(update, sleepInterval);
+        if(running)
+            setTimeout(update, sleepInterval);
     }
 
     update();

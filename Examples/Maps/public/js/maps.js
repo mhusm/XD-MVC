@@ -2,7 +2,7 @@ var map;
 function initialize() {
     XDmvc.init();
     XDmvc.reconnect = false;
-    XDmvc.setClientServer();
+    XDmvc.setPeerToPeer();
     XDmvc.connectToServer();
     $("#myDeviceId").text(XDmvc.deviceId);
     $("#inputDeviceId").val(XDmvc.deviceId);
