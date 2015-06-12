@@ -1,7 +1,7 @@
 
 
 var nofMessages = 3000; //number of 'time messages' for each connected Device
-var sleepInterval = 20; //interval between sending message to the same Device
+var sleepInterval = 30; //interval between sending message to the same Device
 var running = false;
 
 function initialize() {
@@ -10,7 +10,7 @@ function initialize() {
      */
     XDmvc.init();
     XDmvc.reconnect = false;
-    XDmvc.setPeerToPeer();
+    XDmvc.setClientServer();
     XDmvc.connectToServer();
     updateDevices();
     $("#myDeviceId").text(XDmvc.deviceId);
@@ -103,27 +103,39 @@ function addConnectedDevices() {
     // list container
     var listContainer = $('#connectedDeviceList');
     listContainer.empty();
-    for (var i=0; i<XDmvc.connectedDevices.length; i++) {
+    var length = XDmvc.connectedDevices.length;
+    var colors = evenColors(length);
+    for (var i=0; i<length; i++) {
         var dev = XDmvc.connectedDevices[i];
-        listContainer.prepend('<li class="list-group-item">'+dev.id+'</li>');
+        //set color
+        dev.color = colors[i];
+        listContainer.prepend('<li class="list-group-item" id='+dev.id+'>'+dev.id+'</li>');
     }
+    //style the buttons
+    for (var i=0; i<length; i++) {
+        var dev = XDmvc.connectedDevices[i];
+        $('#'+dev.id).css('background-color', dev.color);
+    }
+
 }
 
 document.addEventListener("DOMContentLoaded", function(event) {
     initialize();
 });
 
-function graph(){
 
-    // We use an inline data source in the example, usually data would
-    // be fetched from a server
+
+function graph(){
 
     var data = [],
         totalPoints = 300;
 
+    var colors = [];
+
     function getData() {
 
         var res = [];
+        colors = [];
         XDmvc.connectedDevices.forEach(function(device) {
             var arr = device.timeStamps;
             var data = arr.slice(Math.max(arr.length - totalPoints, 0));
@@ -132,13 +144,13 @@ function graph(){
             for (var i = 0; i < data.length; ++i) {
                 resDevice.push([i, data[i]])
             }
-            res.push({data: resDevice});
+            res.push({data: resDevice, color: device.color});
         });
 
         return res;
     }
 
-    var plot = $.plot("#placeholder",  getData() , {
+    var plot = $.plot("#graph",  getData() , {
         series: {
             shadowSize: 0	// Drawing is faster without shadows
         },
@@ -163,4 +175,78 @@ function graph(){
     }
 
     update();
+}
+
+/*
+    Color settings
+ */
+function evenColors(total)
+{
+    var i = 360 / (total); // distribute the colors evenly on the hue range, don't start with 0
+    var r = []; // hold the generated colors
+    for (var x=1; x<=total; x++)
+    {
+        r.push(hsvToRgb(i * x, 100, 100)); // you can also alternate the saturation and value for even more contrast between the colors
+    }
+    return r;
+}
+
+function rgbToHex(r, g, b) {
+    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+}
+
+//http://snipplr.com/view/14590/hsv-to-rgb/
+function hsvToRgb(h, s, v) {
+    var r, g, b;
+    var i;
+    var f, p, q, t;
+
+    s /= 100;
+    v /= 100;
+
+    h /= 60; // sector 0 to 5
+    i = Math.floor(h);
+    f = h - i; // factorial part of h
+    p = v * (1 - s);
+    q = v * (1 - s * f);
+    t = v * (1 - s * (1 - f));
+
+    switch(i) {
+        case 0:
+            r = v;
+            g = t;
+            b = p;
+            break;
+
+        case 1:
+            r = q;
+            g = v;
+            b = p;
+            break;
+
+        case 2:
+            r = p;
+            g = v;
+            b = t;
+            break;
+
+        case 3:
+            r = p;
+            g = q;
+            b = v;
+            break;
+
+        case 4:
+            r = t;
+            g = p;
+            b = v;
+            break;
+
+        default: // case 5:
+            r = v;
+            g = p;
+            b = q;
+    }
+
+    return rgbToHex(Math.round(r * 255), Math.round(g * 255), Math.round(b * 255));
 }
