@@ -1,113 +1,164 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
 
-<polymer-element name="pointer-element" attributes="position" >
+<dom-module id="pointer-element" >
 	<template>
-        <div id="overlay" id="content" on-down="{{down}}" on-track="{{track}}" touch-action="none" >
+        <div id="overlay" id="content" on-down="down" on-track="track" touch-action="none" >
             <content></content>
         </div>
-        <div id="pointer" style="{{stylesString}}">
-
-        </div>
-
-
-		<style>
-		  :host {
-			/* Note: by default elements are always display:inline. */
-              display: inline-block;
-              position: relative;
-		  }
-		  
-		  ::content * {
-		    display: inline-block;
-            pointer-events: none;
-            user-select: none;
-              -webkit-touch-callout: none;
-              -webkit-user-select: none;		  }
-
-          #overlay {
-              -webkit-touch-callout: none;
-              -webkit-user-select: none;
-              user-select: none;
-              overflow: hidden;
-          }
+        <div id="pointer" ></div>
+        <div >{{stylesString}}</div>
 
 
-          #pointer{
-			position: absolute;
-			top: 20px;
-			left: 0;
-			height: 10px;
-			width: 10px;
-			background-color: #E6399B;
-			border-radius: 50%;
-            display: none;
-		  }
-		</style>
 	</template>
-	<script>
-		var getOffset = function getOffset(e){
-			var target = e.target || e.srcElement,
+    <style>
+
+        :host {
+            /* Note: by default elements are always display:inline. */
+            display: inline-block;
+            position: relative;
+        }
+
+        :host ::content * {
+            display: inline-block;
+            user-select: none;
+            cursor: pointer;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;		  }
+
+        #overlay {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+            overflow: hidden;
+        }
+
+
+        #pointer{
+            position: absolute;
+            top: 20px;
+            left: 0;
+            height: 20px;
+            width: 20px;
+            background-color: #E6399B;
+            border-radius: 50%;
+            display: none;
+        }
+    </style>
+</dom-module>
+<script>
+	var getOffset = function getOffset(e){
+		var target = e.target || e.srcElement,
 				style = target.currentStyle || window.getComputedStyle(target, null),
 				borderLeftWidth = parseInt(style['borderLeftWidth'], 10),
 				borderTopWidth = parseInt(style['borderTopWidth'], 10),
 				rect = target.getBoundingClientRect(),
-				offsetX = e.clientX - rect.left,
-				offsetY = e.clientY - rect.top;
-			return {x: offsetX, y: offsetY};
-		};
+				offsetX = e.detail.x - rect.left,
+				offsetY = e.detail.y - rect.top;
+		return {x: offsetX, y: offsetY};
+	};
 
-		var getRelativePosition = function getRelativePosition(offset, target){
-			var	style = target.currentStyle || window.getComputedStyle(target, null),
-    			rect = target.getBoundingClientRect();
-			return {x: offset.x/rect.width, y: offset.y/rect.height};
-		};
-		
-		var getAbsolutePosition = function getAbsolutePosition(relative, target){
-			var rect = target.getBoundingClientRect();
-			return {x: relative.x * rect.width, y: relative.y * rect.height};
-		};
+	var getRelativePosition = function getRelativePosition(offset, target){
+		var	style = target.currentStyle || window.getComputedStyle(target, null),
+				rect = target.getBoundingClientRect();
+		return {x: offset.x/rect.width, y: offset.y/rect.height};
+	};
 
-		
-		Polymer({
-			created: function() {
-                this.styles = {};
-				this.styles.left = 100+"px";
-				this.styles.top = 100 +"px";
-				this.stylesString = PolymerExpressions.prototype.styleObject.call(this, this.styles);
-				this.position = {x: 0, y: 0} ;
-			},
-		
-		    down: function (event, details, target) {
-				var offset = getOffset(event);
-				var rel = getRelativePosition(offset, event.srcElement);
-				var abs = getAbsolutePosition(rel, event.srcElement);
+	var getAbsolutePosition = function getAbsolutePosition(relative, target){
+		var rect = target.getBoundingClientRect();
+		return {x: relative.x * rect.width, y: relative.y * rect.height};
+	};
+
+    var throttle = function (func, delay) {
+        var timer = null;
+
+        return function () {
+            var context = this, args = arguments;
+
+            if (timer == null) {
+                timer = setTimeout(function () {
+                    func.apply(context, args);
+                    timer = null;
+                }, delay);
+            }
+        };
+    };
+
+
+    Polymer({
+        is: "pointer-element",
+
+        properties: {
+            styles: {
+                type: Object,
+                value: function(){return {left: "100px", top: "100px", display: "none"}},
+                notify: true
             },
-		    track: function (event, details, target) {
-				var offset = getOffset(event);
-				var rel = getRelativePosition(offset, event.srcElement);
-				var old = this.position;
-				this.position.x = rel.x;
-				this.position.y = rel.y;
-			},
- 			updatePosition: function updatePosition() {
-				var abs = getAbsolutePosition(this.position, this.children[0]);
-				this.styles.left = abs.x +"px";
-				this.styles.top = abs.y +"px";
+            position: {
+                type: Object,
+ //               value: function(){return {x: 0, y: 0}},
+                notify: true
+            }
+        },
+
+        observers: ["updatePosition(position.*)"],
+
+
+
+        created: function(){
+            var that = this;
+            this.throttledTrack = throttle(function(event){
+                var offset = getOffset(event);
+                var rel = getRelativePosition(offset, event.srcElement);
+                var old = this.position;
+                that.set("position.x", rel.x);
+                that.set("position.y", rel.y);
+
+            }, 100);
+        },
+
+ 		down: function (event) {
+			var offset = getOffset(event);
+			var rel = getRelativePosition(offset, event.srcElement);
+			var abs = getAbsolutePosition(rel, event.srcElement);
+		},
+		track: function (event) {
+           this.throttledTrack(event);
+    /*        var offset = getOffset(event);
+            var rel = getRelativePosition(offset, event.srcElement);
+            var old = this.position;
+            this.set("position.x", rel.x);
+            this.set("position.y", rel.y);
+	*/
+        },
+
+
+		updatePosition: function updatePosition() {
+
+            if (this.position.x >= 0){
+                var abs = getAbsolutePosition(this.position, this.children[0]);
+                this.styles.left = abs.x +"px";
+                this.styles.top = abs.y +"px";
                 this.styles.display= "block";
-				this.stylesString = PolymerExpressions.prototype.styleObject.call(this, this.styles);
-                this.job('hide', function() { // first arg is the name of the "job"
-                    this.styles.display= "none";
-                    this.stylesString = PolymerExpressions.prototype.styleObject.call(this, this.styles);
-                }, 5000);
 
-            },
-			
-			observe: {
-                'position.x': 'updatePosition',
-                'position.y': 'updatePosition'
+                this.setStyle();
+                this.debounce('hide', function() { // first arg is the name of the "job"
+                    this.styles.display= "none";
+                    this.setStyle();
+                }, 5000);
             }
 
-		});
-		
-	</script>
-</polymer-element>
+		},
+
+        setStyle: function(){
+            var styles = this.styles;
+            var pointerStyle = this.$.pointer.style;
+            Object.keys(this.styles).forEach(function(key) {
+                pointerStyle[key] = styles[key];
+
+            });
+        }
+
+
+	});
+
+</script>

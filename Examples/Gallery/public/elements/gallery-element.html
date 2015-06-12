@@ -2,7 +2,7 @@
 <dom-module id="gallery-element">
 	<template>
  			<template is="dom-repeat" items="{{images}}" >
-				<img on-click="imageHandler" src="{{item}}" class$="{{classCurrent(current, index)}}" />
+				<img on-tap="imageHandler" src="{{item}}" class$="{{classCurrent(current, index)}}" />
  			</template>
 	</template>
     <style>

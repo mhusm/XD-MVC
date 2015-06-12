@@ -253,7 +253,6 @@ var XDmvc = {
             var conDev = XDmvc.connectedDevices[i];
             var con = conDev.connection;
             if (con.open &&  conDev.isInterested(id)){
-                console.log("send sync to interested id: " + conDev.id);
                 con.send(msg);
             }
         }

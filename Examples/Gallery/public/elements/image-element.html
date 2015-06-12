@@ -1,6 +1,6 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
-<!--
 <link rel="import" href="pointer-element.html">
+<!--
 <link rel="import" href="../bower_components/core-icon-button/core-icon-button.html">
 -->
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
@@ -11,11 +11,13 @@
 <dom-module id="image-element">
     <template>
 <!--
-<pointer-element  position="{{cursor}}" >
+        <pointer-element  position="{{cursor}}" >
     <img  src="{{images[current]}}" />
 </pointer-element>
 -->
-        <img  src="{{currentImage}}" />
+        <pointer-element  position="{{cursor}}" >
+            <img  src="{{currentImage}}" />
+        </pointer-element>
         <div>
             <paper-icon-button icon="arrow-back" on-click="previous" disabled$="{{computePreviousDisabled(current)}}" hidden$="{{!showControls}}"></paper-icon-button>
             <paper-icon-button icon="arrow-forward" on-click="next" disabled$="{{computeNextDisabled(current, images.*)}}" hidden$="{{!showControls}}"></paper-icon-button>
