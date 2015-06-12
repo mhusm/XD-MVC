@@ -83,15 +83,11 @@
                             type: Boolean,
                             value: false,
                             notify: true
-                        },
-                        devices: {
-                            type: Object,
                         }
                     },
 
                     _computeShowImage: function() {
                         this.showImage = !(this.roles.isselected.owner && this.devices.othersDevices.large > 0) && this.synced.images.length > 0 ;
-                        console.log(this.showImage);
                     },
 
                     observers: [
