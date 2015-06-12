@@ -36,6 +36,7 @@
                              available='["owner", "visitor", "albums", "album", "image"]'
                              select='["album"]' roles="{{roles}}">
                 </xdmvc-roles>
+                <xdmvc-devices id="devices" devices="{{devices}}"></xdmvc-devices>
 
                 <template is="dom-if" if="{{roles.isselected.owner}}">
                     <input is="core-input" type="file" multiple accept="image/*" on-change="handleFiles"  label="Choose photos"/>
@@ -50,95 +51,83 @@
                                    cursor="{{synced.cursor}}"
                                    show-controls="{{roles.isselected.owner}}"></image-element>
                 </template>
-                <div hidden>test</div>
-
-                <!--
-                          <template is="dom-if" if="{{showImage}}">
-                             <image-element images="{{synced.images}}"
-                                                                 current="{{synced.current.index}}"
-                                                                 cursor="{{synced.cursor}}"
-                                                                 show-controls="{{roles.isselected.owner}}"></image-element>
-                         </template>
-        -->
-
-                         <xdmvc-devices id="devices" devices="{{devices}}"></xdmvc-devices>
-
-                     </template>
 
 
-            </dom-module>
-            <script>
+            </template>
 
-                Polymer({
-                    is: "my-app",
 
-                    properties: {
-                        synced: {
-                            type: Object,
-                            value: {"current": { "index":0}, "images": [],
-                                "cursor" :{"x": 0, "y": 0}},
-                            notify: true
-                        },
-                        showImage: {
-                            type: Boolean,
-                            value: false,
-                            notify: true
+        </dom-module>
+        <script>
+
+            Polymer({
+                is: "my-app",
+
+                properties: {
+                    synced: {
+                        type: Object,
+                        value: {"current": { "index":0}, "images": [],
+                            "cursor" :{"x": 0, "y": 0}},
+                        notify: true
+                    },
+                    showImage: {
+                        type: Boolean,
+                        value: false,
+                        notify: true
+                    }
+                },
+
+                _computeShowImage: function() {
+                    this.showImage = !(this.roles.isselected.owner && this.devices.othersDevices.large > 0) && this.synced.images.length > 0 ;
+                },
+
+                observers: [
+                    '_computeShowImage(roles.*, devices.othersDevices.*, synced.images.*)'
+                ],
+
+
+                handleFiles: function (event) {
+                    var files = event.target.files;
+                    var that = this;
+                    for (var i = 0; i < files.length; i++) {
+                        var file = files[i];
+                        var imageType = /image.*/;
+
+                        if (!file.type.match(imageType)) {
+                            continue;
                         }
-                    },
 
-                    _computeShowImage: function() {
-                        this.showImage = !(this.roles.isselected.owner && this.devices.othersDevices.large > 0) && this.synced.images.length > 0 ;
-                    },
+                        var imgData = this.$.sync.objects.images;
+                        var reader = new FileReader();
+                        reader.onload = function(e) {
+                             that.push("synced.images", e.target.result);
+                        };
+                        reader.readAsDataURL(file);
+                     }
+                },
 
-                    observers: [
-                        '_computeShowImage(roles.*, devices.othersDevices.*, synced.images.*)'
-                    ],
+                ready: function() {
+                    var that = this;
 
-
-                    handleFiles: function (event) {
-                        var files = event.target.files;
-                        var that = this;
-                        for (var i = 0; i < files.length; i++) {
-                            var file = files[i];
-                            var imageType = /image.*/;
-
-                            if (!file.type.match(imageType)) {
-                                continue;
-                            }
-
-                            var imgData = this.$.sync.objects.images;
-                            var reader = new FileReader();
-                            reader.onload = function(e) {
-                                 that.push("synced.images", e.target.result);
-                            };
-                            reader.readAsDataURL(file);
-                         }
-                    },
-
-                    ready: function() {
-                        var that = this;
-
-                        var connect = getQueryParams(window.location.search).connect;
-                        if (!connect) {
-                            var connectString = 'connect=' + XDmvc.deviceId
-                            window.history.pushState('', '', window.location.search.length > 0 ? window.location.search + "&" + connectString : '?' + connectString);
-                            this.$.roles.addRole('owner');
-                        } else {
-                            if (connect !== XDmvc.deviceId) {
-                                if (XDmvc.server) {
+                    var connect = getQueryParams(window.location.search).connect;
+                    if (!connect) {
+                        var connectString = 'connect=' + XDmvc.deviceId
+                        window.history.pushState('', '', window.location.search.length > 0 ? window.location.search + "&" + connectString : '?' + connectString);
+                        this.$.roles.addRole('owner');
+                    } else {
+                        if (connect !== XDmvc.deviceId) {
+                            if (XDmvc.server) {
+                                XDmvc.connectTo(getQueryParams(window.location.search).connect);
+                            } else { // not yet connected to server, wait for the connection event
+                                document.addEventListener("XDServer", function(){
                                     XDmvc.connectTo(getQueryParams(window.location.search).connect);
-                                } else { // not yet connected to server, wait for the connection event
-                                    document.addEventListener("XDServer", function(){
-                                        XDmvc.connectTo(getQueryParams(window.location.search).connect);
-                                    });
-                                }
-                                this.$.roles.addRole('visitor');
-                            } else {
-                                this.$.roles.addRole('owner');
+                                });
                             }
+                            this.$.roles.addRole('visitor');
+                        } else {
+                            this.$.roles.addRole('owner');
                         }
                     }
-
+                }
             });
         </script>
 
