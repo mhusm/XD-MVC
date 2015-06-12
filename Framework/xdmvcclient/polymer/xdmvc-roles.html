@@ -1,4 +1,5 @@
 <link rel="import" href="../../polymer/polymer.html">
+<link rel="import" href="../../observe-js/observe-js.html">
 <link rel="import" href="xdmvc.html">
 
 <script>
@@ -6,19 +7,32 @@
         is: "xdmvc-roles",
 
         properties: {
-            roles: {
+            roles:{
+                type: Object,
+                readOnly: true,
+                notify: true,
+                value: function(){return {selected: [], isselected: {}, othersRoles: {}}}
+            },
+            available: {
                 type: Array,
                 value: [],
-                observer: "rolesChanged",
+                observer: "availableChanged",
                 notify: true,
                 reflectToAttribute: true
             },
+            select: {
+                type: Array,
+                value: [],
+                observer: "selectChanged",
+                reflectToAttribute: true,
+                notify: true
+            },
+ /*
             selected: {
                 type: Array,
                 value: [],
-                observer: "selectedChanged",
-                notify: true,
-                reflectToAttribute: true
+                reflectToAttribute: true,
+                notify: true
             },
             isselected: {
                 type: Object,
@@ -32,32 +46,36 @@
                 notify: true,
                 value: XDmvc.othersRoles
             }
+  */
         },
 
-        ready: function(){
-            var self = this;
-            var observer = new ObjectObserver(XDmvc.roles);
-            observer.open(function(changes){
-                self.updateIsselected();
-                self.selected = XDmvc.roles;
-            });
+        observers: ["updateIsselected(roles.selected.*)"],
 
+        created: function(){
+            synchronizeArray("roles.selected", XDmvc.roles, this);
+            synchronizeObject("roles.othersRoles", XDmvc.othersRoles, this);
         },
 
         updateIsselected: function() {
             var self = this;
-            this.roles.forEach(function(r) {
-                self.isselected[r] = self.selected.indexOf(r) > -1;
+            var r = {};
+            Object.keys(this.roles.isselected).forEach(function(role){
+                r[role] = false; //default all to false
             });
+            this.roles.selected.forEach(function(role) {
+                r[role] = true;
+            });
+
+            Object.keys(r).forEach(function(role){
+                self.set("roles.isselected." +role, r[role]);
+            });
+
         },
 
-        rolesChanged: function(newValue, oldValue){
-            console.log("roles changed");
-            console.log(this.roles);
-            console.log(this.isselected);
-            var sel = this.isselected;
+        availableChanged: function(){
+            var sel = this.roles.isselected;
             if (sel) {
-                this.roles.forEach(function(r) {
+                this.available.forEach(function(r) {
                     // Initialize to false
                     if (!sel[r]) {
                         sel[r] = false;
@@ -78,17 +96,9 @@
 
         },
 
-        selectedChanged: function(){
-            console.log("selected changed");
-            console.log(this.selected);
-            var sel = this.isselected;
-            this.selected.forEach(function (r) {
+        selectChanged: function(){
+            this.select.forEach(function (r) {
                 XDmvc.addRole(r);
-                if (sel) {
-                     if (!sel[r]) {
-                         sel[r] = true;
-                     }
-                }
            });
         }
 

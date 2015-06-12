@@ -6,6 +6,14 @@
         is: "xdmvc-devices",
 
         properties: {
+
+            devices:{
+                type: Object,
+                readOnly: true,
+                notify: true,
+                value: function(){return {thisDevice: {}, availableDevices: [], connectedDevices: [], othersDevices: {}}}
+            },
+            /*
             device: {
                 type: Object,
                 notify: true,
@@ -26,6 +34,16 @@
                 notify: true,
                 value: XDmvc.availableDevices
             }
+            */
+        },
+
+
+        created: function(){
+            synchronizeArray("devices.connectedDevices", XDmvc.connectedDevices, this);
+            synchronizeArray("devices.availableDevices", XDmvc.availableDevices, this);
+            synchronizeObject("devices.othersDevices", XDmvc.othersDevices, this);
+            synchronizeObject("devices.thisDevice", XDmvc.device, this);
         }
+
     });
 </script>

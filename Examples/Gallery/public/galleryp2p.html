@@ -30,12 +30,13 @@
             <template>
                 <xdmvc-connection reconnect="true" peerport="9005" ajaxport="9006"></xdmvc-connection>
                 <xdmvc-synchronised id="sync"
-                                    objects='{{synced}}' on-objects-changed="objectsChanged">
+                                    objects='{{synced}}'>
                 </xdmvc-synchronised>
                 <xdmvc-roles id="roles"
-                             roles='["owner", "visitor", "albums", "album", "image"]'
-                             selected='["albums"]'>
+                             available='["owner", "visitor", "albums", "album", "image"]'
+                             select='["album"]' roles="{{roles}}">
                 </xdmvc-roles>
+
                 <template is="dom-if" if="{{roles.isselected.owner}}">
                     <input is="core-input" type="file" multiple accept="image/*" on-change="handleFiles"  label="Choose photos"/>
                     <gallery-element id='gallery'
@@ -43,23 +44,12 @@
                                      current="{{synced.current.index}}">
                     </gallery-element>
                 </template>
-                <div>{{roles.selected.1}}</div>
-                <!--
-
-                        <template is="dom-if" if="{{roles}}">
-                            <paper-input-decorator label="Choose photos">
-                                <input is="core-input" type="file" multiple accept="image/*" on-change="handleFiles"/>
-                            </paper-input-decorator>
-                            <gallery-element id='gallery'
-                                             images="{{synced.images}}"
-                                             current="{{synced.current.index}}">
-                            </gallery-element>
-                        </template>
-        -->
-                <image-element id="image" images="{{synced.images}}"
-                               current="{{synced.current.index}}"
-                               cursor="{{synced.cursor}}"
-                               showControls="{{roles.isselected.owner}}"></image-element>
+                <template is="dom-if" if="{{showImage}}">
+                    <image-element id="image" images="{{synced.images}}"
+                                   current="{{synced.current.index}}"
+                                   cursor="{{synced.cursor}}"
+                                   showControls="{{roles.isselected.owner}}"></image-element>
+                </template>
 
                 <!--
                           <template is="dom-if" if="{{showImage}}">
@@ -70,148 +60,92 @@
                          </template>
         -->
 
-                         <xdmvc-devices id="devices"></xdmvc-devices>
+                         <xdmvc-devices id="devices" devices="{{devices}}"></xdmvc-devices>
 
                      </template>
 
 
-             </dom-module>
-             <script>
-                 Polymer({
+            </dom-module>
+            <script>
 
-                     is: "my-app",
+                Polymer({
+                    is: "my-app",
 
-                     _computeShowImage: function() {
-                         console.log("showimage computing...")
-                         console.log(this.showImage);
-                         console.log(this.roles);
-                         console.log(this.devices);
-                         console.log(this.synced);
-                  //       this.showImage = !(this.$.roles.isselected.owner && this.$.devices.othersDevices.large > 0) && this.$.sync.objects.images.length > 0 ;
-                         this.showImage = !(this.roles.isselected.owner && this.devices.othersDevices.large > 0) && this.synced.images.length > 0 ;
-                         console.log(this.showImage);
-                     },
+                    properties: {
+                        synced: {
+                            type: Object,
+                            value: {"current": { "index":0}, "images": [],
+                                "cursor" :{"x": 0, "y": 0}},
+                            notify: true
+                        },
+                        showImage: {
+                            type: Boolean,
+                            value: false,
+                            notify: true
+                        },
+                        devices: {
+                            type: Object,
+                        }
+                    },
 
-                     properties: {
-                         synced: {
-                             type: Object,
-                             value: {"current": { "index":0}, "images": [],
-                                 "cursor" :{"x": 0, "y": 0}},
-                             notify: true,
-                             observer: 'syncedChanged'
-                         },
-                         showImage: {
-                             type: Boolean,
-                             value: false,
-                             notify: true
-                         },
-            /*
-                         roles: {
-                             type: Object,
-                             observer: 'rolesChanged',
-                         },
-                         */
-                         roles: Object,
-                         devices: Object
-                     },
+                    _computeShowImage: function() {
+                        this.showImage = !(this.roles.isselected.owner && this.devices.othersDevices.large > 0) && this.synced.images.length > 0 ;
+                    },
 
-                     observers: [
-                         '_computeShowImage(roles, devices, synced.images)',
-                         'syncedChanged(synced.current.index)'
-                     ],
-                     objectsChanged: function(event){
-                         console.log("objects changed");
-                         console.log(event);
-                     },
+                    observers: [
+                        '_computeShowImage(roles.*, devices.othersDevices.*, synced.images)'
+                    ],
 
-                     syncedChanged: function(event){
-                       console.log("sync changed");
-                         console.log(event);
-                         console.log(this.synced);
-                     },
-                     handleFiles: function (event) {
-                         var files = event.target.files;
-                         var that = this;
-                         for (var i = 0; i < files.length; i++) {
-                             var file = files[i];
-                             var imageType = /image.*/;
 
-                             if (!file.type.match(imageType)) {
-                                 continue;
-                             }
+                    handleFiles: function (event) {
+                        var files = event.target.files;
+                        var that = this;
+                        for (var i = 0; i < files.length; i++) {
+                            var file = files[i];
+                            var imageType = /image.*/;
 
-                             var imgData = this.$.sync.objects.images;
-                             var reader = new FileReader();
-                             reader.onload = function(e) {
-                //                 imgData.push(e.target.result);
+                            if (!file.type.match(imageType)) {
+                                continue;
+                            }
+
+                            var imgData = this.$.sync.objects.images;
+                            var reader = new FileReader();
+                            reader.onload = function(e) {
                                  that.push("synced.images", e.target.result);
- //                                that.$.image.updateCurrentImage();
-
-                             };
-                             reader.readAsDataURL(file);
+                            };
+                            reader.readAsDataURL(file);
                          }
-                     },
-                     updateViews: function(){
-                         this.albumsVisible = this.roles.isselected.albums &&  !this.roles.isselected.visitor;
+                    },
 
-                         this.albumVisible = this.roles.isselected.album && !(this.roles.isselected.image && this.devices.device.type === "small") &&  !this.roles.isselected.visitor;
-                         this.imageVisible = (this.roles.isselected.image || this.roles.isselected.visitor) && !this.albumsVisible;
-                         if (this.devices.device.type === "large" && this.devices.othersDevices.small > 0) {
-                             this.albumsVisible = false;
-                             this.albumVisible = this.roles.othersRoles.albums > 0;
-                             this.imageVisible = this.roles.othersRoles.album > 0;
-                         }
-                         if (this.devices.device.type === "small" && this.devices.othersDevices.large > 0) {
-                             this.albumsVisible = this.roles.isselected.albums;
-                             this.albumVisible = this.roles.isselected.album;
-                             this.imageVisible = false;
-                         }
+                    ready: function() {
+                        var that = this;
 
-                     },
+                        var connect = getQueryParams(window.location.search).connect;
+                        if (!connect) {
+                            var connectString = 'connect=' + XDmvc.deviceId
+                            window.history.pushState('', '', window.location.search.length > 0 ? window.location.search + "&" + connectString : '?' + connectString);
+                            this.$.roles.addRole('owner');
+                        } else {
+                            if (connect !== XDmvc.deviceId) {
+                                if (XDmvc.server) {
+                                    XDmvc.connectTo(getQueryParams(window.location.search).connect);
+                                } else { // not yet connected to server, wait for the connection event
+                                    document.addEventListener("XDServer", function(){
+                                        XDmvc.connectTo(getQueryParams(window.location.search).connect);
+                                    });
+                                }
+                                this.$.roles.addRole('visitor');
+                            } else {
+                                this.$.roles.addRole('owner');
+                            }
+                        }
+                    }
 
-                     ready: function() {
-                         var that = this;
-                         this.devices = this.$.devices;
-                         this.roles = this.$.roles;
-
-                         var connect = getQueryParams(window.location.search).connect;
-                         if (!connect) {
-                             var connectString = 'connect=' + XDmvc.deviceId
-                             window.history.pushState('', '', window.location.search.length > 0 ? window.location.search + "&" + connectString : '?' + connectString);
-                             this.$.roles.addRole('owner');
-                         } else {
-                             if (connect !== XDmvc.deviceId) {
-                                 if (XDmvc.server) {
-                                     XDmvc.connectTo(getQueryParams(window.location.search).connect);
-                                 } else { // not yet connected to server, wait for the connection event
-                                     document.addEventListener("XDServer", function(){
-                                         XDmvc.connectTo(getQueryParams(window.location.search).connect);
-                                     });
-                                 }
-                                 this.$.roles.addRole('visitor');
-                             } else {
-                                 this.$.roles.addRole('owner');
-                             }
-                         }
-
-                         var observer = new ObjectObserver(this.$.roles.isselected);
-                         observer.open(function(changes){
-                             that.updateViews();
-                         });
-
-                         var observer = new ObjectObserver(this.$.roles.othersRoles);
-                         observer.open(function(changes){
-                             that.updateViews();
-                         });
-                     }
-
-                 });
-
-             </script>
+            });
+        </script>
 
 
-             <my-app></my-app>
+        <my-app></my-app>
 
-
-         </body>
-         </html>
+    </body>
+</html>
