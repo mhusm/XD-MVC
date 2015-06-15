@@ -107,6 +107,8 @@ function addConnectedDevices() {
     var colors = evenColors(length);
     for (var i=0; i<length; i++) {
         var dev = XDmvc.connectedDevices[i];
+        // initialize array for averages
+        dev.avg = [];
         //set color
         dev.color = colors[i];
         listContainer.prepend('<li class="list-group-item" id='+dev.id+'>'+dev.id+'</li>');
@@ -139,11 +141,24 @@ function graph(){
         XDmvc.connectedDevices.forEach(function(device) {
             var arr = device.timeStamps;
             var data = arr.slice(Math.max(arr.length - totalPoints, 0));
+            var avgs = device.avg.slice(Math.max(device.avg.length - totalPoints, 0))
             // Zip the generated y values with the x values
             var resDevice = [];
+          //  var avgDevice = [];
+          //  var sum = 0;
             for (var i = 0; i < data.length; ++i) {
-                resDevice.push([i, data[i]])
+                resDevice.push([i, data[i]]);
+              //  sum += data[i];
             }
+            /*
+            var avg = sum / data.length;
+            avgs.push(avg);
+            for (var i = 1; i < avgs.length; ++i) {
+                avgDevice.push([i-1, avgs[i]]);
+            }
+            device.avg = avgs;
+            res.push({data: avgDevice, color: device.color});
+            */
             res.push({data: resDevice, color: device.color});
         });
 
