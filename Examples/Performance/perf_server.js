@@ -7,6 +7,7 @@ var connect = require('connect'),
 var app = connect().use(serveStatic(__dirname + '/public'));
 var server = http.createServer(app);
 
+console.log('starting server');
 xdmvc.start(9000, 3000);
 server.listen(8081);
 

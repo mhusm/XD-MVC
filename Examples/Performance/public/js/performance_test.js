@@ -130,7 +130,8 @@ document.addEventListener("DOMContentLoaded", function(event) {
 function graph(){
 
     var data = [],
-        totalPoints = 300;
+        totalPoints = 300
+        maxY = 50;
 
     var colors = [];
 
@@ -138,6 +139,7 @@ function graph(){
 
         var res = [];
         colors = [];
+        var max = 50;
         XDmvc.connectedDevices.forEach(function(device) {
             var arr = device.timeStamps;
             var data = arr.slice(Math.max(arr.length - totalPoints, 0));
@@ -147,7 +149,10 @@ function graph(){
           //  var avgDevice = [];
           //  var sum = 0;
             for (var i = 0; i < data.length; ++i) {
-                resDevice.push([i, data[i]]);
+                var time = data[i];
+                if( time > max)
+                    max = time;
+                resDevice.push([i, time]);
               //  sum += data[i];
             }
             /*
@@ -159,6 +164,7 @@ function graph(){
             device.avg = avgs;
             res.push({data: avgDevice, color: device.color});
             */
+            maxY = max;
             res.push({data: resDevice, color: device.color});
         });
 
@@ -170,8 +176,7 @@ function graph(){
             shadowSize: 0	// Drawing is faster without shadows
         },
         yaxis: {
-            min: 0,
-            max: 100
+            min: 0
         },
         xaxis: {
             show: false
@@ -181,8 +186,7 @@ function graph(){
     function update() {
 
         plot.setData(getData());
-
-        // Since the axes don't change, we don't need to call plot.setupGrid()
+        plot.getAxes().yaxis.options.max = maxY;
         plot.setupGrid();
         plot.draw();
         if(running)
