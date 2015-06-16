@@ -10,8 +10,8 @@ function initialize() {
      */
     XDmvc.init();
     XDmvc.reconnect = false;
-    XDmvc.setClientServer();
-    XDmvc.connectToServer();
+    XDmvc.setPeerToPeer();
+    XDmvc.connectToServer(null, 7001, 3001,9001, null);
     updateDevices();
     $("#myDeviceId").text(XDmvc.deviceId);
     $("#inputDeviceId").val(XDmvc.deviceId);

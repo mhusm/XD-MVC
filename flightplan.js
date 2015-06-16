@@ -38,8 +38,13 @@ plan.remote(function(remote) {
         remote.exec('cd '+appTopFolder + appFolder + ' && grunt && grunt server');
     });
 
-    remote.log('Reload application');
+    remote.log('---------------------------------------------------------');
+    remote.log('Reload  Maps application');
     remote.exec('forever stop ~/code/xdmvc/Examples/Maps/server.js', {failsafe: true});
     remote.exec('forever start ~/code/xdmvc/Examples/Maps/server.js');
+    remote.log('---------------------------------------------------------');
+    remote.log('Reload applications');
+    remote.exec('forever stop ~/code/xdmvc/Examples/Performance/perf_server.js', {failsafe: true});
+    remote.exec('forever start ~/code/xdmvc/Examples/Performance/perf_server.js');
 
 });
