@@ -3,7 +3,7 @@ function initialize() {
     XDmvc.init();
     XDmvc.reconnect = false;
     XDmvc.setClientServer();
-    XDmvc.connectToServer();
+    XDmvc.connectToServer({host:null, portPeer:7000, portSocketIo:3000,ajaxPort:9000, iceServers:null});
     $("#myDeviceId").text(XDmvc.deviceId);
     $("#inputDeviceId").val(XDmvc.deviceId);
     XDmvc.removeRole("sync-all");

@@ -51,7 +51,6 @@ var XDmvc = {
      */
 
     connectToServer : function (host, portPeer, portSocketIo, ajaxPort, iceServers) {
-
         if (!this.server) {
             this.server = new XDmvcServer(host, portPeer, portSocketIo, ajaxPort, iceServers);
         }
