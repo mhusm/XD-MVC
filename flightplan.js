@@ -11,7 +11,7 @@ plan.target('cloud', [
     {
         host: 'xdmvc.link',
         username: username,
-        privateKey: '/Users/silvan_egli/.ssh/id_rsa',
+        privateKey: 'C:/Users/siegli/Desktop/BaThe/.ssh/id_rsa',
         agent: process.env.SSH_AUTH_SOCK
     }
 ]);

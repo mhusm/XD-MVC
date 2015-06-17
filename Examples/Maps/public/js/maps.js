@@ -2,7 +2,22 @@ var map;
 function initialize() {
     XDmvc.init();
     XDmvc.reconnect = false;
-    XDmvc.setPeerToPeer();
+    var arch = getQueryParams(window.location.search).architecture;
+    if (!arch){
+        var archString = 'architecture='+XDmvc.peerToPeer;
+        window.history.pushState('', '', window.location.search.length > 0? window.location.search +"&" +archString : '?'+archString);
+        XDmvc.setPeerToPeer();
+    } else{
+        if (arch ===  'p2p') {
+            XDmvc.setPeerToPeer();
+            archString = 'architecture=' + XDmvc.peerToPeer;
+            window.history.pushState('', '','?'+archString);
+        } else {
+            XDmvc.setClientServer();
+            archString = 'architecture=' + XDmvc.clientServer;
+            window.history.pushState('', '', '?'+archString);
+        }
+    }
     XDmvc.connectToServer(null, 7000, 3000,9000, null);
     $("#myDeviceId").text(XDmvc.deviceId);
     $("#inputDeviceId").val(XDmvc.deviceId);
