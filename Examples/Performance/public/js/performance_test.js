@@ -19,7 +19,7 @@ function initialize() {
         window.history.pushState('', '', window.location.search.length > 0? window.location.search +"&" +archString : '?'+archString);
         XDmvc.setPeerToPeer();
     } else{
-        if (arch ===  'p2p') {
+        if (arch ===  'p2p' || arch ===  XDmvc.peerToPeer) {
             XDmvc.setPeerToPeer();
             archString = 'architecture=' + XDmvc.peerToPeer;
             window.history.pushState('', '','?'+archString);
@@ -30,12 +30,27 @@ function initialize() {
         }
     }
 
-   XDmvc.connectToServer(null, 7001, 3001,9001, null);
+    XDmvc.connectToServer(null, 7001, 3001,9001, null);
+
+    $('#architecture').text(XDmvc.network_architecture);
 
     updateDevices();
     $("#myDeviceId").text(XDmvc.deviceId);
     $("#inputDeviceId").val(XDmvc.deviceId);
 
+    $("#changeArchitecture").on("click", function(){
+        if(XDmvc.isPeerToPeer()) {
+            archString = 'architecture=' + XDmvc.clientServer;
+            window.history.pushState('', '','?'+archString);
+            location.reload(false);
+        } else {
+            archString = 'architecture=' + XDmvc.peerToPeer;
+            window.history.pushState('', '','?'+archString);
+            location.reload(false);
+        }
+
+        return false;
+    });
 
     $("#showDevices").on("click", function(){
         updateDevices();
