@@ -12,6 +12,7 @@ function initialize() {
     XDmvc.reconnect = false;
 
 
+
     var arch = getQueryParams(window.location.search).architecture;
     if (!arch){
         var archString = 'architecture='+XDmvc.peerToPeer;
@@ -29,7 +30,8 @@ function initialize() {
         }
     }
 
-    XDmvc.connectToServer();
+   XDmvc.connectToServer(null, 7001, 3001,9001, null);
+
     updateDevices();
     $("#myDeviceId").text(XDmvc.deviceId);
     $("#inputDeviceId").val(XDmvc.deviceId);
