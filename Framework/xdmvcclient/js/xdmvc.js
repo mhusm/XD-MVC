@@ -237,7 +237,7 @@ var XDmvc = {
             var conDev = XDmvc.connectedDevices[i];
             var con = conDev.connection;
             if (con.open &&  conDev.isInterested(id)){
-                console.log("send sync to interested id: " + conDev.id);
+             //   console.log("send sync to interested id: " + conDev.id);
                 con.send(msg);
             }
         }
@@ -859,12 +859,14 @@ ConnectedDevice.prototype.handleData = function(msg){
                 var timeNow = Date.now();
                 var thatTime = msg.data.time;
                 //console.log(thatTime + ' received timeAnswer message from ' + this.id);
-                this.timeStamps.push(timeNow - thatTime);
+                var responseTime = timeNow - thatTime;
+                this.dataStream.write(thatTime + ' ' + responseTime + ', ')
+                this.timeStamps.push(responseTime);
                 this.stampSize++;
                 if(this.stampSize > 2000) {
                     this.timeStamps = this.timeStamps.slice(1001,2000);
                     this.stampSize = 1000;
-                    console.log('timeStamp halfed');
+                    console.log('timeStamp  halfed');
                 }
                 if(msg.data.seqNr !== this.lastSeqNr+1)
                     console.warn('packet arrived out of order');

@@ -1,5 +1,4 @@
 
-
 var nofMessages = 3000; //number of 'time messages' for each connected Device
 var sleepInterval = 30; //interval between sending message to the same Device
 var running = false;
@@ -154,6 +153,9 @@ function addConnectedDevices() {
     var colors = evenColors(length);
     for (var i=0; i<length; i++) {
         var dev = XDmvc.connectedDevices[i];
+        // set writeStream if not set already
+        if(dev.dataStream !== undefined)
+            dev.dataStream = createWriteStream(dev.deviceId + '_out.txt');
         // initialize array for averages
         dev.avg = [];
         //set color
