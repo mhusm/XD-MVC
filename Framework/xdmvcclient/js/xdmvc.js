@@ -765,6 +765,8 @@ function ConnectedDevice(connection, id){
     this.latestData = {};
     this.timeStamps = [];
     this.stampSize = 0;
+    this.packetSeq = 0;
+    this.lastSeqNr = -1;
 }
 
 ConnectedDevice.prototype.isInterested = function(dataId){
@@ -864,6 +866,9 @@ ConnectedDevice.prototype.handleData = function(msg){
                     this.stampSize = 1000;
                     console.log('timeStamp halfed');
                 }
+                if(msg.data.seqNr !== this.lastSeqNr+1)
+                    console.warn('packet arrived out of order');
+                this.lastSeqNr = msg.data.seqNr;
 
                 break;
             default :
@@ -921,6 +926,8 @@ ConnectedDevice.prototype.send = function send (msgType, data){
   //          console.log(timeNow +' sending time message to ' + this.id);
             data.time = timeNow;
             data.sender = XDmvc.deviceId;
+            data.seqNr = this.packetSeq;
+            this.packetSeq++;
         }
         this.connection.send({type: msgType, data: data });
     } else {

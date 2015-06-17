@@ -91,10 +91,8 @@ function initialize() {
 
     $("#runTest").on("click", function(){
         running = true;
-        for(var i = 0; i < nofMessages; i++) {
-            window.setTimeout(runTests, sleepInterval*i);
-        }
         graph();
+        runTests();
         return false;
     });
 
@@ -110,6 +108,7 @@ function runTests() {
         XDmvc.connectedDevices.forEach(function(device) {
             device.send('time', {});
         });
+        window.setTimeout(runTests, sleepInterval);
     }
 }
 
@@ -165,8 +164,9 @@ document.addEventListener("DOMContentLoaded", function(event) {
 function graph(){
 
     var data = [],
-        totalPoints = 300
-        maxY = 50;
+        totalPoints = 300,
+        maxY = 20,
+        minY = 40;
 
     var colors = [];
 
@@ -174,7 +174,7 @@ function graph(){
 
         var res = [];
         colors = [];
-        var max = 50;
+        var max = minY;
         XDmvc.connectedDevices.forEach(function(device) {
             var arr = device.timeStamps;
             var data = arr.slice(Math.max(arr.length - totalPoints, 0));
@@ -206,7 +206,7 @@ function graph(){
         return res;
     }
 
-    var plot = $.plot("#graph",  getData() , {
+    var options = {
         series: {
             shadowSize: 0	// Drawing is faster without shadows
         },
@@ -216,6 +216,12 @@ function graph(){
         xaxis: {
             show: false
         }
+    }
+
+    var plot = $.plot("#graph",  getData() , options );
+
+    $(window).resize(function() {
+        plot = $.plot("#graph",  getData() , options );
     });
 
     function update() {
@@ -227,10 +233,8 @@ function graph(){
         if(running)
             setTimeout(update, sleepInterval);
     }
-
     update();
 }
-
 /*
     Color settings
  */
