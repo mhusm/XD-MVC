@@ -8,7 +8,7 @@ function initialize() {
         window.history.pushState('', '', window.location.search.length > 0? window.location.search +"&" +archString : '?'+archString);
         XDmvc.setPeerToPeer();
     } else{
-        if (arch ===  'p2p') {
+        if (arch ===  'p2p' || arch === XDmvc.peerToPeer) {
             XDmvc.setPeerToPeer();
             archString = 'architecture=' + XDmvc.peerToPeer;
             window.history.pushState('', '','?'+archString);
