@@ -423,7 +423,7 @@ var XDmvc = {
         this.deviceId = id? id:  "Id"+Date.now();
         localStorage.setItem("deviceId", this.deviceId);
 
-//        XDmvc.setClientServer()
+        XDmvc.setPeerToPeer(); //default
         XDmvc.loadPeers();
         XDmvc.detectDevice();
         XDmvc.host = document.location.hostname;

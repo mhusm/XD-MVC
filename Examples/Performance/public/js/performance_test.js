@@ -10,8 +10,28 @@ function initialize() {
      */
     XDmvc.init();
     XDmvc.reconnect = false;
-    XDmvc.setPeerToPeer();
-    XDmvc.connectToServer(null, 7001, 3001,9001, null);
+
+
+
+    var arch = getQueryParams(window.location.search).architecture;
+    if (!arch){
+        var archString = 'architecture='+XDmvc.peerToPeer;
+        window.history.pushState('', '', window.location.search.length > 0? window.location.search +"&" +archString : '?'+archString);
+        XDmvc.setPeerToPeer();
+    } else{
+        if (arch ===  'p2p') {
+            XDmvc.setPeerToPeer();
+            archString = 'architecture=' + XDmvc.peerToPeer;
+            window.history.pushState('', '','?'+archString);
+        } else {
+            XDmvc.setClientServer();
+            archString = 'architecture=' + XDmvc.clientServer;
+            window.history.pushState('', '', '?'+archString);
+        }
+    }
+
+   XDmvc.connectToServer(null, 7001, 3001,9001, null);
+
     updateDevices();
     $("#myDeviceId").text(XDmvc.deviceId);
     $("#inputDeviceId").val(XDmvc.deviceId);
@@ -146,24 +166,24 @@ function graph(){
             var avgs = device.avg.slice(Math.max(device.avg.length - totalPoints, 0))
             // Zip the generated y values with the x values
             var resDevice = [];
-          //  var avgDevice = [];
-          //  var sum = 0;
+            var avgDevice = [];
+            var sum = 0;
             for (var i = 0; i < data.length; ++i) {
                 var time = data[i];
                 if( time > max)
                     max = time;
                 resDevice.push([i, time]);
-              //  sum += data[i];
+                sum += data[i];
             }
-            /*
+
             var avg = sum / data.length;
             avgs.push(avg);
             for (var i = 1; i < avgs.length; ++i) {
                 avgDevice.push([i-1, avgs[i]]);
             }
             device.avg = avgs;
-            res.push({data: avgDevice, color: device.color});
-            */
+           // res.push({data: avgDevice, color: device.color});
+
             maxY = max;
             res.push({data: resDevice, color: device.color});
         });
