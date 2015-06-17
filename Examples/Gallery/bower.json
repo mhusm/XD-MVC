@@ -15,6 +15,6 @@
     "paper-elements": "Polymer/paper-elements#^0.5.5"
   },
   "resolutions": {
-    "webcomponentsjs": "0.7.2"
+    "webcomponentsjs": ">0.7.2"
   }
 }
