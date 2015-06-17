@@ -88,6 +88,19 @@ function initialize() {
     Time measurement
      */
 
+    $("#sendFrequency").val(sleepInterval).change(function () {
+        var v = $(this).val();
+        if (v && !isNaN(+v)) {
+            sleepInterval = +v;
+            if (sleepInterval < 1) {
+                sleepInterval = 1;
+            } else if (sleepInterval > 2000) {
+                sleepInterval = 2000;
+            }
+            $(this).val("" + sleepInterval);
+        }
+    });
+
 
     $("#runTest").on("click", function(){
         running = true;
@@ -193,6 +206,7 @@ function graph(){
 
             var avg = sum / data.length;
             avgs.push(avg);
+            // Zip the generated y values with the x values
             for (var i = 1; i < avgs.length; ++i) {
                 avgDevice.push([i-1, avgs[i]]);
             }
@@ -200,7 +214,7 @@ function graph(){
            // res.push({data: avgDevice, color: device.color});
 
             maxY = max;
-            res.push({data: resDevice, color: device.color});
+            res.push({data: resDevice, color: device.color, label:  Math.round(avg) + " ms"});
         });
 
         return res;
