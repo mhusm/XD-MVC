@@ -25,9 +25,12 @@
             #runTest, #stopTest {
                 margin: 15px;
             }
+            .btn-xs {
+                margin: 0px 0px 0px 10px ;
+            }
             .graph-container {
                 box-sizing: border-box;
-                width: 850px;
+                width: auto;
                 height: 450px;
                 padding: 20px 15px 15px 15px;
                 margin: 15px 15px 30px 15px;
@@ -60,7 +63,18 @@
         <div class="panel panel-default" id="menu" >
             <div class="panel-heading">Test Configurations</div>
             <div class="panel-body">
-                <form class="form-horizontal">
+                <form class="form-horizontal" >
+                    <div class="form-group">
+                        <label for="changeArchitecture" class="control-label col-sm-2">Architecture</label>
+                        <div class="col-sm-3">
+                            <p class="form-control-static " ><span id="architecture"></span> <button id="changeArchitecture" class="btn btn-default btn-xs"><span class= "glyphicon glyphicon-random" aria-hidden="true"></span> </button>
+                            </p>
+                        </div>
+                        <div class="col-sm-4">
+                        </div>
+
+
+                    </div>
                     <div class="form-group">
                         <label for="inputDeviceId" class="col-sm-2 control-label">Device ID</label>
                         <div class="col-sm-3">
@@ -88,8 +102,11 @@
                             <ul class="list-group" id="connectedDeviceList"></ul>
                         </div>
                     </div>
-                    <div class="form-group">
-
+                    <div class="form-group" >
+                        <label for="connectedDeviceList" class="control-label col-sm-2">Message frequency [ms]</label>
+                        <div  class="col-sm-1">
+                            <input type="text" class="form-control"  id="sendFrequency"/>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -97,13 +114,13 @@
         <div class="panel panel-default" id="graphs" >
             <div class="panel-heading">Test Results</div>
             <div class="panel-body">
-                <div  class="col-sm-1">
+                <div  class="col-sm-2">
                     <button id="runTest" class="btn btn-default">Run Test </button>
                     <button id="stopTest" class="btn btn-default">Stop Test </button>
 
                 </div>
 
-                <div class="col-sm-4">
+                <div class="col-sm-8">
                     <div class="graph-container">
                         <div id="graph" class="demo-placeholder"></div>
                     </div>
@@ -116,7 +133,6 @@
         <!-- Include all compiled plugins (below), or include individual files as needed -->
         <script src="bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
         <!-- Graph libraries-->
-        <link href="/examples.css" rel="stylesheet" type="text/css">
         <script language="javascript" type="text/javascript" src="js/jquery.js"></script>
         <script language="javascript" type="text/javascript" src="js/jquery.flot.js"></script>
     </body>

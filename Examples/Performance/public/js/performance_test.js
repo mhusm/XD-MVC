@@ -1,5 +1,4 @@
 
-
 var nofMessages = 3000; //number of 'time messages' for each connected Device
 var sleepInterval = 30; //interval between sending message to the same Device
 var running = false;
@@ -19,7 +18,7 @@ function initialize() {
         window.history.pushState('', '', window.location.search.length > 0? window.location.search +"&" +archString : '?'+archString);
         XDmvc.setPeerToPeer();
     } else{
-        if (arch ===  'p2p') {
+        if (arch ===  'p2p' || arch ===  XDmvc.peerToPeer) {
             XDmvc.setPeerToPeer();
             archString = 'architecture=' + XDmvc.peerToPeer;
             window.history.pushState('', '','?'+archString);
@@ -30,12 +29,27 @@ function initialize() {
         }
     }
 
-   XDmvc.connectToServer(null, 7001, 3001,9001, null);
+    XDmvc.connectToServer(null, 7001, 3001,9001, null);
+
+    $('#architecture').text(XDmvc.network_architecture);
 
     updateDevices();
     $("#myDeviceId").text(XDmvc.deviceId);
     $("#inputDeviceId").val(XDmvc.deviceId);
 
+    $("#changeArchitecture").on("click", function(){
+        if(XDmvc.isPeerToPeer()) {
+            archString = 'architecture=' + XDmvc.clientServer;
+            window.history.pushState('', '','?'+archString);
+            location.reload(false);
+        } else {
+            archString = 'architecture=' + XDmvc.peerToPeer;
+            window.history.pushState('', '','?'+archString);
+            location.reload(false);
+        }
+
+        return false;
+    });
 
     $("#showDevices").on("click", function(){
         updateDevices();
@@ -73,13 +87,24 @@ function initialize() {
     Time measurement
      */
 
+    $("#sendFrequency").val(sleepInterval).change(function () {
+        var v = $(this).val();
+        if (v && !isNaN(+v)) {
+            sleepInterval = +v;
+            if (sleepInterval < 1) {
+                sleepInterval = 1;
+            } else if (sleepInterval > 2000) {
+                sleepInterval = 2000;
+            }
+            $(this).val("" + sleepInterval);
+        }
+    });
+
 
     $("#runTest").on("click", function(){
         running = true;
-        for(var i = 0; i < nofMessages; i++) {
-            window.setTimeout(runTests, sleepInterval*i);
-        }
         graph();
+        runTests();
         return false;
     });
 
@@ -95,6 +120,7 @@ function runTests() {
         XDmvc.connectedDevices.forEach(function(device) {
             device.send('time', {});
         });
+        window.setTimeout(runTests, sleepInterval);
     }
 }
 
@@ -127,6 +153,9 @@ function addConnectedDevices() {
     var colors = evenColors(length);
     for (var i=0; i<length; i++) {
         var dev = XDmvc.connectedDevices[i];
+        // set writeStream if not set already
+        if(dev.dataStream !== undefined)
+            dev.dataStream = createWriteStream(dev.deviceId + '_out.txt');
         // initialize array for averages
         dev.avg = [];
         //set color
@@ -150,8 +179,9 @@ document.addEventListener("DOMContentLoaded", function(event) {
 function graph(){
 
     var data = [],
-        totalPoints = 300
-        maxY = 50;
+        totalPoints = 300,
+        maxY = 20,
+        minY = 40;
 
     var colors = [];
 
@@ -159,7 +189,7 @@ function graph(){
 
         var res = [];
         colors = [];
-        var max = 50;
+        var max = minY;
         XDmvc.connectedDevices.forEach(function(device) {
             var arr = device.timeStamps;
             var data = arr.slice(Math.max(arr.length - totalPoints, 0));
@@ -178,6 +208,7 @@ function graph(){
 
             var avg = sum / data.length;
             avgs.push(avg);
+            // Zip the generated y values with the x values
             for (var i = 1; i < avgs.length; ++i) {
                 avgDevice.push([i-1, avgs[i]]);
             }
@@ -185,13 +216,13 @@ function graph(){
            // res.push({data: avgDevice, color: device.color});
 
             maxY = max;
-            res.push({data: resDevice, color: device.color});
+            res.push({data: resDevice, color: device.color, label:  Math.round(avg) + " ms"});
         });
 
         return res;
     }
 
-    var plot = $.plot("#graph",  getData() , {
+    var options = {
         series: {
             shadowSize: 0	// Drawing is faster without shadows
         },
@@ -201,6 +232,12 @@ function graph(){
         xaxis: {
             show: false
         }
+    }
+
+    var plot = $.plot("#graph",  getData() , options );
+
+    $(window).resize(function() {
+        plot = $.plot("#graph",  getData() , options );
     });
 
     function update() {
@@ -212,10 +249,8 @@ function graph(){
         if(running)
             setTimeout(update, sleepInterval);
     }
-
     update();
 }
-
 /*
     Color settings
  */

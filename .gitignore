@@ -9,4 +9,5 @@ Examples/Maps/public/bower_components
 Examples/Performance/public/bower_components
 Examples/Todo
 flightplan.js
+node_modules
 .idea
