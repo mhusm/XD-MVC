@@ -124,7 +124,7 @@ function initialize() {
 
 function runTests() {
     if(running) {
-        for(var l= XDmvc.connectedDevices.length-1, i= l; i>-l; --i) {
+        for(var l= XDmvc.connectedDevices.length-1, i= l; i>=0; --i) {
             XDmvc.connectedDevices[i].send('time', {});
         }
 
