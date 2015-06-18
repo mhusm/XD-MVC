@@ -122,15 +122,6 @@ function initialize() {
 
 }
 
-function runTests() {
-    if(running) {
-        for(var l= XDmvc.connectedDevices.length-1, i= l; i>=0; --i) {
-            XDmvc.connectedDevices[i].send('time', {});
-        }
-
-        window.setTimeout(runTests, sleepInterval);
-    }
-}
 
 function updateDevices() {
     XDmvc.server.requestAvailableDevices();
@@ -177,6 +168,17 @@ function addConnectedDevices() {
 document.addEventListener("DOMContentLoaded", function(event) {
     initialize();
 });
+
+
+function runTests() {
+    if(running) {
+        for(var l= XDmvc.connectedDevices.length-1, i= l; i>=0; --i) {
+            XDmvc.connectedDevices[i].send('time', {});
+        }
+
+        window.setTimeout(runTests, sleepInterval);
+    }
+}
 
 function createCSV(name) {
     var csvRows = [];

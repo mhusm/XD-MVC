@@ -2,6 +2,7 @@ var map;
 function initialize() {
     XDmvc.init();
     XDmvc.reconnect = false;
+
     var arch = getQueryParams(window.location.search).architecture;
     if (!arch){
         var archString = 'architecture='+XDmvc.peerToPeer;
@@ -18,11 +19,28 @@ function initialize() {
             window.history.pushState('', '', '?'+archString);
         }
     }
+
     XDmvc.connectToServer(null, 7000, 3000,9000, null);
+
+    $("#changeArchitecture").on("click", function(){
+        if(XDmvc.isPeerToPeer()) {
+            archString = 'architecture=' + XDmvc.clientServer;
+            window.history.pushState('', '','?'+archString);
+            location.reload(false);
+        } else {
+            archString = 'architecture=' + XDmvc.peerToPeer;
+            window.history.pushState('', '','?'+archString);
+            location.reload(false);
+        }
+
+        return false;
+    });
+
+    $('#architecture').text(XDmvc.network_architecture);
     $("#myDeviceId").text(XDmvc.deviceId);
     $("#inputDeviceId").val(XDmvc.deviceId);
     XDmvc.removeRole("sync-all");
-    XDmvc.addRole("viewer");
+    XDmvc.addRole("mirror");
 
 
     var mapOptions = {
@@ -164,8 +182,38 @@ function initialize() {
         XDmvc.removeRole(XDmvc.roles[0]);
         XDmvc.addRole(role);
     });
+    $("#showDevices").on("click", function(){
+        updateDevices();
+        return false;
+    });
 
+    document.addEventListener('XDConnection', function(event){
+        updateDevices();
+    });
+
+    updateDevices();
 }
+
+function updateDevices() {
+    XDmvc.server.requestAvailableDevices();
+    window.setTimeout(addAvailableDevices, 1000);
+}
+
+function addAvailableDevices() {
+    // list container
+    var listContainer = $('#availableDeviceList');
+    listContainer.empty();
+    for (var i=0; i<XDmvc.availableDevices.length; i++) {
+        var dev = XDmvc.availableDevices[i];
+        listContainer.prepend('<a href="#" class="list-group-item">'+dev.id+'</a>');
+    }
+    // add onclick listener
+    $("#availableDeviceList a").click(function() {
+        XDmvc.connectTo($(this).text());
+        $(this).remove();
+    });
+}
+
 
 
 google.maps.event.addDomListener(window, 'load', initialize);
