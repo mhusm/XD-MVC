@@ -860,8 +860,8 @@ ConnectedDevice.prototype.handleData = function(msg){
                 var thatTime = msg.data.time;
                 //console.log(thatTime + ' received timeAnswer message from ' + this.id);
                 var responseTime = timeNow - thatTime;
-                this.dataStream.write(thatTime + ' ' + responseTime + ', ')
-                this.timeStamps.push(responseTime);
+                this.timeStamps.push([thatTime,responseTime]);
+                /*
                 this.stampSize++;
                 if(this.stampSize > 2000) {
                     this.timeStamps = this.timeStamps.slice(1001,2000);
@@ -871,7 +871,7 @@ ConnectedDevice.prototype.handleData = function(msg){
                 if(msg.data.seqNr !== this.lastSeqNr+1)
                     console.warn('packet arrived out of order');
                 this.lastSeqNr = msg.data.seqNr;
-
+                */
                 break;
             default :
                 console.warn("received unhandled msg type");

@@ -82,9 +82,8 @@ function initialize() {
         updateDevices();
     });
 
-
     /*
-    Time measurement
+     Time measurement
      */
 
     $("#sendFrequency").val(sleepInterval).change(function () {
@@ -113,13 +112,22 @@ function initialize() {
         return false;
     });
 
+    $("#downloadCSV").on("click", function(){
+        running = false;
+        XDmvc.connectedDevices.forEach(function (device) {
+            createCSV(device.id);
+        })
+        return false;
+    });
+
 }
 
 function runTests() {
     if(running) {
-        XDmvc.connectedDevices.forEach(function(device) {
-            device.send('time', {});
-        });
+        for(var l= XDmvc.connectedDevices.length-1, i= l; i>-l; --i) {
+            XDmvc.connectedDevices[i].send('time', {});
+        }
+
         window.setTimeout(runTests, sleepInterval);
     }
 }
@@ -153,9 +161,6 @@ function addConnectedDevices() {
     var colors = evenColors(length);
     for (var i=0; i<length; i++) {
         var dev = XDmvc.connectedDevices[i];
-        // set writeStream if not set already
-        if(dev.dataStream !== undefined)
-            dev.dataStream = createWriteStream(dev.deviceId + '_out.txt');
         // initialize array for averages
         dev.avg = [];
         //set color
@@ -167,12 +172,31 @@ function addConnectedDevices() {
         var dev = XDmvc.connectedDevices[i];
         $('#'+dev.id).css('background-color', dev.color);
     }
-
 }
 
 document.addEventListener("DOMContentLoaded", function(event) {
     initialize();
 });
+
+function createCSV(name) {
+    var csvRows = [];
+    var data = XDmvc.getConnectedDevice(name).timeStamps;
+/*
+    for(var i=0, l=data.length; i<l; ++i){
+        csvRows.push(data[i].join(','));
+    }*/
+
+    var csvString = data.join(',');
+    var a         = document.createElement('a');
+    a.href        = 'data:attachment/csv,' + csvString;
+    a.target      = '_blank';
+    a.download    = name + '_out.csv';
+
+    document.body.appendChild(a);
+    a.click();
+}
+
+
 
 
 
@@ -199,22 +223,23 @@ function graph(){
             var avgDevice = [];
             var sum = 0;
             for (var i = 0; i < data.length; ++i) {
-                var time = data[i];
+                var time = data[i][1];
                 if( time > max)
                     max = time;
                 resDevice.push([i, time]);
-                sum += data[i];
+                sum += data[i][1];
             }
 
             var avg = sum / data.length;
             avgs.push(avg);
             // Zip the generated y values with the x values
+            /*
             for (var i = 1; i < avgs.length; ++i) {
                 avgDevice.push([i-1, avgs[i]]);
             }
             device.avg = avgs;
            // res.push({data: avgDevice, color: device.color});
-
+            */
             maxY = max;
             res.push({data: resDevice, color: device.color, label:  Math.round(avg) + " ms"});
         });
