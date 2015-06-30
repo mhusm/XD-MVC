@@ -183,14 +183,14 @@ function runTests() {
 function createCSV(name) {
     var csvRows = [];
     var data = XDmvc.getConnectedDevice(name).timeStamps;
-/*
-    for(var i=0, l=data.length; i<l; ++i){
-        csvRows.push(data[i].join(','));
-    }*/
 
-    var csvString = data.join(';');
+    for(var i=0, l=data.length; i<l; ++i){
+        csvRows.push(data[i][1]);
+    }
+
+    csvRows = csvRows.join(';');
     var a         = document.createElement('a');
-    a.href        = 'data:attachment/csv,' + csvString;
+    a.href        = 'data:attachment/csv,' + csvRows;
     a.target      = '_blank';
     a.download    = name + '_out.csv';
 
