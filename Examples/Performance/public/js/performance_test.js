@@ -188,7 +188,7 @@ function createCSV(name) {
         csvRows.push(data[i].join(','));
     }*/
 
-    var csvString = data.join(',');
+    var csvString = data.join(';');
     var a         = document.createElement('a');
     a.href        = 'data:attachment/csv,' + csvString;
     a.target      = '_blank';
