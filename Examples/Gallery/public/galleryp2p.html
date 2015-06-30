@@ -15,13 +15,6 @@
         <link rel="import" href="elements/image-element.html">
         <link rel="import" href="elements/gallery-element.html">
 
-        <!--
-        <link rel="import"
-              href="bower_components/font-roboto/roboto.html">
-        <link rel="import" href="bower_components/paper-input/paper-input-decorator.html">
-        <link rel="import" href="bower_components/paper-input/paper-input.html">
-        <link href="css/app.css" rel="stylesheet" >
-        -->
         <meta name="viewport" content="width=device-width, user-scalable=no">
 
     </head>
@@ -65,8 +58,8 @@
                 properties: {
                     synced: {
                         type: Object,
-                        value: {"current": { "index":0}, "images": [],
-                            "cursor" :{"x": -1, "y": -1}},
+                        value: function(){ return {"current": { "index":0}, "images": [],
+                            "cursor" :{"x": -1, "y": -1}} } ,
                         notify: true
                     },
                     showImage: {
@@ -131,7 +124,7 @@
             });
         </script>
 
-
+		<h1>Share your photos!</h1>
         <my-app></my-app>
 
     </body>

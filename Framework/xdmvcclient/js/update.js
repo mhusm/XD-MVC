@@ -1,4 +1,4 @@
-function synchronizeObject(path, original, owner){
+function synchronizeObject(path, original, owner, callback){
     var observer = new ObjectObserver(original);
     var key;
     observer.open(function(added, removed, changed){
@@ -13,11 +13,14 @@ function synchronizeObject(path, original, owner){
         for (key in added) {
             owner.set(path+"." +key, added[key]);
         }
+        if (callback) {
+            callback();
+        }
     });
 
 }
 
-function synchronizeArray(path, original, owner){
+function synchronizeArray(path, original, owner, callback){
     var observer = new ArrayObserver(original);
     observer.open(function(splices){
         splices.forEach(function(splice) {
@@ -31,6 +34,9 @@ function synchronizeArray(path, original, owner){
             var args = [path].concat(spliceArgs);
             owner.splice.apply(owner, args);
         });
+        if (callback) {
+            callback();
+        }
     });
 
 }

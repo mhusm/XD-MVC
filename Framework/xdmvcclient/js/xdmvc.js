@@ -258,7 +258,7 @@ var XDmvc = {
         }
 
         if (XDmvc.syncData[id].updateServer) {
-            XDmvc.sendToServer("sync", msg);
+            XDmvc.sendToServer("sync", {type: 'sync', data: XDmvc.syncData[id].data});
         }
         var event = new CustomEvent('XDSyncData', {'detail' : id});
         document.dispatchEvent(event);
@@ -553,10 +553,11 @@ var XDmvc = {
 
         var parser = new UAParser();
         var scale = 1;
+        var pixelRatio;
         if (parser.getOS() !== 'Mac OS' && parser.getOS() !== 'iOS'){
-            window.devicePixelRatio = window.devicePixelRatio ||
+            pixelRatio = window.devicePixelRatio ||
                 window.screen.deviceXDPI / window.screen.logicalXDPI;
-            scale = window.devicePixelRatio;
+            scale = pixelRatio;
         }
 
         var width = window.innerWidth / scale;

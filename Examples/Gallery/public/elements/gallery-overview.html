@@ -1,35 +1,65 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
-<polymer-element name="gallery-overview" attributes="albums, currentAlbum" >
+<script src="http://code.jquery.com/jquery-2.0.3.js"></script>
+
+<dom-module id="gallery-overview">
 	<template>
         <h2>My Albums</h2>
-        <div>
-            <template repeat="{{a, idx in albums}}">
-                <div class="album" on-click="{{albumClicked}}" id="{{'album' +idx}}" >
-                    <span>{{a.title}}</span>
-                    <img src="{{a.url}}" />
-                </div>
+              <div>
+             <template is="dom-repeat" items="{{albums}}">
+                        <div class="album" on-click="albumClicked">
+                            <span>{{item.title}}</span>
+                            <img src="{{item.url}}" />
+                        </div>
             </template>
         </div>
-        <link rel="stylesheet" href="../css/overview.css" />
     </template>
-	<script>
-		Polymer({
-			created: function() {
-                this.albums = [{}];
-                this.currentAlbum = -1;
-                var that = this;
-                $.getJSON("/gallery",
-                    function (data) {
-                        that.albums = data;
-                        console.log(that.albums);
-                    }
-                );
- 			},
-            albumClicked: function(event, detail, target) {
-                var title = target.templateInstance.model.a.title;
-                this.currentAlbum = target.templateInstance.model.idx;
+    <style>
+        img {
+            display: block;
+            max-width: 95%;
+        }
+
+        .album {
+            display: inline-block;
+            margin: 8px;
+        }
+
+
+        :host(.current) {
+            border: solid 2px blue;
+            margin: 8px;
+        }
+        :host {
+            display: inline-block;
+        }
+
+    </style>
+</dom-module>
+<script>
+    Polymer({
+        is: "gallery-overview",
+
+        properties: {
+            albums: {
+                type: Array,
+                notify: true
+            },
+            currentAlbum: {
+                type: Number,
+                value: 0,
+                notify: true
             }
- 	  
-		});
-	</script>
-</polymer-element>
+        },
+        ready: function() {
+            var that = this;
+            $.getJSON("/gallery",
+                function (data) {
+                    that.set("albums", data);
+                }
+            );
+        },
+        albumClicked: function(event) {
+            this.set("currentAlbum", event.model.index);
+        }
+    });
+</script>

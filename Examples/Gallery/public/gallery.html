@@ -2,7 +2,7 @@
 <html>
     <head>
         <!-- 1. Load platform support before any code that touches the DOM. -->
-        <script src="bower_components/webcomponentsjs/webcomponents.js"></script>
+        <script src="bower_components/webcomponentsjs/webcomponents-lite.min.js"></script>
         <!-- 2. Load the component using an HTML Import -->
         <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-synchronised.html">
         <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-connection.html">
@@ -14,163 +14,196 @@
         <link rel="import" href="elements/gallery-overview.html">
         <link href="css/app.css" rel="stylesheet" >
 
+        <script src="bower_components/xdmvcclient/js/queryParams.js"></script>
+
         <meta name="viewport" content="width=device-width, user-scalable=no">
     </head>
     <body>
 
-        <polymer-element name="my-app" >
+        <dom-module id="my-app">
             <template>
                 <xdmvc-connection reconnect="true" architecture="client-server"></xdmvc-connection>
 
                 <xdmvc-synchronised id="sync"
-                               objects='{ "gallery": {"currentAlbum": -1, "currentImage": 0},
-                               "cursor" :{"x": -1, "y": -1}}'>
+                               objects='{{synced}}'>
                 </xdmvc-synchronised>
                 <xdmvc-synchronised id="persistent"
-                                    objects='{ "album": {"id":"", "cover": ""}}'
-                                    updateServer="true">
+                                    objects='{{persisted}}'
+                                    update-server="true">
                 </xdmvc-synchronised>
+
+                <xdmvc-roles id="roles"
+                             available='["owner", "visitor", "albums", "album", "image"]'
+                             select='["albums"]'
+                             roles='{{roles}}'>
+                </xdmvc-roles>
+                <xdmvc-devices id="devices" devices="{{devices}}"></xdmvc-devices>
+
                 <gallery-overview id='overview'
-                                   hidden?="{{!albumsVisible}}"
-                                   on-click="{{albumClicked}}"
-                                   currentAlbum="{{$.sync.objects.gallery.currentAlbum}}"
-                                   albums="{{albums}}">
+                                  hidden$="{{!albumsVisible}}"
+                                  on-click="albumClicked"
+                                  current-album="{{synced.gallery.currentAlbum}}"
+                                  albums="{{albums}}">
                 </gallery-overview>
-                <template bind if="{{albumVisible}}">
-                    <paper-button on-click="{{showAlbums}}"
-                            hidden?="{{albumsVisible  || !$.roles.isselected.owner}}" raised>
+                <template is="dom-if" if="{{albumVisible}}">
+                    <gallery-element id='gallery'
+                                     images="{{getAlbums(albums, synced.gallery.currentAlbum)}}"
+                                     current="{{synced.gallery.currentImage}}"
+                                     on-image="imageClicked" >
+                    </gallery-element>
+                    <paper-button on-click="showAlbums"
+                                  hidden$="{{hideAlbumsButton(albumsVisible, roles.isselected)}}" raised>
                         Back to Albums
                     </paper-button>
-                    <gallery-element id='gallery'
-                                      images="{{albums[$.sync.objects.gallery.currentAlbum].thumbs}}"
-                                      current="{{$.sync.objects.gallery.currentImage}}"
-                                      on-image="{{imageClicked}}"/>
                  </template>
 
-                <template bind if="{{$.sync.objects.gallery.currentAlbum >=0 && imageVisible}}">
-                    <paper-button on-click="{{showAlbum}}"
-                            hidden?="{{!$.roles.isselected.owner}}" raised>
+                <template is="dom-if" if="{{imageVisible}}">
+                    <paper-button on-click="showAlbum"
+                                  hidden$="{{!roles.isselected.owner}}" raised>
                         Back to Album
                     </paper-button>
                     <image-element id="image"
-                                    images="{{albums[$.sync.objects.gallery.currentAlbum].large}}"
-                                    current="{{$.sync.objects.gallery.currentImage}}"
-                                    cursor="{{$.sync.objects.cursor}}"
-                                    showControls="{{$.roles.isselected.owner}}"
-                                    showCover="{{$.roles.isselected.owner}}"
-                                    on-cover="{{handleCoverChange}}"/>
+                                   images="{{getImages(albums, synced.gallery.currentAlbum)}}"
+                                   current="{{synced.gallery.currentImage}}"
+                                   cursor="{{synced.cursor}}"
+                                   show-controls="{{roles.isselected.owner}}"
+                                   show-cover="{{roles.isselected.owner}}"
+                                   on-cover="handleCoverChange">
+                    </image-element>
                 </template>
-                <xdmvc-roles id="roles"
-                             roles="['owner', 'visitor', 'albums', 'album', 'image']"
-                             selected="['albums']">
-                </xdmvc-roles>
 
-                <xdmvc-devices id="devices"></xdmvc-devices>
 
-                <style>
-                    gallery-element,gallery-overview,image-element {
-                        margin-top: 10px;
-                    }
-
-                </style>
             </template>
-            <script>
-                Polymer({
-                    created: function(){
-                        this.albums = [];
-                        this.albumsVisible = true;
-                        this.albumVisible = false;
-                        this.imageVisible = false;
+            <style>
+                gallery-element,gallery-overview,image-element {
+                    margin-top: 10px;
+                }
+
+
+                [hidden] {
+                    display: none;
+                }
+
+            </style>
+        </dom-module>
+        <script>
+            Polymer({
+
+                is: "my-app",
+
+                properties: {
+                    synced: {
+                        type: Object,
+                        value: function(){ return { "gallery": {"currentAlbum": -1, "currentImage": 0},
+                            "cursor" :{"x": -1, "y": -1}} } ,
+                        notify: true
                     },
-
-                    albumClicked: function() {
-                        this.$.roles.removeRole('albums');
-                        this.$.roles.addRole('album');
+                    persisted: {
+                        type: Object,
+                        value: function(){ return { "album": {"id":"", "cover": ""}}} ,
+                        notify: true
                     },
-
-                    showAlbums: function() {
-                        this.$.roles.addRole('albums');
-                        this.$.roles.removeRole('album');
-                        this.$.roles.removeRole('image');
+                    albums : {
+                        type: Array,
+                        notify: true,
+                        value: function(){ return []}
                     },
-
-                    showAlbum: function() {
-                        this.$.roles.addRole('album');
-                        this.$.roles.removeRole('image');
+                    albumVisible : {
+                        type: Boolean,
+                        computed: 'computeAlbumVisible(roles.*, devices.*)'
                     },
-                    
-                    imageClicked: function(){
-                        this.$.roles.addRole('image');
+                    albumsVisible : {
+                        type: Boolean,
+                        computed: 'computeAlbumsVisible(roles.*, devices.*)'
                     },
-                    
-                    updateViews: function(){
-                        var roles = this.$.roles;
-                        var devices = this.$.devices;
-
-                        this.albumsVisible = roles.isselected.albums &&  !roles.isselected.visitor;
-
-                        this.albumVisible = roles.isselected.album && !(roles.isselected.image && devices.device.type === "small") &&  !roles.isselected.visitor;
-                        this.imageVisible = (roles.isselected.image || roles.isselected.visitor) && !this.albumsVisible;
-                        if (devices.device.type === "large" && devices.othersDevices.small > 0) {
-                            this.albumsVisible = false;
-                            this.albumVisible = roles.othersRoles.albums > 0;
-                            this.imageVisible = roles.othersRoles.album > 0;
-                        }
-                        if (devices.device.type === "small" && devices.othersDevices.large > 0) {
-                            this.albumsVisible = roles.isselected.albums;
-                            this.albumVisible = roles.isselected.album; 
-                            this.imageVisible = false;
-                        }
-                        
+                    imageVisible:  {
+                        type: Boolean,
+                        computed: 'computeImageVisible(roles.*, devices.*)'
                     },
-
-                    handleCoverChange: function(event, detail, sender){
-                        var album = this.$.persistent.objects.album;
-                        var gallery = this.$.sync.objects.gallery;
-                        var thumbnail = detail.src.replace("large", "thumbs");
-                        this.albums[gallery.currentAlbum].url = thumbnail;
-                        album.cover = thumbnail;
-                        album.id = gallery.currentAlbum;
-                    },
-                    
-                    domReady: function(){
-                        var that = this;
-                        
-                        var connect = getQueryParams(window.location.search).connect;
-                        if (!connect){
-                            var connectString = 'connect='+XDmvc.deviceId;
-                            window.history.pushState('', '', window.location.search.length > 0? window.location.search +"&" +connectString : '?'+connectString);
-                            this.$.roles.addRole('owner');   
-                        } else{
-                            if (connect !==  XDmvc.deviceId) {
-                                if (XDmvc.server) {
-                                    XDmvc.connectTo(getQueryParams(window.location.search).connect);
-                                } else { // not yet connected to server, wait for the connection event
-                                    document.addEventListener("XDServer", function(){
-                                        console.log("server connected");
-                                        XDmvc.connectTo(getQueryParams(window.location.search).connect);
-                                    });
-                                }
-                                this.$.roles.addRole('visitor');
-                            } else {
-                                this.$.roles.addRole('owner');   
-                            }
-                        }
-
-                        var observer = new ObjectObserver(this.$.roles.isselected);
-                        observer.open(function(changes){
-                            that.updateViews();
-                        });
-
-                        var observer = new ObjectObserver(this.$.roles.othersRoles);
-                        observer.open(function(changes){
-                            that.updateViews();
-                        });
+                    showImage: {
+                        type: Boolean,
+                        value: false,
+                        notify: true
                     }
+                },
 
-                });
-            </script>
-        </polymer-element>        
+                getAlbums : function(){
+                    return this.synced.gallery.currentAlbum > -1 ? this.albums[this.synced.gallery.currentAlbum].thumbs : undefined;
+                },
+                getImages : function(){
+                    return this.synced.gallery.currentAlbum > -1 ? this.albums[this.synced.gallery.currentAlbum].large : undefined;
+                },
+                albumClicked: function() {
+                    this.$.roles.removeRole('albums');
+                    this.$.roles.addRole('album');
+                },
+
+                hideAlbumsButton: function(){
+                    return this.albumsVisible  || !this.roles.isselected.owner;
+                },
+
+
+                showAlbums: function() {
+                    this.$.roles.addRole('albums');
+                    this.$.roles.removeRole('album');
+                    this.$.roles.removeRole('image');
+                },
+
+                showAlbum: function() {
+                    this.$.roles.addRole('album');
+                    this.$.roles.removeRole('image');
+                },
+
+                imageClicked: function(){
+                    this.$.roles.addRole('image');
+                },
+
+                computeAlbumVisible: function(){
+                    return this.roles.isselected.album
+                            && !(this.roles.isselected.image && this.devices.thisDevice.type === "small")
+                            &&  !this.roles.isselected.visitor;
+                },
+
+                computeAlbumsVisible: function(){
+                    return this.roles.isselected.albums &&  !this.roles.isselected.visitor;
+                },
+
+                computeImageVisible: function(){
+                    return (this.roles.isselected.image || this.roles.isselected.visitor) && !this.albumsVisible;
+                },
+
+                handleCoverChange: function(event){
+                    var album = this.persisted.album;
+                    var gallery = this.synced.gallery;
+                    var thumbnail = event.detail.src.replace("large", "thumbs");
+                    this.set(["albums", gallery.currentAlbum, "url"], thumbnail);
+                    this.set("persisted.album.cover", thumbnail);
+                    this.set("persisted.album.id", gallery.currentAlbum);
+                },
+
+                ready: function(){
+                    var connect = getQueryParams(window.location.search).connect;
+                    if (!connect){
+                        var connectString = 'connect='+XDmvc.deviceId;
+                        window.history.pushState('', '', window.location.search.length > 0? window.location.search +"&" +connectString : '?'+connectString);
+                        this.$.roles.addRole('owner');
+                    } else{
+                        if (connect !==  XDmvc.deviceId) {
+                            if (XDmvc.server) {
+                                XDmvc.connectTo(connect);
+                            } else { // not yet connected to server, wait for the connection event
+                                document.addEventListener("XDServer", function(){
+                                    XDmvc.connectTo(connect);
+                                });
+                            }
+                            this.$.roles.addRole('visitor');
+                        } else {
+                            this.$.roles.addRole('owner');
+                        }
+                    }
+                }
+            });
+        </script>
 
         <my-app></my-app>
 
@@ -185,8 +218,5 @@
         </style>
 
         <script src="http://code.jquery.com/jquery-2.0.3.js"></script>
-        <script src="bower_components/xdmvcclient/js/xdmvc.js"></script>
-        <script src="bower_components/xdmvcclient/js/queryParams.js"></script>
-
     </body>
 </html>

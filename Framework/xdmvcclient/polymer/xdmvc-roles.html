@@ -52,8 +52,9 @@
         observers: ["updateIsselected(roles.selected.*)"],
 
         created: function(){
+            var that  = this;
             synchronizeArray("roles.selected", XDmvc.roles, this);
-            synchronizeObject("roles.othersRoles", XDmvc.othersRoles, this);
+            synchronizeObject("roles.othersRoles", XDmvc.othersRoles, this, function(){that.fire("othersRolesChanged")});
         },
 
         updateIsselected: function() {
@@ -69,8 +70,11 @@
             Object.keys(r).forEach(function(role){
                 self.set("roles.isselected." +role, r[role]);
             });
+            this.fire('isselectedChanged');
 
         },
+
+
 
         availableChanged: function(){
             var sel = this.roles.isselected;
