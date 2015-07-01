@@ -1,6 +1,6 @@
 
 var nofMessages = 3000; //number of 'time messages' for each connected Device
-var sleepInterval = 30; //interval between sending message to the same Device
+var sleepInterval = 100; //interval between sending message to the same Device
 var running = false;
 
 function initialize() {
