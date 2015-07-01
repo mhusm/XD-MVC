@@ -223,7 +223,7 @@ var XDmvc = {
 
         if (!changes) {
             // No changes specified. Send whole object
-            data = XDmvc.syncData[id]
+            data = XDmvc.syncData[id].data;
         } else {
             if (Array.isArray(XDmvc.syncData[id].data)){
                 var splices = changes[0];
@@ -243,8 +243,6 @@ var XDmvc = {
             }
         }
 
-        // Send delta for array, otherwise new copy of object
-   //     var msg = {type: 'sync', data: arrayDelta.length > 0? arrayDelta: XDmvc.syncData[id].data, id: id, arrayDelta: arrayDelta.length>0};
         var msg = {type: 'sync', data: data, id: id, arrayDelta: arrayDelta.length>0, objectDelta: objectDelta.length >0};
         var len = XDmvc.connectedDevices.length,
             i;
@@ -292,6 +290,53 @@ var XDmvc = {
         }
     },
 
+    // TODO there is some redundancy with the update function. This should be fixed
+    updateOld: function(old, data, arrayDelta, objectDelta){
+        var changedOrAdded;
+        var removed;
+        var added = {};
+        var key;
+        var splices;
+        if (Array.isArray(old)) {
+            if (arrayDelta) {
+                splices = data;
+            } else {
+                // No delta, replace old with new
+                var args= [0, old.length].concat(data)
+                splices = [args];
+            }
+
+             splices.forEach(function(spliceArgs){
+                Array.prototype.splice.apply(old, spliceArgs);
+             });
+        } else {
+            if (objectDelta) {
+                added = data[0];
+                removed = data[1];
+                var changed = data[2];
+                changedOrAdded = changed;
+            }
+            else{
+                var delta = XDmvc.getDelta(old, data);
+                removed = delta[0];
+                changedOrAdded = delta[1];
+
+            }
+
+            // Deleted properties
+            for (key in removed) {
+                old[key] = undefined; // TODO this is not exactly the same as delete
+            }
+            // New and changed properties
+            for (key in changedOrAdded) {
+                old[key]= changedOrAdded[key];
+            }
+            for (key in added) {
+                old[key]= changedOrAdded[key];
+            }
+        }
+    },
+
 	update : function (data, id, arrayDelta, objectDelta, keepChanges) {
         var observed =  XDmvc.syncData[id];
         var changedOrAdded;
@@ -309,11 +354,6 @@ var XDmvc = {
             }
 
             observed.updateArrayFunction(id, splices);
-            /*
-            splices.forEach(function(spliceArgs){
-                Array.prototype.splice.apply(observed.data, spliceArgs);
-            });
-*/
         } else {
             if (objectDelta) {
                 added = data[0];
@@ -405,7 +445,6 @@ var XDmvc = {
         if(this.server.serverSocket)
             this.server.serverSocket.emit('roleConfigs', {roles : configs });
 
-        console.log(JSON.stringify(configs));
         this.sendToAll("roleConfigurations", {role: role, configurations : configurations});
     },
 
@@ -850,18 +889,13 @@ ConnectedDevice.prototype.handleRoles = function(roles){
     var old = this.roles;
     this.roles = roles;
     XDmvc.updateOthersRoles(old, this.roles);
-    // sends the current state, the first time it receives roles from another device
-    // only sends them, if the other device was the one to request the connection
-    // TODO maybe this needs to be configurable?
-    if (this.sendSync) {
-        Object.keys(XDmvc.syncData).forEach(function (element) {
-            if (this.isInterested(element)){
-                var msg = {type: 'sync', data: XDmvc.syncData[element].data, id: element};
-                this.connection.send(msg);
-            }
-        }, this);
-        this.sendSync = false;
-    }
+    // sends the current state, the every time it receives roles from another device
+    Object.keys(XDmvc.syncData).forEach(function (element) {
+        if (this.isInterested(element)){
+            var msg = {type: 'sync', data: XDmvc.syncData[element].data, id: element};
+            this.connection.send(msg);
+        }
+    }, this);
 };
 
 
@@ -895,25 +929,32 @@ ConnectedDevice.prototype.handleData = function(msg){
                 document.dispatchEvent(event);
                 break;
             case 'sync':
+                console.log(msg.data);
+                if (!this.latestData[msg.id])  {
+                    this.latestData[msg.id] = msg.data;
+                }  else {
+                    XDmvc.updateOld(this.latestData[msg.id], msg.data, msg.arrayDelta, msg.objectDelta);
+                }
+                var data = this.latestData[msg.id];
+                console.log(data);
+
                 // First all role specific callbacks
                 var callbacks = XDmvc.getRoleCallbacks(msg.id);
                 //TODO data can now be a delta, this must be accounted for in the callbacks. maybe the last object should be cached
                 //TODO also, initially, the complete object should always be sent. otherwise the connected device may not have all information.
-                //TODO maybe on connection each device should already send all synchronised data to all the device?
+                //TODO maybe on connection each device should already send all synchronised data to all devices?
                 if (callbacks.length > 0) {
                     callbacks.forEach(function(callback){
-                        callback.apply(undefined, [msg.id, msg.data, this.id]);
+                        callback(msg.id, data, this.id);
                     }, this);
                 }
                 // Else object specific callbacks
                 else if (XDmvc.syncData[msg.id].callback) {
-                    XDmvc.syncData[msg.id].callback.apply(undefined, [msg.id, msg.data, this.id]);
+                    XDmvc.syncData[msg.id].callback(msg.id, data, this.id);
                     // Else default merge behaviour
                 } else {
                     XDmvc.update(msg.data, msg.id, msg.arrayDelta, msg.objectDelta);
                 }
-                //TODO find what the problem is with latest Data
-//                this.latestData[msg.id] = msg.data; //TODO maybe handle array deltas?
 
                 event = new CustomEvent('XDsync', {'detail': {dataId: msg.id, data: msg.data, sender: this.id}});
                 document.dispatchEvent(event);

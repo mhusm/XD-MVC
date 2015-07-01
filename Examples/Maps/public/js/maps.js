@@ -1,4 +1,5 @@
 var map;
+var views = {};
 function initialize() {
     XDmvc.init();
     XDmvc.reconnect = false;
@@ -22,11 +23,11 @@ function initialize() {
                             "lng" : 0},
                     "sw" : {"lat" : 0,
                             "lng" : 0}};
-    var views = {};
 
     var setCenter = function setCenter(id, newcenter){
         center.lat = newcenter.lat;
         center.lng = newcenter.lng;
+        console.log(newcenter);
         map.setCenter(new google.maps.LatLng(newcenter.lat, newcenter.lng));
         XDmvc.discardChanges(id);
     };
@@ -146,8 +147,15 @@ function initialize() {
 
     $("#roles input:radio").on("change", function(event){
         var role = event.target.value;
-        XDmvc.removeRole(XDmvc.roles[0]);
+        var old = XDmvc.roles[0];
+        XDmvc.removeRole(old);
         XDmvc.addRole(role);
+        if (old  === "overview") {
+            Object.keys(views).forEach(function(key){
+                views[key].setMap(null);
+            });
+            views = {};
+        }
     });
 
 }
