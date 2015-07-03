@@ -9,6 +9,12 @@ function initialize() {
     $("#inputDeviceId").val(XDmvc.deviceId);
     XDmvc.removeRole("sync-all");
     XDmvc.addRole("viewer");
+    document.addEventListener("XDdisconnect", function(event){
+        if (XDmvc.hasRole("overview")) {
+            views[event.detail].setMap(null);
+            delete views[event.detail];
+        }
+    });
 
 
     var mapOptions = {
@@ -27,7 +33,6 @@ function initialize() {
     var setCenter = function setCenter(id, newcenter){
         center.lat = newcenter.lat;
         center.lng = newcenter.lng;
-        console.log(newcenter);
         map.setCenter(new google.maps.LatLng(newcenter.lat, newcenter.lng));
         XDmvc.discardChanges(id);
     };

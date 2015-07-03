@@ -543,6 +543,13 @@ var XDmvc = {
 
         // default role
         this.addRole(XDmvc.defaultRole);
+
+        // disconnect server on unload (this could solve some PeerJS issues with IDs)
+        window.addEventListener("unload", function(){
+            if (XDmvc.server) {
+                XDmvc.server.disconnect();
+            }
+        });
     },
 
 
@@ -929,14 +936,12 @@ ConnectedDevice.prototype.handleData = function(msg){
                 document.dispatchEvent(event);
                 break;
             case 'sync':
-                console.log(msg.data);
                 if (!this.latestData[msg.id])  {
                     this.latestData[msg.id] = msg.data;
                 }  else {
                     XDmvc.updateOld(this.latestData[msg.id], msg.data, msg.arrayDelta, msg.objectDelta);
                 }
                 var data = this.latestData[msg.id];
-                console.log(data);
 
                 // First all role specific callbacks
                 var callbacks = XDmvc.getRoleCallbacks(msg.id);
@@ -1011,6 +1016,8 @@ ConnectedDevice.prototype.handleOpen = function handleOpen (){
 
 ConnectedDevice.prototype.handleClose = function handleClose (){
     XDmvc.removeConnection(this);
+    var event = new CustomEvent('XDdisconnect', {'detail' : this.id});
+    document.dispatchEvent(event);
 };
 
 ConnectedDevice.prototype.send = function send (msgType, data){
@@ -1024,7 +1031,6 @@ ConnectedDevice.prototype.send = function send (msgType, data){
 ConnectedDevice.prototype.disconnect = function disconnect (){
     this.connection.close();
     XDmvc.removeConnection(this);
-
 };
 
 ConnectedDevice.prototype.installHandlers = function installHandlers(conn){
