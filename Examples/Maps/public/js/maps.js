@@ -31,23 +31,25 @@ function initialize() {
                             "lng" : 0}};
 
     var setCenter = function setCenter(id, newcenter){
-        center.lat = newcenter.lat;
-        center.lng = newcenter.lng;
+        center.lat = Math.round10(newcenter.lat, -10);
+        center.lng = Math.round10(newcenter.lng, -10);
+        XDmvc.discardChanges(id);
         map.setCenter(new google.maps.LatLng(newcenter.lat, newcenter.lng));
         XDmvc.discardChanges(id);
     };
 
     google.maps.event.addListener(map, 'center_changed', function() {
-        center.lat = map.center.lat();
-        center.lng = map.center.lng();
+        center.lat = Math.round10(map.center.lat(), -10);
+        center.lng =  Math.round10(map.center.lng(), -10);
         Platform.performMicrotaskCheckpoint();
     });
     XDmvc.synchronize(center,setCenter ,"center");
 
 
     var setMapType = function setMapType(id, newmapType){
-        map.setMapTypeId(newmapType.type);
         mapType.type = newmapType.type;
+        XDmvc.discardChanges(id);
+        map.setMapTypeId(newmapType.type);
         XDmvc.discardChanges(id);
     };
     google.maps.event.addListener(map, 'maptypeid_changed', function() {
@@ -57,8 +59,9 @@ function initialize() {
     XDmvc.synchronize(mapType,setMapType ,"mapType");
 
     var setZoom = function setZoom(id, newzoom){
-        map.setZoom(newzoom.level);
         zoom.level = newzoom.level;
+        XDmvc.discardChanges(id);
+        map.setZoom(newzoom.level);
         XDmvc.discardChanges(id);
     };
     google.maps.event.addListener(map, 'zoom_changed', function() {
@@ -164,6 +167,54 @@ function initialize() {
     });
 
 }
+document.addEventListener("DOMContentLoaded", initialize);
 
+// Closure
+(function() {
+    /**
+     * Decimal adjustment of a number.
+     *
+     * @param {String}  type  The type of adjustment.
+     * @param {Number}  value The number.
+     * @param {Integer} exp   The exponent (the 10 logarithm of the adjustment base).
+     * @returns {Number} The adjusted value.
+     */
+    function decimalAdjust(type, value, exp) {
+        // If the exp is undefined or zero...
+        if (typeof exp === 'undefined' || +exp === 0) {
+            return Math[type](value);
+        }
+        value = +value;
+        exp = +exp;
+        // If the value is not a number or the exp is not an integer...
+        if (isNaN(value) || !(typeof exp === 'number' && exp % 1 === 0)) {
+            return NaN;
+        }
+        // Shift
+        value = value.toString().split('e');
+        value = Math[type](+(value[0] + 'e' + (value[1] ? (+value[1] - exp) : -exp)));
+        // Shift back
+        value = value.toString().split('e');
+        return +(value[0] + 'e' + (value[1] ? (+value[1] + exp) : exp));
+    }
 
-google.maps.event.addDomListener(window, 'load', initialize);
+    // Decimal round
+    if (!Math.round10) {
+        Math.round10 = function(value, exp) {
+            return decimalAdjust('round', value, exp);
+        };
+    }
+    // Decimal floor
+    if (!Math.floor10) {
+        Math.floor10 = function(value, exp) {
+            return decimalAdjust('floor', value, exp);
+        };
+    }
+    // Decimal ceil
+    if (!Math.ceil10) {
+        Math.ceil10 = function(value, exp) {
+            return decimalAdjust('ceil', value, exp);
+        };
+    }
+})();
+//google.maps.event.addDomListener(window, 'load', initialize);

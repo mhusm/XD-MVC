@@ -220,7 +220,6 @@ var XDmvc = {
         var arrayDelta = [];
         var objectDelta = [];
         var data;
-
         if (!changes) {
             // No changes specified. Send whole object
             data = XDmvc.syncData[id].data;
@@ -389,7 +388,7 @@ var XDmvc = {
         document.dispatchEvent(event);
     },
 
-    getDelta(oldObj, newObj){
+    getDelta: function(oldObj, newObj){
         var addedOrChanged = {};
         var removed = {};
         var key;
