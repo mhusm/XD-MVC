@@ -91,11 +91,13 @@
 
         next: function () {
             this.current += 1;
+            Platform.performMicrotaskCheckpoint();
         },
 
         previous: function () {
             if (this.current > 0){
                 this.current -= 1;
+                Platform.performMicrotaskCheckpoint();
             }
         },
 

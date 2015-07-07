@@ -3,6 +3,8 @@
     <head>
         <!-- 1. Load platform support before any code that touches the DOM. -->
         <script src="bower_components/webcomponentsjs/webcomponents-lite.min.js"></script>
+        <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc.html">
+        <link src="bower_components/polymer/polymer.html" rel="import">
         <!-- 2. Load the component using an HTML Import -->
         <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-synchronised.html">
         <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-connection.html">
@@ -19,7 +21,6 @@
         <meta name="viewport" content="width=device-width, user-scalable=no">
     </head>
     <body>
-
         <dom-module id="my-app">
             <template>
                 <xdmvc-connection reconnect="true" architecture="client-server"></xdmvc-connection>
@@ -87,121 +88,129 @@
             </style>
         </dom-module>
         <script>
-            Polymer({
 
-                is: "my-app",
+            HTMLImports.whenReady(function () {
+                Polymer({
 
-                properties: {
-                    synced: {
-                        type: Object,
-                        value: function(){ return { "gallery": {"currentAlbum": -1, "currentImage": 0},
-                            "cursor" :{"x": -1, "y": -1}} } ,
-                        notify: true
+                    is: "my-app",
+
+                    properties: {
+                        synced: {
+                            type: Object,
+                            value: function(){ return { "gallery": {"currentAlbum": -1, "currentImage": 0},
+                                "cursor" :{"x": -1, "y": -1}} } ,
+                            notify: true
+                        },
+                        persisted: {
+                            type: Object,
+                            value: function(){ return { "album": {"id":"", "cover": ""}}} ,
+                            notify: true
+                        },
+                        albums : {
+                            type: Array,
+                            notify: true,
+                            value: function(){ return []}
+                        },
+                        albumVisible : {
+                            type: Boolean,
+                            computed: 'computeAlbumVisible(roles.*, devices.*)'
+                        },
+                        albumsVisible : {
+                            type: Boolean,
+                            computed: 'computeAlbumsVisible(roles.*, devices.*)'
+                        },
+                        imageVisible:  {
+                            type: Boolean,
+                            computed: 'computeImageVisible(roles.*, devices.*)'
+                        },
+                        showImage: {
+                            type: Boolean,
+                            value: false,
+                            notify: true
+                        }
                     },
-                    persisted: {
-                        type: Object,
-                        value: function(){ return { "album": {"id":"", "cover": ""}}} ,
-                        notify: true
+
+                    getAlbums : function(){
+                        return this.synced.gallery.currentAlbum > -1 ? this.albums[this.synced.gallery.currentAlbum].thumbs : undefined;
                     },
-                    albums : {
-                        type: Array,
-                        notify: true,
-                        value: function(){ return []}
+                    getImages : function(){
+                        return this.synced.gallery.currentAlbum > -1 ? this.albums[this.synced.gallery.currentAlbum].large : undefined;
                     },
-                    albumVisible : {
-                        type: Boolean,
-                        computed: 'computeAlbumVisible(roles.*, devices.*)'
+                    albumClicked: function() {
+                        this.$.roles.removeRole('albums');
+                        this.$.roles.addRole('album');
                     },
-                    albumsVisible : {
-                        type: Boolean,
-                        computed: 'computeAlbumsVisible(roles.*, devices.*)'
+
+                    hideAlbumsButton: function(){
+                        return this.albumsVisible  || !this.roles.isselected.owner;
                     },
-                    imageVisible:  {
-                        type: Boolean,
-                        computed: 'computeImageVisible(roles.*, devices.*)'
+
+
+                    showAlbums: function() {
+                        this.$.roles.addRole('albums');
+                        this.$.roles.removeRole('album');
+                        this.$.roles.removeRole('image');
                     },
-                    showImage: {
-                        type: Boolean,
-                        value: false,
-                        notify: true
-                    }
-                },
 
-                getAlbums : function(){
-                    return this.synced.gallery.currentAlbum > -1 ? this.albums[this.synced.gallery.currentAlbum].thumbs : undefined;
-                },
-                getImages : function(){
-                    return this.synced.gallery.currentAlbum > -1 ? this.albums[this.synced.gallery.currentAlbum].large : undefined;
-                },
-                albumClicked: function() {
-                    this.$.roles.removeRole('albums');
-                    this.$.roles.addRole('album');
-                },
+                    showAlbum: function() {
+                        this.$.roles.addRole('album');
+                        this.$.roles.removeRole('image');
+                    },
 
-                hideAlbumsButton: function(){
-                    return this.albumsVisible  || !this.roles.isselected.owner;
-                },
+                    imageClicked: function(){
+                        this.$.roles.addRole('image');
+                    },
 
+                    computeAlbumVisible: function(){
+                        return this.roles.isselected.album
+                                && !(this.roles.isselected.image && this.devices.thisDevice.type === "small")
+                                &&  !this.roles.isselected.visitor;
+                    },
 
-                showAlbums: function() {
-                    this.$.roles.addRole('albums');
-                    this.$.roles.removeRole('album');
-                    this.$.roles.removeRole('image');
-                },
+                    computeAlbumsVisible: function(){
+                        return this.roles.isselected.albums &&  !this.roles.isselected.visitor;
+                    },
 
-                showAlbum: function() {
-                    this.$.roles.addRole('album');
-                    this.$.roles.removeRole('image');
-                },
+                    computeImageVisible: function(){
+                        return (this.roles.isselected.image || this.roles.isselected.visitor) && !this.albumsVisible;
+                    },
 
-                imageClicked: function(){
-                    this.$.roles.addRole('image');
-                },
+                    handleCoverChange: function(event){
+                        var album = this.persisted.album;
+                        var gallery = this.synced.gallery;
+                        var thumbnail = event.detail.src.replace("large", "thumbs");
+                        this.set(["albums", gallery.currentAlbum, "url"], thumbnail);
+                        this.set("persisted.album.cover", thumbnail);
+                        this.set("persisted.album.id", gallery.currentAlbum);
+                    },
 
-                computeAlbumVisible: function(){
-                    return this.roles.isselected.album
-                            && !(this.roles.isselected.image && this.devices.thisDevice.type === "small")
-                            &&  !this.roles.isselected.visitor;
-                },
+                    ready: function(){
+                        var that = this;
+                        if (XDmvc.server) {
+                            this.onServerReady();
+                        } else { // not yet connected to server, wait for the connection event
+                            document.addEventListener("XDServer", function(){
+                                that.onServerReady();
+                            });
+                        }
+                    },
 
-                computeAlbumsVisible: function(){
-                    return this.roles.isselected.albums &&  !this.roles.isselected.visitor;
-                },
-
-                computeImageVisible: function(){
-                    return (this.roles.isselected.image || this.roles.isselected.visitor) && !this.albumsVisible;
-                },
-
-                handleCoverChange: function(event){
-                    var album = this.persisted.album;
-                    var gallery = this.synced.gallery;
-                    var thumbnail = event.detail.src.replace("large", "thumbs");
-                    this.set(["albums", gallery.currentAlbum, "url"], thumbnail);
-                    this.set("persisted.album.cover", thumbnail);
-                    this.set("persisted.album.id", gallery.currentAlbum);
-                },
-
-                ready: function(){
-                    var connect = getQueryParams(window.location.search).connect;
-                    if (!connect){
-                        var connectString = 'connect='+XDmvc.deviceId;
-                        window.history.pushState('', '', window.location.search.length > 0? window.location.search +"&" +connectString : '?'+connectString);
-                        this.$.roles.addRole('owner');
-                    } else{
-                        if (connect !==  XDmvc.deviceId) {
-                            if (XDmvc.server) {
-                                XDmvc.connectTo(connect);
-                            } else { // not yet connected to server, wait for the connection event
-                                document.addEventListener("XDServer", function(){
-                                    XDmvc.connectTo(connect);
-                                });
-                            }
-                            this.$.roles.addRole('visitor');
-                        } else {
+                    onServerReady: function(){
+                        var connect = getQueryParams(window.location.search).connect;
+                        if (!connect){
+                            var connectString = 'connect='+XDmvc.deviceId;
+                            window.history.pushState('', '', window.location.search.length > 0? window.location.search +"&" +connectString : '?'+connectString);
                             this.$.roles.addRole('owner');
+                        } else {
+                            if (connect !== XDmvc.deviceId) {
+                                XDmvc.connectTo(connect);
+                                this.$.roles.addRole('visitor');
+                            } else {
+                                this.$.roles.addRole('owner');
+                            }
                         }
                     }
-                }
+                });
             });
         </script>
 

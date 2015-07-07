@@ -2,7 +2,7 @@
 
 <dom-module id="pointer-element" >
 	<template>
-        <div id="overlay" id="content" on-down="down" on-track="track" touch-action="none" >
+        <div id="overlay" id="content"on-track="track" touch-action="none" >
             <content></content>
         </div>
         <div id="pointer" ></div>
@@ -28,8 +28,10 @@
         #overlay {
             -webkit-touch-callout: none;
             -webkit-user-select: none;
+            -moz-user-select: none;
             user-select: none;
             overflow: hidden;
+            max-width: 100%;
         }
 
 
@@ -95,7 +97,6 @@
             },
             position: {
                 type: Object,
- //               value: function(){return {x: 0, y: 0}},
                 notify: true
             }
         },
@@ -108,27 +109,16 @@
             var that = this;
             this.throttledTrack = throttle(function(event){
                 var offset = getOffset(event);
-                var rel = getRelativePosition(offset, event.srcElement);
-                var old = this.position;
+                var rel = getRelativePosition(offset, this.children[0]);
                 that.set("position.x", rel.x);
                 that.set("position.y", rel.y);
+                Platform.performMicrotaskCheckpoint();
 
             }, 100);
         },
 
- 		down: function (event) {
-			var offset = getOffset(event);
-			var rel = getRelativePosition(offset, event.srcElement);
-			var abs = getAbsolutePosition(rel, event.srcElement);
-		},
 		track: function (event) {
            this.throttledTrack(event);
-    /*        var offset = getOffset(event);
-            var rel = getRelativePosition(offset, event.srcElement);
-            var old = this.position;
-            this.set("position.x", rel.x);
-            this.set("position.y", rel.y);
-	*/
         },
 
 

@@ -451,6 +451,7 @@ var XDmvc = {
         if (!this.hasRole(role)) {
             this.roles.push(role);
             this.sendRoles();
+            Platform.performMicrotaskCheckpoint();
         }
     },
 
@@ -459,6 +460,7 @@ var XDmvc = {
         if (index > -1) {
             this.roles.splice(index, 1);
             this.sendRoles();
+            Platform.performMicrotaskCheckpoint();
         }
     },
 
@@ -628,6 +630,7 @@ var XDmvc = {
         var name = localStorage.getItem("deviceName");
         this.device.name = name? name : this.deviceId;
         localStorage.setItem("deviceName", this.device.name);
+        Platform.performMicrotaskCheckpoint();
     }
 };
 
@@ -902,6 +905,8 @@ ConnectedDevice.prototype.handleRoles = function(roles){
             this.connection.send(msg);
         }
     }, this);
+    Platform.performMicrotaskCheckpoint();
+
 };
 
 
@@ -933,6 +938,7 @@ ConnectedDevice.prototype.handleData = function(msg){
                 XDmvc.othersDevices[msg.data.type] +=1;
                 event = new CustomEvent('XDdevice', {'detail': msg.data});
                 document.dispatchEvent(event);
+                Platform.performMicrotaskCheckpoint();
                 break;
             case 'sync':
                 if (!this.latestData[msg.id])  {

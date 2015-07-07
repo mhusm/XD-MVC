@@ -43,6 +43,7 @@
         imageHandler: function(event){
 			this.current = event.model.index;
 			this.fire('image');
+            Platform.performMicrotaskCheckpoint();
 		},
 
         classCurrent: function(current, index){

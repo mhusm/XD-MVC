@@ -51,76 +51,78 @@
 
         </dom-module>
         <script>
+            HTMLImports.whenReady(function () {
 
-            Polymer({
-                is: "my-app",
+                Polymer({
+                    is: "my-app",
 
-                properties: {
-                    synced: {
-                        type: Object,
-                        value: function(){ return {"current": { "index":0}, "images": [],
-                            "cursor" :{"x": -1, "y": -1}} } ,
-                        notify: true
+                    properties: {
+                        synced: {
+                            type: Object,
+                            value: function(){ return {"current": { "index":0}, "images": [],
+                                "cursor" :{"x": -1, "y": -1}} } ,
+                            notify: true
+                        },
+                        showImage: {
+                            type: Boolean,
+                            value: false,
+                            notify: true
+                        }
                     },
-                    showImage: {
-                        type: Boolean,
-                        value: false,
-                        notify: true
-                    }
-                },
 
-                _computeShowImage: function() {
-                    this.showImage = !(this.roles.isselected.owner && this.devices.othersDevices.large > 0);
-                },
+                    _computeShowImage: function() {
+                        this.showImage = !(this.roles.isselected.owner && this.devices.othersDevices.large > 0);
+                    },
 
-                observers: [
-                    '_computeShowImage(roles.*, devices.othersDevices.*, synced.images.*)'
-                ],
+                    observers: [
+                        '_computeShowImage(roles.*, devices.othersDevices.*, synced.images.*)'
+                    ],
 
 
-                handleFiles: function (event) {
-                    var files = event.target.files;
-                    var that = this;
-                    for (var i = 0; i < files.length; i++) {
-                        var file = files[i];
-                        var imageType = /image.*/;
+                    handleFiles: function (event) {
+                        var files = event.target.files;
+                        var that = this;
+                        for (var i = 0; i < files.length; i++) {
+                            var file = files[i];
+                            var imageType = /image.*/;
 
-                        if (!file.type.match(imageType)) {
-                            continue;
-                        }
-
-                        var imgData = this.$.sync.objects.images;
-                        var reader = new FileReader();
-                        reader.onload = function(e) {
-                             that.push("synced.images", e.target.result);
-                        };
-                        reader.readAsDataURL(file);
-                     }
-                },
-
-                ready: function() {
-                    var that = this;
-
-                    var connect = getQueryParams(window.location.search).connect;
-                    if (!connect) {
-                        var connectString = 'connect=' + XDmvc.deviceId
-                        window.history.pushState('', '', window.location.search.length > 0 ? window.location.search + "&" + connectString : '?' + connectString);
-                        this.$.roles.addRole('owner');
-                    } else {
-                        if (connect !== XDmvc.deviceId) {
-                            if (XDmvc.server) {
-                                XDmvc.connectTo(getQueryParams(window.location.search).connect);
-                            } else { // not yet connected to server, wait for the connection event
-                                document.addEventListener("XDServer", function(){
-                                    XDmvc.connectTo(getQueryParams(window.location.search).connect);
-                                });
+                            if (!file.type.match(imageType)) {
+                                continue;
                             }
-                            this.$.roles.addRole('visitor');
-                        } else {
+
+                            var imgData = this.$.sync.objects.images;
+                            var reader = new FileReader();
+                            reader.onload = function(e) {
+                                 that.push("synced.images", e.target.result);
+                            };
+                            reader.readAsDataURL(file);
+                         }
+                    },
+
+                    ready: function() {
+                        var that = this;
+
+                        var connect = getQueryParams(window.location.search).connect;
+                        if (!connect) {
+                            var connectString = 'connect=' + XDmvc.deviceId
+                            window.history.pushState('', '', window.location.search.length > 0 ? window.location.search + "&" + connectString : '?' + connectString);
                             this.$.roles.addRole('owner');
+                        } else {
+                            if (connect !== XDmvc.deviceId) {
+                                if (XDmvc.server) {
+                                    XDmvc.connectTo(getQueryParams(window.location.search).connect);
+                                } else { // not yet connected to server, wait for the connection event
+                                    document.addEventListener("XDServer", function(){
+                                        XDmvc.connectTo(getQueryParams(window.location.search).connect);
+                                    });
+                                }
+                                this.$.roles.addRole('visitor');
+                            } else {
+                                this.$.roles.addRole('owner');
+                            }
                         }
                     }
-                }
+                });
             });
         </script>
 
