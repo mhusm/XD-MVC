@@ -22,6 +22,10 @@
                 type: Number,
                 value: XDmvc.defaultAjaxPort
             } ,
+            socketport: {
+                type: Number,
+                value: XDmvc.defaultSocketIoPort
+            } ,
             deviceid:  {
                 type: String,
                 value: XDmvc.deviceId
@@ -32,7 +36,7 @@
             }
         },
                 /*
-TODO reflect changes in XDmvc (e.g. different ports ect.) back into this element
+TODO reflect changes in XDmvc (e.g. different ports ect.) back into this element?
                  */
 
         attached: function(){
@@ -41,7 +45,7 @@ TODO reflect changes in XDmvc (e.g. different ports ect.) back into this element
             if (this.architecture === XDmvc.clientServer) {
                 XDmvc.setClientServer();
             }
-            XDmvc.connectToServer(this.url, this.peerport, undefined, this.ajaxport);
+            XDmvc.connectToServer(this.url, this.peerport, this.socketport, this.ajaxport);
         },
 
         changeDeviceId: function(newID){
