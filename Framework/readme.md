@@ -1,6 +1,6 @@
 # Cross-device MVC
 
-Here is a quick introduction to the framework using Polymer. Please look at the examples for more details on usage. 
+Here is a quick introduction to the framework using [Polymer](http://www.polymer-project.org). Please look at the examples for more details on usage. 
 If you don't want to use Polymer, look at the maps example.
 
 ## Server

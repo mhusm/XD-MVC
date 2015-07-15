@@ -27,3 +27,4 @@ For the peer-to-peer version:
 ## Configuration
 You can add your own photos to the image folder, just use the same folder structure as the example albums.
 
+##Photo Credits
