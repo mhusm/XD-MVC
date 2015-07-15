@@ -5,7 +5,6 @@ The second one allows the user to choose photos from their device and sends no d
 
 ## Installation
 It is assumed that you have both the Framework and the Examples folder in the same directory (as it is here in the repository).
-The Fabian folder is not required.
 
 1. `npm install`
 2. `bower install`

@@ -3,8 +3,9 @@
 XD-MVC brings cross-device capabilities to MVC frameworks. 
 It can be used as a plain JavaScript library. In addition, we provide an integration with Polymer (https://www.polymer-project.org).
 For communication among devices, both a peer-to-peer and a client-server version exist. You are free to choose the one that suits your needs best.
-You find three sample applications in the Examples folder: 
+You can find three sample applications in the Examples folder: 
 Two gallery applications that are built with Polymer and a maps application built with plain JavaScript.
+More details on the framework can be found in the framework folder.
 
 ## Supported Browsers
 The framework uses some experimental JavaScript features, hence it may not work equally well in all browsers. 

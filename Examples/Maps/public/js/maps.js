@@ -169,6 +169,7 @@ function initialize() {
 }
 document.addEventListener("DOMContentLoaded", initialize);
 
+// Rounding numbers. Source: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/round
 // Closure
 (function() {
     /**
