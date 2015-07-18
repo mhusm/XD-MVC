@@ -24,7 +24,7 @@ var XDmvc = {
     defaultPeerPort: 9000,
     defaultAjaxPort: 9001,
     defaultSocketIoPort: 3000,
-    
+
 
 
     /*
@@ -617,12 +617,13 @@ var XDmvc = {
 
         //Check for WebRTC support
         this.device.supportsWebRTC = DetectRTC.isWebRTCSupported;
-        window.alert(DetectRTC.isWebRTCSupported);
+        
     },
 
     /*
     function to determine whether a peerJS or a SocketIo connection should be used to connect
-    to the remoteId device
+    to the remoteId device. Logic might be extended. Currently the decicion is made based on
+    the availability of WebRTC
      */
     usePeerToPeer: function usePeerToPeer(remoteId) {
         var device = this.availableDevices.find(function(avDev){return avDev.id === remoteId; });
