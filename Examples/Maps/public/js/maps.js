@@ -3,7 +3,6 @@ var views = {};
 function initialize() {
     XDmvc.init();
     XDmvc.reconnect = false;
-    XDmvc.setClientServer();
     XDmvc.connectToServer();
     $("#myDeviceId").text(XDmvc.deviceId);
     $("#inputDeviceId").val(XDmvc.deviceId);

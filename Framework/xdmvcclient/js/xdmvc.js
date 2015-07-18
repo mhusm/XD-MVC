@@ -586,6 +586,9 @@ var XDmvc = {
     },
 
     detectDevice: function(){
+
+
+
         /* Device detection by Marko Zivkovic
 
          Distinguishes between
@@ -631,6 +634,10 @@ var XDmvc = {
         this.device.name = name? name : this.deviceId;
         localStorage.setItem("deviceName", this.device.name);
         Platform.performMicrotaskCheckpoint();
+
+        //Check for WebRTC support
+        this.device.supportsWebRTC = DetectRTC.isWebRTCSupported;
+        window.alert(DetectRTC.isWebRTCSupported);
     }
 };
 
