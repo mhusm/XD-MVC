@@ -19,11 +19,78 @@ var allowCrossDomain = function(req, res, next) {
 
 function XDmvcServer() {
     EventEmitter.call(this);
-    this.peers = {};
+    this.socketIoPeers = {};
+    this.peerJsPeers = {};
+    this.peers = {}; //union of socketIoPeers and peerJsPeers
     this.sessions = {};
     this.configuredRoles = {};
 }
 util.inherits(XDmvcServer, EventEmitter);
+
+XDmvcServer.prototype.addPeerJsPeer = function addPeerJsPeer(id) {
+    if(this.peers[id]) //peer was already registered by socketIo
+        this.peers[id].usesPeerJs = true;
+    else
+        this.peers[id] = {
+            'id': id,
+            'name': undefined,
+            'role': undefined,
+            'roles': [],
+            'session': undefined,
+            'usesPeerJs': true,
+            'usesSocketIo': false
+        };
+
+    this.peerJsPeers[id] = {
+        'id': id,
+        'name': undefined,
+        'role': undefined,
+        'roles': [],
+        'session': undefined
+    };
+};
+
+XDmvcServer.prototype.addSocketIoPeer = function addSocketIoPeer(id, socketioId) {
+    if(this.peers[id]) //peer was already registered by peerJs
+        this.peers[id].usesSocketIo = true;
+    else
+        this.peers[id] = {
+            'id': id,
+            'name': undefined,
+            'role': undefined,
+            'roles': [],
+            'session': undefined,
+            'usesPeerJs': false,
+            'usesSocketIo': true
+        };
+    this.socketIoPeers[id] = {
+        'id': id,
+        'socketioId': socketioId,
+        'name': undefined,
+        'role': undefined,
+        'roles': [],
+        'session': undefined,
+        'connectedPeers' : []
+    };
+};
+
+XDmvcServer.prototype.deletePeerJsPeer = function deletePeerJsPeer(id) {
+    delete this.peerJsPeers[id];
+    if(this.peers[id])
+        if(this.peers[id].usesSocketIo) //peer is still used with socketio
+            this.peers[id].usesPeerJs = false;
+        else //peer is not used anymore
+            delete this.peers[id];
+};
+
+XDmvcServer.prototype.deleteSocketIoPeer = function deleteSocketIoPeer(id) {
+    delete this.socketIoPeers[id];
+    if(this.peers[id])
+        if(this.peers[id].usesPeerJs)//peer is still used with peerJS
+            this.peers[id].usesSocketIo = false;
+        else
+            delete this.peers[id];
+};
 
 XDmvcServer.prototype.startPeerSever = function(port){
 
@@ -35,19 +102,13 @@ XDmvcServer.prototype.startPeerSever = function(port){
     var that = this;
 
     pserver.on('connection', function(id) {
-        that.peers[id] = {
-            'id': id,
-            'name': undefined,
-            'role': undefined,
-            'roles': [],
-            'session': undefined
-        };
+        that.addPeerJsPeer(id);
         that.emit("connected", id);
     });
 
     pserver.on('disconnect', function(id) {
-        if (that.peers[id].session !== undefined) {
-            var ps = that.sessions[that.peers[id].session].peers;
+        if (that.peerJsPeers[id].session !== undefined) {
+            var ps = that.sessions[that.peerJsPeers[id].session].peers;
             var index = ps.indexOf(id);
             if (index > -1) {
                 ps.splice(index, 1);
@@ -55,10 +116,10 @@ XDmvcServer.prototype.startPeerSever = function(port){
 
             if (ps.length === 0) {
                 // session has no more users -> delete it
-                delete that.sessions[that.peers[id].session];
+                delete that.sessions[that.peerJsPeers[id].session];
             }
         }
-        delete that.peers[id];
+        that.deletePeerJsPeer(id);
         that.emit("disconnected", id);
     });
 };
@@ -82,20 +143,20 @@ XDmvcServer.prototype.startSocketIoServer = function startSocketIoServer(port) {
             var deviceId;
             var connPeers;
 
-            //There should be exactly one object in peers with socketioId === socket.id
-            for(var peer in xdServer.peers)
-                if (xdServer.peers[peer] && xdServer.peers[peer].socketioId === socket.id){
+            //There should be exactly one object in socketIoPeers with socketioId === socket.id
+            for(var peer in xdServer.socketIoPeers)
+                if (xdServer.socketIoPeers[peer] && xdServer.socketIoPeers[peer].socketioId === socket.id){
                     deviceId = peer;
-                    connPeers =xdServer.peers[deviceId].connectedPeers;
+                    connPeers =xdServer.socketIoPeers[deviceId].connectedPeers;
                 }
 
-            delete xdServer.peers[deviceId]; //delete peer that disconnected
+            xdServer.deleteSocketIoPeer(deviceId); //delete peer that disconnected
 
             if(deviceId) {
                 var arrayLength = connPeers.length;
                 var msg = {sender:deviceId, eventTag:'close'};
                 for (var i = 0; i < arrayLength; i++) {
-                    var peerObject= xdServer.peers[connPeers[i]]
+                    var peerObject= xdServer.socketIoPeers[connPeers[i]];
                     if(peerObject){// otherwise the other one disconnected nearly simultaneously or was connected to himself
                         io.sockets.connected[peerObject.socketioId].emit('wrapMsg', msg); //send message only to interestedDevice
                         var removeDeviceId = peerObject.connectedPeers.filter(
@@ -104,17 +165,15 @@ XDmvcServer.prototype.startSocketIoServer = function startSocketIoServer(port) {
                         peerObject.connectedPeers = removeDeviceId;
                     }
                 }
-                console.log('user '+ deviceId + ' disconnected --> server sent close event to connected peers: ' + connPeers);
+                console.log('user '+ deviceId + ' disconnected --> server sent close event to connected socketIoPeers: ' + connPeers);
             } else
-                console.log('peer was not in peers --> TODO:check logic');
-
+                console.log('peer was not in socketIoPeers --> TODO:check logic');
         });
 
         socket.on('connectTo', function(msg) {
-
             var receiver = msg.receiver;
-            if(xdServer.peers[receiver] !== undefined) {
-                var socketId = xdServer.peers[receiver].socketioId;
+            if(xdServer.socketIoPeers[receiver] !== undefined) {
+                var socketId = xdServer.socketIoPeers[receiver].socketioId;
                 console.log(msg.sender + ' tries to connect to ' + receiver);
                 io.sockets.connected[socketId].emit('connectTo', msg);
             } else {
@@ -127,20 +186,17 @@ XDmvcServer.prototype.startSocketIoServer = function startSocketIoServer(port) {
                 io.sockets.connected[this.id].emit('wrapMsg', err);
                 console.log(msg.sender + ' tries to connect to ' + msg.receiver + ' : failed ! (peer not available)');
             }
-
-
-
         });
 
         socket.on('readyForOpen', function(msg) {
-            // store the id's in peers.connectedPeers
-            xdServer.peers[msg.recA].connectedPeers.push(msg.recB);
-            xdServer.peers[msg.recB].connectedPeers.push(msg.recA);
+            // store the id's in socketIoPeers.connectedPeers
+            xdServer.socketIoPeers[msg.recA].connectedPeers.push(msg.recB);
+            xdServer.socketIoPeers[msg.recB].connectedPeers.push(msg.recA);
 
             //one of both is identical to this.id
-            var socketidA = xdServer.peers[msg.recA].socketioId;
-            var socketidB = xdServer.peers[msg.recB].socketioId;
-            // send open Event to both peers
+            var socketidA = xdServer.socketIoPeers[msg.recA].socketioId;
+            var socketidB = xdServer.socketIoPeers[msg.recB].socketioId;
+            // send open Event to both socketIoPeers
             var msgA = {sender:msg.recB, eventTag:'open'};
             var msgB = {sender:msg.recA, eventTag:'open'};
             //TODO:maybe check if really connected
@@ -155,8 +211,8 @@ XDmvcServer.prototype.startSocketIoServer = function startSocketIoServer(port) {
         });
 
         socket.on('wrapMsg', function(msg){
-            console.log('message: ' + msg + ' for ' + msg.receiver);
-            var connRec = xdServer.peers[msg.receiver];
+            //console.log('message: ' + msg + ' for ' + msg.receiver);
+            var connRec = xdServer.socketIoPeers[msg.receiver];
             if(connRec !== undefined)
                 io.sockets.connected[connRec.socketioId].emit('wrapMsg', msg); //send message only to interestedDevice
             else {
@@ -175,15 +231,7 @@ XDmvcServer.prototype.startSocketIoServer = function startSocketIoServer(port) {
 
         socket.on('id', function(msg){
             console.log('match deviceId ' + msg  + ' to socketioId ' + id);
-            xdServer.peers[msg] = {
-                'id': msg,
-                'socketioId': this.id,
-                'name': undefined,
-                'role': undefined,
-                'roles': [],
-                'session': undefined,
-                'connectedPeers' : []
-            };
+            xdServer.addSocketIoPeer(msg, this.id);
         });
     });
 };

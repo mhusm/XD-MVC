@@ -614,30 +614,23 @@ var XDmvc = {
         this.device.name = name? name : this.deviceId;
         localStorage.setItem("deviceName", this.device.name);
         Platform.performMicrotaskCheckpoint();
-
-        //Check for WebRTC support
-        this.device.supportsWebRTC = DetectRTC.isWebRTCSupported;
-        
     },
 
     /*
     function to determine whether a peerJS or a SocketIo connection should be used to connect
     to the remoteId device. Logic might be extended. Currently the decicion is made based on
-    the availability of WebRTC
+    the availability of WebRTC and whether the remote has connected to the server with peerJS
      */
     usePeerToPeer: function usePeerToPeer(remoteId) {
         var device = this.availableDevices.find(function(avDev){return avDev.id === remoteId; });
 
-        if(!this.device.supportsWebRTC) //if this device does not support WebRTC
+        if(!DetectRTC.isWebRTCSupported) //if this device does not support WebRTC (maybe a check via peerJS is possible)
             return false;
 
-        if(device) {
-            if (device.supportsWebRTC && this.device.supportsWebRTC)
-                return true; // both devices support WebRTC
-            else
-                return false; // one of both devices does not support WebRTC
-        }
-        return true; //if the other device does not show up in the availableDevices list try with P2P
+        if(device && !device.usesPeerJs)
+            return false; // one of both devices does not support WebRTC
+
+        return true; // both devices support WebRTC or the remote does not show up in the list
     }
 };
 
@@ -777,7 +770,7 @@ XDmvcServer.prototype.connectToDevice = function connectToDevice (deviceId) {
             console.log('use peerJS to connect to ' + deviceId);
         }else{
             conn = new VirtualConnection(this.serverSocket, deviceId);
-            console.log('use peerJS to connect to ' + deviceId);
+            console.log('use socketIO to connect to ' + deviceId);
         }
 
         var connDev = XDmvc.addConnectedDevice(conn);
