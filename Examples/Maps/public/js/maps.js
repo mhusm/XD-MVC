@@ -176,8 +176,35 @@ function initialize() {
         }
     });
 
+    $("#showDevices").on("click", function(){
+        updateDevices();
+        return false;
+    });
+
+    document.addEventListener('XDConnection', function(event){
+        updateDevices();
+    });
+    updateDevices();
+
 }
+
+function addAvailableDevices() {
+    // list container
+    var listContainer = $('#availableDeviceList');
+    listContainer.empty();
+    for (var i=0; i<XDmvc.availableDevices.length; i++) {
+        var dev = XDmvc.availableDevices[i];
+        listContainer.prepend('<a href="#" class="list-group-item">'+dev.id+'</a>');
+    }
+    // add onclick listener
+    $("#availableDeviceList a").click(function() {
+        XDmvc.connectTo($(this).text());
+        $(this).remove();
+    });
+}
+
 document.addEventListener("DOMContentLoaded", initialize);
+
 
 // Rounding numbers. Source: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/round
 // Closure
