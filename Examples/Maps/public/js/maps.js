@@ -188,17 +188,23 @@ function initialize() {
 
 }
 
+function updateDevices() {
+    XDmvc.server.requestAvailableDevices();
+    window.setTimeout(addAvailableDevices, 1000);
+}
+
 function addAvailableDevices() {
     // list container
     var listContainer = $('#availableDeviceList');
     listContainer.empty();
     for (var i=0; i<XDmvc.availableDevices.length; i++) {
         var dev = XDmvc.availableDevices[i];
-        listContainer.prepend('<a href="#" class="list-group-item">'+dev.id+'</a>');
+        var availableConnections = '  (' + (dev.usesPeerJs ? 'peerJS':'') + ' / ' + (dev.usesSocketIo ? 'socketIo': '') + ')';
+        listContainer.prepend('<a href="#" class="list-group-item"> <p class="id">'+dev.id + '</p><p><small>' +  availableConnections + '</small></p></a>');
     }
     // add onclick listener
     $("#availableDeviceList a").click(function() {
-        XDmvc.connectTo($(this).text());
+        XDmvc.connectTo($(this).find('.id').text());
         $(this).remove();
     });
 }

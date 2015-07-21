@@ -115,6 +115,8 @@ var XDmvc = {
             XDmvc.attemptedConnections.splice(index, 1);
         }
 
+        var event = new CustomEvent('XDConnection', {'detail' : connection});
+        document.dispatchEvent(event);
     },
 
 
@@ -1044,4 +1046,7 @@ ConnectedDevice.prototype.installHandlers = function installHandlers(conn){
     conn.on('open', function () { that.handleOpen()});
     conn.on('data', function (msg) { that.handleData(msg)});
     conn.on('close', function () { that.handleClose()});
+
+    var event = new CustomEvent('XDConnection', {'detail' : conn});
+    document.dispatchEvent(event);
 }
