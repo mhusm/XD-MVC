@@ -9,7 +9,7 @@ any other connected device as a coloured rectangle.
 
 
 ## Installation
-This project requires Node.js and bower.
+This project requires [node.js](nodejs.org) and [bower](bower.io).
 It is assumed that you have both the Framework and the Examples folder in the same directory (as it is here in the repository).
 
 1. `npm install`

@@ -11,6 +11,8 @@ More details on the framework can be found in the framework folder.
 ## Supported Browsers
 The framework uses some experimental JavaScript features, hence it may not work equally well in all browsers. 
 The best support is reached for Chrome.
-If peer-to-peer communication is used, this is the only browser that is fully supported. 
-For the client-server communication, Firefox and Safari work fairly well. For applications built with Polymer we have seen best 
-results with Chrome. Internet Explorer is not supported. 
+If peer-to-peer communication is used, that is the only browser that is fully supported. 
+For the client-server communication, Firefox and Safari work fairly well. For applications built with Polymer we have seen best results with Chrome. Internet Explorer is not supported. 
+
+## About this Project
+XD-MVC is under development at the [Globis Group at ETH Zürich](https://globis.ethz.ch). The project is coordinated by [Maria Husmann](https://globis.ethz.ch/#!/person/maria-husmann/). Fabian Stutz, Silvan Egli, and Marko Zivkovic have contributed to XD-MVC.

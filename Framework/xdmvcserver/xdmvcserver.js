@@ -155,7 +155,6 @@ XDmvcServer.prototype.startSocketIoServer = function startSocketIoServer(port) {
         });
 
         socket.on('wrapMsg', function(msg){
-            console.log('message: ' + msg + ' for ' + msg.receiver);
             var connRec = xdServer.peers[msg.receiver];
             if(connRec !== undefined)
                 io.sockets.connected[connRec.socketioId].emit('wrapMsg', msg); //send message only to interestedDevice
@@ -250,69 +249,6 @@ XDmvcServer.prototype.handleAjaxRequest = function(req, res, next, xdmvcServer){
             res.write(parameters.pathname);
             res.end();
     }
-/*
-    if (query.type && query.type === "listAllPeers") {
-        // return list of all peers
-        var peersArray = Object.keys(xdmvcServer.peers).map(function (key) {return xdmvcServer.peers[key]});
-        res.write('{"peers": ' + JSON.stringify(peersArray) + ', "sessions": ' + JSON.stringify(xdmvcServer.sessions) + '}');
-        res.end();
-
-    } else if (query.joinSession != null && query.id != null && query.session != null) {
-        // Join Session
-        if (xdmvcServer.sessions[query.session] === undefined) {
-            // New Session must be created
-            xdmvcServer.sessions[query.session] = {
-                'id': query.session,
-                'peers': []
-            };
-            console.info('Session ' + query.session + ' created.');
-        }
-
-        if (xdmvcServer.sessions[query.session].peers.indexOf(query.id) === -1) {
-            xdmvcServer.peers[query.id].session = query.session;
-            xdmvcServer.sessions[query.session].peers.push(query.id);
-            res.write('{"peers": ' + JSON.stringify(xdmvcServer.sessions[query.session]) + '}');
-            console.info(query.id + ' joined Session ' + query.session + '.');
-        }
-        res.end();
-
-    } else if (query.storeSession != null && query.id != null && query.sessionId != null && query.data != null) {
-        // store session
-        //TODO handle event based instead
-        xdmvcServer.emit("store", query.sessionId, query.id, query.role, query.name, query.data, res);
-  //      storageModule.storeSession(query.sessionId, query.id, query.role, query.name, query.data, res);
-
-    } else if (query.restoreSession != null && query.id != null && query.sessionId != null) {
-        //TODO handle event based instead
-//        // restore session
-        xdmvcServer.emit("restore", query.sessionId, query.id, res);
- //       storageModule.restoreSession(query.sessionId, query.id, res);
-    } else if (query.type && query.type === "sync") {
-        xdmvcServer.emit("objectChanged", query.data);
-        res.end();
-    } else if (query.type && query.type === "roles") {
-        // only store role information, if the peer is already connected
-        if (xdmvcServer.peers[query.id]){
-            xdmvcServer.peers[query.id].roles = query.data;
-        }
-        res.end();
-    } else if (query.type && query.type === "device") {
-        // only store device information, if the peer is already connected
-        if (xdmvcServer.peers[query.id]){
-            xdmvcServer.peers[query.id].device = query.data;
-        }
-        res.end();
-    } else {
-        // someone tried to call a not supported method
-        // answer with 404
-        console.log("not found");
-        res.setHeader("Content-Type", "text/html");
-  //      res.statusCode = 404;
-        res.write('<h1>404 - File not found</h1>');
-        res.write(parameters.pathname);
-        res.end();
-    }
-    */
 };
 
 XDmvcServer.prototype.start = function(portPeer, portSocketIo, portAjax) {
