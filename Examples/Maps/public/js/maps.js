@@ -181,16 +181,18 @@ function initialize() {
         return false;
     });
 
-    document.addEventListener('XDConnection', function(event){
-        updateDevices();
-    });
     updateDevices();
+
+    document.addEventListener('XDConnection', function(event){
+        addConnectedDevices();
+    });
 
 }
 
 function updateDevices() {
     XDmvc.server.requestAvailableDevices();
     window.setTimeout(addAvailableDevices, 1000);
+    window.setTimeout(addConnectedDevices, 1000);
 }
 
 function addAvailableDevices() {
@@ -207,6 +209,26 @@ function addAvailableDevices() {
         XDmvc.connectTo($(this).find('.id').text());
         $(this).remove();
     });
+}
+
+function addConnectedDevices() {
+    // list container
+    var listContainer = $('#connectedDeviceList');
+    listContainer.empty();
+    var length = XDmvc.connectedDevices.length;
+    for (var i=0; i<length; i++) {
+        var dev = XDmvc.connectedDevices[i];
+        var usesSocketIo = dev.connection instanceof VirtualConnection;
+        var connString = ' (' + (usesSocketIo ? 'socketIO':'peerJS') + ')';
+        listContainer.prepend('<li class="list-group-item" id='+dev.id+'>' + dev.id + connString + '</li>');
+    }
+    //style the buttons
+    for (var i=0; i<length; i++) {
+        var dev = XDmvc.connectedDevices[i];
+        var usesSocketIo = dev.connection instanceof VirtualConnection;
+        var color = usesSocketIo ? 'orange':'yellow'
+        $('#'+dev.id).css('background-color', color );
+    }
 }
 
 document.addEventListener("DOMContentLoaded", initialize);
