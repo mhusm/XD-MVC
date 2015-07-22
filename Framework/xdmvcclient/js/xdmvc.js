@@ -25,6 +25,29 @@ var XDmvc = {
     defaultAjaxPort: 9001,
     defaultSocketIoPort: 3000,
 
+    /*
+     ---------
+     Constants
+     ---------
+     */
+    peerToPeer : 'peer-to-peer',
+    clientServer : 'client-server',
+    hybrid: 'hybrid',
+
+    /*
+     --------------------
+     Network Architecture
+     --------------------
+     */
+    network_architecture : 'hybrid', //default peerToPeer
+
+    setClientServer : function() { this.network_architecture = this.clientServer; },
+    setPeerToPeer : function() { this.network_architecture = this.peerToPeer; },
+    setHybrid: function() { this.network_architecture = this.hybrid},
+
+    isClientServer : function() { return this.network_architecture === this.clientServer; },
+    isPeerToPeer : function() { return this.network_architecture === this.peerToPeer; },
+    isHybrid : function() { return this.network_architecture === this.hybrid},
 
 
     /*
@@ -670,54 +693,61 @@ function XDmvcServer(host, portPeer, portSocketIo, ajaxPort, iceServers){
 XDmvcServer.prototype.connect = function connect () {
 
     // For the PeerJS connection
-    var server = this;
-    if (!this.peer) {
-        this.peer = new Peer(XDmvc.deviceId, {
-            host: this.host,
-            port: this.portPeer,
-//                           debug: 3,
-            config: {
-                'iceServers': this.iceServers
-            }
-        });
-        this.peer.on('connection', function(conn){server.handleConnection(conn);});
-        this.peer.on('error', function(err){server.handleError(err);});
+    if (XDmvc.isHybrid() || XDmvc.isPeerToPeer()) {
+        var server = this;
+        if (!this.peer) {
+            this.peer = new Peer(XDmvc.deviceId, {
+                host: this.host,
+                port: this.portPeer,
+                //                           debug: 3,
+                config: {
+                    'iceServers': this.iceServers
+                }
+            });
+            this.peer.on('connection', function (conn) {
+                server.handleConnection(conn);
+            });
+            this.peer.on('error', function (err) {
+                server.handleError(err);
+            });
 
-    } else{
-        console.warn("Already connected.")
+        } else {
+            console.warn("Already connected.")
+        }
     }
     // For the SocketIO connection
-    if(!this.serverSocket) {
-        var socket = io.connect(this.socketIoAddress, {'forceNew':true }); //TODO:make port editable
+    if(XDmvc.isHybrid() || XDmvc.isClientServer()) {
+        if (!this.serverSocket) {
+            var socket = io.connect(this.socketIoAddress, {'forceNew': true}); //TODO:make port editable
 
-        this.serverSocket = socket;
-        socket.on('connect', function() {
-            socket.emit('id', XDmvc.deviceId);
-        });
+            this.serverSocket = socket;
+            socket.on('connect', function () {
+                socket.emit('id', XDmvc.deviceId);
+            });
 
-        var server = this;
-        // another Peer called virtualConnect(...)
-        socket.on('connectTo', function (msg) {
-            var conn = new VirtualConnection(this, msg.sender);
-            server.handleConnection(conn);
-            //send readyForOpen
-            socket.emit('readyForOpen', {recA: XDmvc.deviceId, recB: msg.sender});
-        });
+            var server = this;
+            // another Peer called virtualConnect(...)
+            socket.on('connectTo', function (msg) {
+                var conn = new VirtualConnection(this, msg.sender);
+                server.handleConnection(conn);
+                //send readyForOpen
+                socket.emit('readyForOpen', {recA: XDmvc.deviceId, recB: msg.sender});
+            });
 
-        socket.on('wrapMsg', function (msg) {
-            var sender = XDmvc.getConnectedDevice(msg.sender);
-            if(sender !== undefined)
-                sender.connection.handleEvent(msg.eventTag, msg);
-        });
+            socket.on('wrapMsg', function (msg) {
+                var sender = XDmvc.getConnectedDevice(msg.sender);
+                if (sender !== undefined)
+                    sender.connection.handleEvent(msg.eventTag, msg);
+            });
 
-        socket.on('error', function(err) {
-            console.warn(err);
-        });
+            socket.on('error', function (err) {
+                console.warn(err);
+            });
 
-    } else{
-        console.warn("Already connected.")
+        } else {
+            console.warn("Already connected.")
+        }
     }
-
     if (XDmvc.reconnect) {
         XDmvc.connectToStoredPeers();
     }
@@ -767,10 +797,10 @@ XDmvcServer.prototype.connectToDevice = function connectToDevice (deviceId) {
             .some(function (el) {return el.id === deviceId; })) {
         var conn = null;
         var usePeerJS = XDmvc.usePeerToPeer(deviceId); //check which technology/architecture to use
-        if(usePeerJS){
+        if(XDmvc.isPeerToPeer() || (XDmvc.isHybrid() && usePeerJS)){
             conn = this.peer.connect(deviceId, {serialization : 'binary', reliable: true});
             console.log('use peerJS to connect to ' + deviceId);
-        }else{
+        }else if(XDmvc.isClientServer() || (XDmvc.isHybrid() && !usePeerJS)){
             conn = new VirtualConnection(this.serverSocket, deviceId);
             console.log('use socketIO to connect to ' + deviceId);
         }
@@ -778,7 +808,7 @@ XDmvcServer.prototype.connectToDevice = function connectToDevice (deviceId) {
         var connDev = XDmvc.addConnectedDevice(conn);
         connDev.installHandlers(conn);
         XDmvc.attemptedConnections.push(connDev);
-        if(!usePeerJS) //just for socketIO
+        if(conn instanceof VirtualConnection) //just for socketIO
             conn.virtualConnect(deviceId);
     } else {
         console.warn("already connected");
@@ -816,11 +846,15 @@ XDmvcServer.prototype.handleConnection = function handleConnection (connection){
 
 XDmvcServer.prototype.disconnect = function disconnect (){
     //for PeerJS
-    this.peer.destroy();
-    this.peer = null;
+    if(XDmvc.isPeerToPeer() || XDmvc.isHybrid()) {
+        this.peer.destroy();
+        this.peer = null;
+    }
     //for SocketIO
-    this.serverSocket.disconnect();
-    this.serverSocket = null;
+    if(XDmvc.isClientServer() || XDmvc.isHybrid()) {
+        this.serverSocket.disconnect();
+        this.serverSocket = null;
+    }
 };
 
 
