@@ -19,7 +19,7 @@ plan.target('cloud', [
 
 
 // run commands on localhost
-plan.local(['all', 'performance'], function(local) {
+plan.local(['all', 'performance', 'maps'], function(local) {
     currBranch = local.exec('git rev-parse --abbrev-ref HEAD').stdout;
     local.log('Push files to origin ' + currBranch);
     local.exec('git push origin ' + currBranch);
@@ -31,6 +31,7 @@ plan.remote('all',function(remote) {
     var appFolders = ['Gallery','Maps','Performance'];
 
     remote.log('pull from origin '+ currBranch);
+    remote.exec('cd /root/code/xdmvc && git fetch origin');
     remote.exec('cd /root/code/xdmvc && git checkout ' + currBranch + ' git pull origin ' + currBranch);
 
 
@@ -56,6 +57,28 @@ plan.remote('performance',function(remote) {
     var appFolders = ['Performance'];
 
     remote.log('pull from origin '+ currBranch);
+    remote.exec('cd /root/code/xdmvc && git fetch origin');
+    remote.exec('cd /root/code/xdmvc && git checkout ' + currBranch + ' git pull origin ' + currBranch);
+
+    appFolders.forEach(function (appFolder) {
+        remote.log('-----------------------------------------------------------')
+        remote.log('running grunt for ' + appFolder);
+        remote.exec('cd '+appTopFolder + appFolder + ' && grunt && grunt server');
+    });
+
+    remote.log('---------------------------------------------------------');
+    remote.log('Reload  Maps application');
+    remote.exec('forever stop ~/code/xdmvc/Examples/Maps/server.js', {failsafe: true});
+    remote.exec('forever start ~/code/xdmvc/Examples/Maps/server.js');
+
+});
+
+plan.remote('maps',function(remote) {
+    var appTopFolder = '~/code/xdmvc/Examples/'
+    var appFolders = ['Maps'];
+
+    remote.log('pull from origin '+ currBranch);
+    remote.exec('cd /root/code/xdmvc && git fetch origin');
     remote.exec('cd /root/code/xdmvc && git checkout ' + currBranch + ' git pull origin ' + currBranch);
 
 
@@ -66,8 +89,8 @@ plan.remote('performance',function(remote) {
     });
 
     remote.log('---------------------------------------------------------');
-    remote.log('Reload Performance application');
-    remote.exec('forever stop ~/code/xdmvc/Examples/Performance/perf_server.js', {failsafe: true});
-    remote.exec('forever start ~/code/xdmvc/Examples/Performance/perf_server.js');
+    remote.log('Reload  Maps application');
+    remote.exec('forever stop ~/code/xdmvc/Examples/Maps/server.js', {failsafe: true});
+    remote.exec('forever start ~/code/xdmvc/Examples/Maps/server.js');
 
 });
