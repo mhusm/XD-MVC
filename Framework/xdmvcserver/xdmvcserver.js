@@ -102,6 +102,7 @@ XDmvcServer.prototype.startPeerSever = function(port){
     var that = this;
 
     pserver.on('connection', function(id) {
+        console.log("user connected via PeerJS. ID: " + id);
         that.addPeerJsPeer(id);
         that.emit("connected", id);
     });
@@ -136,6 +137,11 @@ XDmvcServer.prototype.startSocketIoServer = function startSocketIoServer(port) {
 
         console.log('user connected ' + socket.id);
         xdServer.emit("connected", id);
+
+        socket.on('id', function(msg){
+            console.log('match deviceId ' + msg  + ' to socketioId ' + id);
+            xdServer.addSocketIoPeer(msg, this.id);
+        });
 
         socket.on('disconnect', function(){
             //TODO: handle disconnect
@@ -206,10 +212,6 @@ XDmvcServer.prototype.startSocketIoServer = function startSocketIoServer(port) {
             console.log('--> connection established !');
         });
 
-        socket.on('error', function(err){
-            console.log('socket Error: ' + err);
-        });
-
         socket.on('wrapMsg', function(msg){
             //console.log('message: ' + msg + ' for ' + msg.receiver);
             var connRec = xdServer.socketIoPeers[msg.receiver];
@@ -228,11 +230,10 @@ XDmvcServer.prototype.startSocketIoServer = function startSocketIoServer(port) {
             }
         });
 
-
-        socket.on('id', function(msg){
-            console.log('match deviceId ' + msg  + ' to socketioId ' + id);
-            xdServer.addSocketIoPeer(msg, this.id);
+        socket.on('error', function(err){
+            console.log('socket Error: ' + err);
         });
+
     });
 };
 
