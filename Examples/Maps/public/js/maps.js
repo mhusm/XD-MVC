@@ -1,9 +1,19 @@
 var map;
 var views = {};
 function initialize() {
+    (function () {
+        function CustomEvent ( event, params ) {
+            params = params || { bubbles: false, cancelable: false, detail: undefined };
+            var evt = document.createEvent( 'CustomEvent' );
+            evt.initCustomEvent( event, params.bubbles, params.cancelable, params.detail );
+            return evt;
+        };
+
+        CustomEvent.prototype = window.Event.prototype;
+        window.CustomEvent = CustomEvent;
+    })();
     XDmvc.init();
     XDmvc.reconnect = false;
-    XDmvc.setClientServer();
     XDmvc.connectToServer();
     $("#myDeviceId").text(XDmvc.deviceId);
     $("#inputDeviceId").val(XDmvc.deviceId);
@@ -166,8 +176,63 @@ function initialize() {
         }
     });
 
+    $("#showDevices").on("click", function(){
+        updateDevices();
+        return false;
+    });
+
+    updateDevices();
+
+    document.addEventListener('XDConnection', function(event){
+        addConnectedDevices();
+    });
+
 }
+
+function updateDevices() {
+    XDmvc.server.requestAvailableDevices();
+    window.setTimeout(addAvailableDevices, 1000);
+    window.setTimeout(addConnectedDevices, 1000);
+}
+
+function addAvailableDevices() {
+    // list container
+    var listContainer = $('#availableDeviceList');
+    listContainer.empty();
+    for (var i=0; i<XDmvc.availableDevices.length; i++) {
+        var dev = XDmvc.availableDevices[i];
+        var availableConnections = '  (' + (dev.usesPeerJs ? 'peerJS':'') + ' / ' + (dev.usesSocketIo ? 'socketIo': '') + ')';
+        listContainer.prepend('<a href="#" class="list-group-item"> <p class="id">'+dev.id + '</p><p><small>' +  availableConnections + '</small></p></a>');
+    }
+    // add onclick listener
+    $("#availableDeviceList a").click(function() {
+        XDmvc.connectTo($(this).find('.id').text());
+        $(this).remove();
+    });
+}
+
+function addConnectedDevices() {
+    // list container
+    var listContainer = $('#connectedDeviceList');
+    listContainer.empty();
+    var length = XDmvc.connectedDevices.length;
+    for (var i=0; i<length; i++) {
+        var dev = XDmvc.connectedDevices[i];
+        var usesSocketIo = dev.connection instanceof VirtualConnection;
+        var connString = ' (' + (usesSocketIo ? 'socketIO':'peerJS') + ')';
+        listContainer.prepend('<li class="list-group-item" id='+dev.id+'>' + dev.id + connString + '</li>');
+    }
+    //style the buttons
+    for (var i=0; i<length; i++) {
+        var dev = XDmvc.connectedDevices[i];
+        var usesSocketIo = dev.connection instanceof VirtualConnection;
+        var color = usesSocketIo ? 'orange':'yellow'
+        $('#'+dev.id).css('background-color', color );
+    }
+}
+
 document.addEventListener("DOMContentLoaded", initialize);
+
 
 // Rounding numbers. Source: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/round
 // Closure

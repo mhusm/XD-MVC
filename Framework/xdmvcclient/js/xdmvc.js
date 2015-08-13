@@ -32,19 +32,22 @@ var XDmvc = {
      */
     peerToPeer : 'peer-to-peer',
     clientServer : 'client-server',
+    hybrid: 'hybrid',
 
     /*
      --------------------
      Network Architecture
      --------------------
      */
-    network_architecture : 'peer-to-peer', //default peerToPeer
+    network_architecture : 'hybrid', //default peerToPeer
 
     setClientServer : function() { this.network_architecture = this.clientServer; },
     setPeerToPeer : function() { this.network_architecture = this.peerToPeer; },
+    setHybrid: function() { this.network_architecture = this.hybrid},
 
     isClientServer : function() { return this.network_architecture === this.clientServer; },
     isPeerToPeer : function() { return this.network_architecture === this.peerToPeer; },
+    isHybrid : function() { return this.network_architecture === this.hybrid},
 
 
     /*
@@ -135,6 +138,8 @@ var XDmvc = {
             XDmvc.attemptedConnections.splice(index, 1);
         }
 
+        var event = new CustomEvent('XDConnection', {'detail' : connection});
+        document.dispatchEvent(event);
     },
 
 
@@ -586,6 +591,9 @@ var XDmvc = {
     },
 
     detectDevice: function(){
+
+
+
         /* Device detection by Marko Zivkovic
 
          Distinguishes between
@@ -631,6 +639,23 @@ var XDmvc = {
         this.device.name = name? name : this.deviceId;
         localStorage.setItem("deviceName", this.device.name);
         Platform.performMicrotaskCheckpoint();
+    },
+
+    /*
+    function to determine whether a peerJS or a SocketIo connection should be used to connect
+    to the remoteId device. Logic might be extended. Currently the decicion is made based on
+    the availability of WebRTC and whether the remote has connected to the server with peerJS
+     */
+    usePeerToPeer: function usePeerToPeer(remoteId) {
+        var device = this.availableDevices.find(function(avDev){return avDev.id === remoteId; });
+
+        if(!DetectRTC.isWebRTCSupported) //if this device does not support WebRTC (maybe a check via peerJS is possible)
+            return false;
+
+        if(device && !device.usesPeerJs)
+            return false; // one of both devices does not support WebRTC
+
+        return true; // both devices support WebRTC or the remote does not show up in the list
     }
 };
 
@@ -666,30 +691,37 @@ function XDmvcServer(host, portPeer, portSocketIo, ajaxPort, iceServers){
 }
 
 XDmvcServer.prototype.connect = function connect () {
-    if(XDmvc.isPeerToPeer()) {
-        // If not connected already
+
+    // For the PeerJS connection
+    if (XDmvc.isHybrid() || XDmvc.isPeerToPeer()) {
         var server = this;
         if (!this.peer) {
             this.peer = new Peer(XDmvc.deviceId, {
                 host: this.host,
                 port: this.portPeer,
-//                           debug: 3,
+                //                           debug: 3,
                 config: {
                     'iceServers': this.iceServers
                 }
             });
-            this.peer.on('connection', function(conn){server.handleConnection(conn);});
-            this.peer.on('error', function(err){server.handleError(err);});
+            this.peer.on('connection', function (conn) {
+                server.handleConnection(conn);
+            });
+            this.peer.on('error', function (err) {
+                server.handleError(err);
+            });
 
-        } else{
+        } else {
             console.warn("Already connected.")
         }
-    } else if(XDmvc.isClientServer()) {
-        if(!this.serverSocket) {
-            var socket = io.connect(this.socketIoAddress, {'forceNew':true }); //TODO:make port editable
+    }
+    // For the SocketIO connection
+    if(XDmvc.isHybrid() || XDmvc.isClientServer()) {
+        if (!this.serverSocket) {
+            var socket = io.connect(this.socketIoAddress, {'forceNew': true}); //TODO:make port editable
 
             this.serverSocket = socket;
-            socket.on('connect', function() {
+            socket.on('connect', function () {
                 socket.emit('id', XDmvc.deviceId);
             });
 
@@ -704,19 +736,18 @@ XDmvcServer.prototype.connect = function connect () {
 
             socket.on('wrapMsg', function (msg) {
                 var sender = XDmvc.getConnectedDevice(msg.sender);
-                if(sender !== undefined)
+                if (sender !== undefined)
                     sender.connection.handleEvent(msg.eventTag, msg);
             });
 
-            socket.on('error', function(err) {
+            socket.on('error', function (err) {
                 console.warn(err);
             });
 
-        } else{
+        } else {
             console.warn("Already connected.")
         }
     }
-
     if (XDmvc.reconnect) {
         XDmvc.connectToStoredPeers();
     }
@@ -765,15 +796,19 @@ XDmvcServer.prototype.connectToDevice = function connectToDevice (deviceId) {
     if (!XDmvc.connectedDevices.concat(XDmvc.attemptedConnections)
             .some(function (el) {return el.id === deviceId; })) {
         var conn = null;
-        if(XDmvc.isPeerToPeer())
+        var usePeerJS = XDmvc.usePeerToPeer(deviceId); //check which technology/architecture to use
+        if(XDmvc.isPeerToPeer() || (XDmvc.isHybrid() && usePeerJS)){
             conn = this.peer.connect(deviceId, {serialization : 'binary', reliable: true});
-        else if(XDmvc.isClientServer())
+            console.log('use peerJS to connect to ' + deviceId);
+        }else if(XDmvc.isClientServer() || (XDmvc.isHybrid() && !usePeerJS)){
             conn = new VirtualConnection(this.serverSocket, deviceId);
+            console.log('use socketIO to connect to ' + deviceId);
+        }
 
         var connDev = XDmvc.addConnectedDevice(conn);
         connDev.installHandlers(conn);
         XDmvc.attemptedConnections.push(connDev);
-        if(XDmvc.isClientServer())
+        if(conn instanceof VirtualConnection) //just for socketIO
             conn.virtualConnect(deviceId);
     } else {
         console.warn("already connected");
@@ -810,14 +845,16 @@ XDmvcServer.prototype.handleConnection = function handleConnection (connection){
 };
 
 XDmvcServer.prototype.disconnect = function disconnect (){
-    if(XDmvc.isPeerToPeer()) {
+    //for PeerJS
+    if(XDmvc.isPeerToPeer() || XDmvc.isHybrid()) {
         this.peer.destroy();
         this.peer = null;
-    } else if(XDmvc.isClientServer()) {
+    }
+    //for SocketIO
+    if(XDmvc.isClientServer() || XDmvc.isHybrid()) {
         this.serverSocket.disconnect();
         this.serverSocket = null;
     }
-
 };
 
 
@@ -888,6 +925,10 @@ ConnectedDevice.prototype.isInterested = function(dataId){
             return XDmvc.configuredRoles[role] && typeof XDmvc.configuredRoles[role][dataId] !== "undefined" ;
         }) ;
 };
+
+ConnectedDevice.prototype.usesPeerJS = function() {
+    return ! this.connection instanceof VirtualConnection;
+}
 
 ConnectedDevice.prototype.handleRoles = function(roles){
     var old = this.roles;
@@ -982,13 +1023,13 @@ ConnectedDevice.prototype.handleData = function(msg){
 
 //TODO: make nicer e.g with different err.type
 ConnectedDevice.prototype.handleError = function handleError (err){
-    if(XDmvc.isPeerToPeer()) {
+    if(this.usesPeerJS()) {
         console.warn("Error in PeerConnection:");
         console.warn(err);
         XDmvc.cleanUpConnections();
         var event = new CustomEvent('XDerror', {"detail": err});
         document.dispatchEvent(event);
-    } else if(XDmvc.isClientServer) {
+    } else {
         console.warn("Error in Socketio Connection:" + err.message );
         console.warn(err);
         if(err.type === 'peer-unavailable')
@@ -1039,4 +1080,7 @@ ConnectedDevice.prototype.installHandlers = function installHandlers(conn){
     conn.on('open', function () { that.handleOpen()});
     conn.on('data', function (msg) { that.handleData(msg)});
     conn.on('close', function () { that.handleClose()});
+
+    var event = new CustomEvent('XDConnection', {'detail' : conn});
+    document.dispatchEvent(event);
 }
