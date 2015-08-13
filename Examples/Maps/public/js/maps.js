@@ -18,7 +18,7 @@ function initialize() {
     $("#myDeviceId").text(XDmvc.deviceId);
     $("#inputDeviceId").val(XDmvc.deviceId);
     XDmvc.removeRole("sync-all");
-    XDmvc.addRole("viewer");
+    XDmvc.addRole("mirror");
     document.addEventListener("XDdisconnect", function(event){
         if (XDmvc.hasRole("overview")) {
             views[event.detail].setMap(null);
@@ -184,7 +184,7 @@ function initialize() {
     updateDevices();
 
     document.addEventListener('XDConnection', function(event){
-        addConnectedDevices();
+        updateDevices();
     });
 
 }
