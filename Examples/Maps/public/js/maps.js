@@ -184,7 +184,7 @@ function initialize() {
     updateDevices();
 
     document.addEventListener('XDConnection', function(event){
-        addConnectedDevices();
+        updateDevices();
     });
 
 }
