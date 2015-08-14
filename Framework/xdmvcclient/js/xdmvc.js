@@ -649,13 +649,17 @@ var XDmvc = {
     usePeerToPeer: function usePeerToPeer(remoteId) {
         var device = this.availableDevices.find(function(avDev){return avDev.id === remoteId; });
 
-        if(!DetectRTC.isWebRTCSupported) //if this device does not support WebRTC (maybe a check via peerJS is possible)
+        if(! XDmvc.supportsPeerJS()) //if this device does not support WebRTC (maybe a check via peerJS is possible)
             return false;
 
         if(device && !device.usesPeerJs)
             return false; // one of both devices does not support WebRTC
 
         return true; // both devices support WebRTC or the remote does not show up in the list
+    },
+
+    supportsPeerJS: function() {
+        return DetectRTC.isWebRTCSupported && !DetectRTC.browser.isFirefox;
     }
 };
 
@@ -693,26 +697,30 @@ function XDmvcServer(host, portPeer, portSocketIo, ajaxPort, iceServers){
 XDmvcServer.prototype.connect = function connect () {
 
     // For the PeerJS connection
-    if (XDmvc.isHybrid() || XDmvc.isPeerToPeer()) {
-        var server = this;
-        if (!this.peer) {
-            this.peer = new Peer(XDmvc.deviceId, {
-                host: this.host,
-                port: this.portPeer,
-                //                           debug: 3,
-                config: {
-                    'iceServers': this.iceServers
-                }
-            });
-            this.peer.on('connection', function (conn) {
-                server.handleConnection(conn);
-            });
-            this.peer.on('error', function (err) {
-                server.handleError(err);
-            });
+    if (XDmvc.isHybrid()  || XDmvc.isPeerToPeer() ) {
+        if(XDmvc.isPeerToPeer() || XDmvc.supportsPeerJS()) {
+            var server = this;
+            if (!this.peer) {
+                this.peer = new Peer(XDmvc.deviceId, {
+                    host: this.host,
+                    port: this.portPeer,
+                    //                           debug: 3,
+                    config: {
+                        'iceServers': this.iceServers
+                    }
+                });
+                this.peer.on('connection', function (conn) {
+                    server.handleConnection(conn);
+                });
+                this.peer.on('error', function (err) {
+                    server.handleError(err);
+                });
 
+            } else {
+                console.warn("Already connected.")
+            }
         } else {
-            console.warn("Already connected.")
+            console.log("PeerJS not supported");
         }
     }
     // For the SocketIO connection
@@ -846,7 +854,7 @@ XDmvcServer.prototype.handleConnection = function handleConnection (connection){
 
 XDmvcServer.prototype.disconnect = function disconnect (){
     //for PeerJS
-    if(XDmvc.isPeerToPeer() || XDmvc.isHybrid()) {
+    if(XDmvc.isPeerToPeer() || (XDmvc.isHybrid() && XDmvc.supportsPeerJS()) ) {
         this.peer.destroy();
         this.peer = null;
     }
