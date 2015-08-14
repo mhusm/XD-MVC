@@ -643,7 +643,7 @@ var XDmvc = {
 
     /*
     function to determine whether a peerJS or a SocketIo connection should be used to connect
-    to the remoteId device. Logic might be extended. Currently the decicion is made based on
+    to the remoteId device. Logic might be extended. Currently the decision is made based on
     the availability of WebRTC and whether the remote has connected to the server with peerJS
      */
     usePeerToPeer: function usePeerToPeer(remoteId) {
@@ -901,7 +901,7 @@ VirtualConnection.prototype.handleEvent = function(tag, msg) {
         else// close or error
             this.open = false;
     }
-    this.callbackMap[tag].apply(undefined,[msg]); //call the handler that was set in the on(...) method
+    this.callbackMap[tag](msg); //call the handler that was set in the on(...) method
 }
 
 VirtualConnection.prototype.close = function() {
@@ -1075,11 +1075,10 @@ ConnectedDevice.prototype.disconnect = function disconnect (){
 };
 
 ConnectedDevice.prototype.installHandlers = function installHandlers(conn){
-    var that = this;
-    conn.on('error', function (err) { that.handleError(err)});
-    conn.on('open', function () { that.handleOpen()});
-    conn.on('data', function (msg) { that.handleData(msg)});
-    conn.on('close', function () { that.handleClose()});
+    conn.on('error', this.handleError.bind(this));
+    conn.on('open', this.handleOpen.bind(this));
+    conn.on('data', this.handleData.bind(this));
+    conn.on('close', this.handleClose.bind(this));
 
     var event = new CustomEvent('XDConnection', {'detail' : conn});
     document.dispatchEvent(event);

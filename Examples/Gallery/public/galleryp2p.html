@@ -81,7 +81,6 @@
 
                     handleFiles: function (event) {
                         var files = event.target.files;
-                        var that = this;
                         for (var i = 0; i < files.length; i++) {
                             var file = files[i];
                             var imageType = /image.*/;
@@ -93,18 +92,16 @@
                             var imgData = this.$.sync.objects.images;
                             var reader = new FileReader();
                             reader.onload = function(e) {
-                                 that.push("synced.images", e.target.result);
-                            };
+                                 this.push("synced.images", e.target.result);
+                            }.bind(this);
                             reader.readAsDataURL(file);
                          }
                     },
 
                     ready: function() {
-                        var that = this;
-
                         var connect = getQueryParams(window.location.search).connect;
                         if (!connect) {
-                            var connectString = 'connect=' + XDmvc.deviceId
+                            var connectString = 'connect=' + XDmvc.deviceId;
                             window.history.pushState('', '', window.location.search.length > 0 ? window.location.search + "&" + connectString : '?' + connectString);
                             this.$.roles.addRole('owner');
                         } else {

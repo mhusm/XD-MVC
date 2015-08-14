@@ -186,13 +186,10 @@
                     },
 
                     ready: function(){
-                        var that = this;
                         if (XDmvc.server) {
                             this.onServerReady();
                         } else { // not yet connected to server, wait for the connection event
-                            document.addEventListener("XDServer", function(){
-                                that.onServerReady();
-                            });
+                            document.addEventListener("XDServer", this.onServerReady.bind(this));
                         }
                     },
 

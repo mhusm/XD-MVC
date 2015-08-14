@@ -44,6 +44,8 @@ TODO reflect changes in XDmvc (e.g. different ports ect.) back into this element
             XDmvc.reconnect = this.reconnect;
             if (this.architecture === XDmvc.clientServer) {
                 XDmvc.setClientServer();
+            } else if (this.architecture === XDmvc.peer) {
+                XDmvc.setPeerToPeer();
             }
             XDmvc.connectToServer(this.url, this.peerport, this.socketport, this.ajaxport);
         },
