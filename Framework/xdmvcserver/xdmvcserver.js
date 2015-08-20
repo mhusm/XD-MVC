@@ -27,7 +27,7 @@ function XDmvcServer() {
 }
 util.inherits(XDmvcServer, EventEmitter);
 
-XDmvcServer.prototype.addPeerJsPeer = function addPeerJsPeer(id) {
+XDmvcServer.prototype.addPeerJsPeer = function addPeerJsPeer(id, peerId) {
     if(this.peers[id]) //peer was already registered by socketIo
         this.peers[id].usesPeerJs = true;
     else
@@ -43,6 +43,7 @@ XDmvcServer.prototype.addPeerJsPeer = function addPeerJsPeer(id) {
 
     this.peerJsPeers[id] = {
         'id': id,
+        'peerId': peerId,
         'name': undefined,
         'role': undefined,
         'roles': [],
@@ -101,28 +102,33 @@ XDmvcServer.prototype.startPeerSever = function(port){
     });
     var that = this;
 
+/*
     pserver.on('connection', function(id) {
         console.log("user connected via PeerJS. ID: " + id);
         that.addPeerJsPeer(id);
         that.emit("connected", id);
     });
-
+*/
     pserver.on('disconnect', function(id) {
-        if (that.peerJsPeers[id].session !== undefined) {
-            var ps = that.sessions[that.peerJsPeers[id].session].peers;
-            var index = ps.indexOf(id);
+        var deviceId = Object.keys(that.peerJsPeers).filter(function(key){
+            return that.peerJsPeers[key].peerId == id;
+        })[0];
+        if (deviceId && (that.peerJsPeers[deviceId].session !== undefined)) {
+            var ps = that.sessions[that.peerJsPeers[deviceId].session].peers;
+            var index = ps.indexOf(deviceId);
             if (index > -1) {
                 ps.splice(index, 1);
             }
 
             if (ps.length === 0) {
                 // session has no more users -> delete it
-                delete that.sessions[that.peerJsPeers[id].session];
+                delete that.sessions[that.peerJsPeers[deviceId].session];
             }
         }
         that.deletePeerJsPeer(id);
         that.emit("disconnected", id);
     });
+
 };
 
 XDmvcServer.prototype.startSocketIoServer = function startSocketIoServer(port) {
@@ -285,8 +291,19 @@ XDmvcServer.prototype.handleAjaxRequest = function(req, res, next, xdmvcServer){
         case 'device':
             // only store device information, if the peer is already connected
             if (xdmvcServer.peers[query.id]){
-                xdmvcServer.peers[query.id].device = query.data;
+                xdmvcServer.peers[query.id].device = query.data
             }
+            res.end();
+            break;
+        case 'deviceId':
+            console.log(query);
+            this.addPeerJsPeer(query.id, query.data.peerId);
+            this.emit("connected", query.id);
+/*
+            if (xdmvcServer.peers[query.peerId]){
+                xdmvcServer.peers[query.peerId].deviceId = query.deviceId
+            }
+            */
             res.end();
             break;
         default :

@@ -39,7 +39,7 @@ function XDMVC () {
      Network Architecture
      --------------------
      */
-    this.network_architecture = 'hybrid'; //default peerToPeer
+    this.network_architecture = 'hybrid';
 }
 
 
