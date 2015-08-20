@@ -99,11 +99,11 @@ XDMVC.prototype.removeStoredPeer = function (peerId) {
 };
 
 XDMVC.prototype.loadPeers = function () {
-        if (localStorage.peers) {
-            this.storedPeers.length = 0;
-            var peers = JSON.parse(localStorage.peers);
-            peers.forEach(this.storedPeers.push.bind(this));
-        }
+    if (localStorage.peers) {
+        this.storedPeers.length = 0;
+        var peers = JSON.parse(localStorage.peers);
+        Array.prototype.push.apply(this.storedPeers, peers);
+    }
 };
 
     /*
@@ -1007,7 +1007,6 @@ ConnectedDevice.prototype.handleData = function(msg){
                 }
 
                 XDmvc.emit('XDsync', {'detail': {dataId: msg.id, data: msg.data, sender: this.id}});
-                document.dispatchEvent(event);
                 break;
             case 'role':
                 if (msg.operation === "add") {
@@ -1032,7 +1031,6 @@ ConnectedDevice.prototype.handleError = function handleError (err){
         console.warn(err);
         XDmvc.cleanUpConnections();
         var event = new CustomEvent('XDerror', {"detail": err});
-        document.dispatchEvent(event);
     } else {
         console.warn("Error in Socketio Connection:" + err.message );
         console.warn(err);
@@ -1040,7 +1038,6 @@ ConnectedDevice.prototype.handleError = function handleError (err){
             XDmvc.removeConnection(this);
 
         var event = new CustomEvent('XDerror', {"detail": err});
-        document.dispatchEvent(event);
     }
 
 };
@@ -1062,7 +1059,6 @@ ConnectedDevice.prototype.handleOpen = function handleOpen (){
 ConnectedDevice.prototype.handleClose = function handleClose (){
     XDmvc.removeConnection(this);
     XDmvc.emit('XDdisconnect', {'detail' : this.id});
-    document.dispatchEvent(event);
 };
 
 ConnectedDevice.prototype.send = function send (msgType, data){
