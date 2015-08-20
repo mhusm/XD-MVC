@@ -309,7 +309,7 @@ XDMVC.prototype.updateOld = function(old, data, arrayDelta, objectDelta){
                 splices = data;
             } else {
                 // No delta, replace old with new
-                var args= [0, old.length].concat(data)
+                var args= [0, old.length].concat(data);
                 splices = [args];
             }
 
@@ -541,21 +541,21 @@ XDMVC.prototype.init = function () {
         localStorage.setItem("deviceId", this.deviceId);
 
 //        XDmvc.setClientServer()
-        XDmvc.loadPeers();
-        XDmvc.detectDevice();
-        XDmvc.host = document.location.hostname;
+        this.loadPeers();
+        this.detectDevice();
+        this.host = document.location.hostname;
         window.addEventListener('resize', function(event){
-            XDmvc.detectDevice();
-            XDmvc.sendDevice();
-        });
+            this.detectDevice();
+            this.sendDevice();
+        }.bind(this));
 
         // default role
-        this.addRole(XDmvc.defaultRole);
+        this.addRole(this.defaultRole);
 
         // disconnect server on unload (this could solve some PeerJS issues with IDs)
         window.addEventListener("unload", function(){
-            if (XDmvc.server) {
-                XDmvc.server.disconnect();
+            if (this.server) {
+                this.server.disconnect();
             }
         });
 };
@@ -564,16 +564,16 @@ XDMVC.prototype.init = function () {
 
 XDMVC.prototype.changeDeviceId = function (newId){
         if (newId !== this.deviceId) {
-            XDmvc.deviceId = newId;
+            this.deviceId = newId;
             localStorage.deviceId = newId;
-            XDmvc.device.id = XDmvc.deviceId;
+            this.device.id = this.deviceId;
             // If connected, disconnect and reconnect
-            if (XDmvc.server) {
-                XDmvc.server.disconnect();
-                var oldServer = XDmvc.server;
-                XDmvc.server = null;
-                XDmvc.disconnectAll();
-                XDmvc.connectToServer(oldServer.host, oldServer.port, oldServer.portSocketio, oldServer.ajaxPort, oldServer.iceServers);
+            if (this.server) {
+                this.server.disconnect();
+                var oldServer = this.server;
+                this.server = null;
+                this.disconnectAll();
+                this.connectToServer(oldServer.host, oldServer.port, oldServer.portSocketio, oldServer.ajaxPort, oldServer.iceServers);
                 // TODO reconnect previous connections?
             }
         }
@@ -651,7 +651,7 @@ XDMVC.prototype.detectDevice = function(){
 XDMVC.prototype.usePeerToPeer = function usePeerToPeer(remoteId) {
         var device = this.availableDevices.find(function(avDev){return avDev.id === remoteId; });
 
-        if(! XDmvc.supportsPeerJS()) //if this device does not support WebRTC (maybe a check via peerJS is possible)
+        if(! this.supportsPeerJS()) //if this device does not support WebRTC (maybe a check via peerJS is possible)
             return false;
 
         if(device && !device.usesPeerJs)
