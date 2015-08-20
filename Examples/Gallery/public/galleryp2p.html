@@ -98,13 +98,11 @@
                     },
 
                     ready: function() {
-                        XDmvc.configureRole("owner", ["cursor"]);
                         var connect = getQueryParams(window.location.search).connect;
                         if (!connect) {
                             var connectString = 'connect=' + XDmvc.deviceId;
                             window.history.pushState('', '', window.location.search.length > 0 ? window.location.search + "&" + connectString : '?' + connectString);
                             this.$.roles.addRole('owner');
-                            this.$.roles.removeRole('sync-all')
                         } else {
                             if (connect !== XDmvc.deviceId) {
                                 if (XDmvc.server) {
@@ -117,7 +115,6 @@
                                 this.$.roles.addRole('visitor');
                             } else {
                                 this.$.roles.addRole('owner');
-                                this.$.roles.removeRole('sync-all')
                             }
                         }
                     }
