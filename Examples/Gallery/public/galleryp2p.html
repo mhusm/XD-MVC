@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html>
     <head>
-    <head>
        <!-- 1. Load platform support before any code that touches the DOM. -->
         <script src="bower_components/webcomponentsjs/webcomponents-lite.min.js"></script>
         <link rel="import" href="bower_components/polymer/polymer.html">
@@ -99,11 +98,13 @@
                     },
 
                     ready: function() {
+                        XDmvc.configureRole("owner", ["cursor"]);
                         var connect = getQueryParams(window.location.search).connect;
                         if (!connect) {
                             var connectString = 'connect=' + XDmvc.deviceId;
                             window.history.pushState('', '', window.location.search.length > 0 ? window.location.search + "&" + connectString : '?' + connectString);
                             this.$.roles.addRole('owner');
+                            this.$.roles.removeRole('sync-all')
                         } else {
                             if (connect !== XDmvc.deviceId) {
                                 if (XDmvc.server) {
@@ -116,6 +117,7 @@
                                 this.$.roles.addRole('visitor');
                             } else {
                                 this.$.roles.addRole('owner');
+                                this.$.roles.removeRole('sync-all')
                             }
                         }
                     }
