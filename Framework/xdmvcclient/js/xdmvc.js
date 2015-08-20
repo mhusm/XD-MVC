@@ -1,4 +1,4 @@
-/*global console, CustomEvent, Peer, Event */
+/*global console, Peer, Event */
 'use strict';
 /*jslint plusplus: true */
 
@@ -1037,16 +1037,14 @@ ConnectedDevice.prototype.handleError = function handleError (err){
         console.warn("Error in PeerConnection:");
         console.warn(err);
         XDmvc.cleanUpConnections();
-        var event = new CustomEvent('XDerror', {"detail": err});
     } else {
         console.warn("Error in Socketio Connection:" + err.message );
         console.warn(err);
-        if(err.type === 'peer-unavailable')
+        if(err.type === 'peer-unavailable') {
             XDmvc.removeConnection(this);
-
-        var event = new CustomEvent('XDerror', {"detail": err});
+        }
     }
-
+    XDmvc.emit('XDerror', {"detail": err})
 };
 
 ConnectedDevice.prototype.handleOpen = function handleOpen (){
