@@ -183,7 +183,7 @@ function initialize() {
 
     updateDevices();
 
-    document.addEventListener('XDConnection', function(event){
+    XDmvc.on('XDconnection', function(event){
         updateDevices();
     });
 

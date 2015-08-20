@@ -110,7 +110,7 @@
                                 if (XDmvc.server) {
                                     XDmvc.connectTo(getQueryParams(window.location.search).connect);
                                 } else { // not yet connected to server, wait for the connection event
-                                    document.addEventListener("XDServer", function(){
+                                    XDmvc.on("XDserver", function(){
                                         XDmvc.connectTo(getQueryParams(window.location.search).connect);
                                     });
                                 }

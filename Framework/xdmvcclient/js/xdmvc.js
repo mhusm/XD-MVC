@@ -140,8 +140,7 @@ XDMVC.prototype.removeConnection = function (connection) {
         this.attemptedConnections.splice(index, 1);
     }
 
-    var event = new CustomEvent('XDConnection', {'detail': connection});
-    document.dispatchEvent(event);
+    this.emit('XDconnection', {'detail': connection});
 };
 
 
@@ -265,9 +264,7 @@ XDMVC.prototype.sendSyncToAll = function (changes, id) {
         if (this.syncData[id].updateServer) {
             this.sendToServer("sync", {type: 'sync', data: this.syncData[id].data});
         }
-        var event = new CustomEvent('XDSyncData', {'detail' : id});
-        document.dispatchEvent(event);
-
+        this.emit('XDsyncData', {'detail' : id});
 };
 
 XDMVC.prototype.synchronize = function (data, callback, id, updateServer, updateObjectFunction, updateArrayFunction) {
@@ -392,8 +389,7 @@ XDMVC.prototype.update = function (data, id, arrayDelta, objectDelta, keepChange
             observed.observer.discardChanges();
         }
 
-        var event = new CustomEvent('XDupdate', {'detail': {dataId: id, data: observed.data}});
-        document.dispatchEvent(event);
+        this.emit('XDupdate', {'detail': {dataId: id, data: observed.data}});
 };
 
 XDMVC.prototype.getDelta = function(oldObj, newObj){
@@ -504,8 +500,7 @@ XDMVC.prototype.updateOthersRoles = function (oldRoles, newRoles) {
         });
 
         // TODO check whether there really was a change? Report added and removed?
-        event = new CustomEvent('XDothersRolesChanged');
-        document.dispatchEvent(event);
+       this.emit('XDothersRolesChanged');
 };
 
 XDMVC.prototype.changeRoleForPeer = function (role, isAdd, peer) {
@@ -769,8 +764,7 @@ XDmvcServer.prototype.connect = function connect () {
     window.setInterval(function(){
         server.requestAvailableDevices();}, 5000);
 
-    var event = new CustomEvent('XDServer');
-    document.dispatchEvent(event);
+    XDmvc.emit('XDserver');
 
     // TODO the server may not have the peer yet. This should be sent a bit later
     this.send('device', XDmvc.device);
@@ -830,8 +824,6 @@ XDmvcServer.prototype.connectToDevice = function connectToDevice (deviceId) {
 //TODO: not used by ClientServer yet
 XDmvcServer.prototype.handleError = function handleError (err){
     XDmvc.cleanUpConnections();
-    var event = new CustomEvent('XDerror');
-    document.dispatchEvent(event);
 
     if (err.type === "peer-unavailable") {
         var peerError = "Could not connect to peer ";
@@ -845,6 +837,8 @@ XDmvcServer.prototype.handleError = function handleError (err){
     } else {
         console.warn(err);
     }
+
+    XDmvc.emit('XDerror');
 };
 
 XDmvcServer.prototype.handleConnection = function handleConnection (connection){
@@ -971,8 +965,7 @@ ConnectedDevice.prototype.handleData = function(msg){
                 });
                 break;
             case 'data':
-                event = new CustomEvent('XDdata', {'detail': msg.data});
-                document.dispatchEvent(event);
+                XDmvc.emit('XDdata', {'detail': msg.data});
                 break;
             case 'roles':
                 this.handleRoles(msg.data);
@@ -984,8 +977,7 @@ ConnectedDevice.prototype.handleData = function(msg){
                 }
                 this.device = msg.data;
                 XDmvc.othersDevices[msg.data.type] +=1;
-                event = new CustomEvent('XDdevice', {'detail': msg.data});
-                document.dispatchEvent(event);
+                XDmvc.emit('XDdevice', {'detail': msg.data});
                 Platform.performMicrotaskCheckpoint();
                 break;
             case 'sync':
@@ -1014,7 +1006,7 @@ ConnectedDevice.prototype.handleData = function(msg){
                     XDmvc.update(msg.data, msg.id, msg.arrayDelta, msg.objectDelta);
                 }
 
-                event = new CustomEvent('XDsync', {'detail': {dataId: msg.id, data: msg.data, sender: this.id}});
+                XDmvc.emit('XDsync', {'detail': {dataId: msg.id, data: msg.data, sender: this.id}});
                 document.dispatchEvent(event);
                 break;
             case 'role':
@@ -1069,7 +1061,7 @@ ConnectedDevice.prototype.handleOpen = function handleOpen (){
 
 ConnectedDevice.prototype.handleClose = function handleClose (){
     XDmvc.removeConnection(this);
-    var event = new CustomEvent('XDdisconnect', {'detail' : this.id});
+    XDmvc.emit('XDdisconnect', {'detail' : this.id});
     document.dispatchEvent(event);
 };
 
@@ -1092,8 +1084,7 @@ ConnectedDevice.prototype.installHandlers = function installHandlers(conn){
     conn.on('data', this.handleData.bind(this));
     conn.on('close', this.handleClose.bind(this));
 
-    var event = new CustomEvent('XDConnection', {'detail' : conn});
-    document.dispatchEvent(event);
+    XDmvc.emit('XDconnection', {'detail' : conn});
 };
 
 

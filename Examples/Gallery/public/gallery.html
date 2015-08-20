@@ -188,7 +188,7 @@
                         if (XDmvc.server) {
                             this.onServerReady();
                         } else { // not yet connected to server, wait for the connection event
-                            document.addEventListener("XDServer", this.onServerReady.bind(this));
+                            XDmvc.on("XDserver", this.onServerReady.bind(this));
                         }
                     },
 
