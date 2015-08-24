@@ -223,18 +223,17 @@ XDd2d.prototype.connectTo = function connectTo (deviceId) {
         var usePeerJS = this.usePeerToPeer(deviceId); //check which technology/architecture to use
         if(this.isPeerToPeer() || (this.isHybrid() && usePeerJS)){
             conn = this.peer.connect(device.peerId, {serialization : 'binary', reliable: true});
-            console.log('use peerJS to connect to ' + deviceId);
+            console.info('using peerJS to connect to ' + deviceId);
         }else if(this.isClientServer() || (this.isHybrid() && !usePeerJS)){
             conn = new VirtualConnection(this.serverSocket, deviceId, this);
             conn.virtualConnect(deviceId);
-            console.log('use socketIO to connect to ' + deviceId);
+            console.info('using socketIO to connect to ' + deviceId);
         }
 
 //        var connDev = this.addConnectedDevice(conn);
         var connDev = this.createConnectedDevice(conn, deviceId);
         connDev.installHandlers(conn);
         this.attemptedConnections.push(connDev);
-        console.log("attempted connection" +connDev.id);
 
     }.bind(this);
 
@@ -311,9 +310,8 @@ XDd2d.prototype.handleConnection = function handleConnection (connection){
 
     var conDev = this.createConnectedDevice(connection, id);
     conDev.installHandlers(connection);
-    console.log(connection);
+    conDev.initiator = false;
     this.attemptedConnections.push(conDev);
-    console.log("handle connection " +conDev.id);
 
     //TODO do this in other module
 /*
@@ -481,7 +479,6 @@ VirtualConnection.prototype.handleEvent = function(tag, msg) {
     if (tag  === 'open') {
         this.open = true;
     }
-    console.log("virtual connection open");
     this.callbackMap[tag](msg); //call the handler that was set in the on(...) method
 };
 
@@ -500,6 +497,7 @@ function ConnectedDevice(connection, id, XDd2d){
     this.device = {};
     this.latestData = {};
     this.initial = [];
+    this.initiator = true; // Indicates if this device initiated the connection
     this.XDd2d = XDd2d;
 }
 // TODO do this in another module
@@ -535,19 +533,29 @@ ConnectedDevice.prototype.handleRoles = function(roles){
 ConnectedDevice.prototype.handleData = function(msg){
     var ids;
     console.log(msg);
-    if (msg.type === "id") {
-        this.handleId(msg.data);
-    }
-    /*
     if (Object.prototype.toString.call(msg) === "[object Object]") {
         // Connect to the ones we are not connected to yet
         switch (msg.type) {
             case 'connections':
-                ids = XDmvc.connectedDevices.map(function (el) {return el.id; });
-                msg.data.filter(function (el) { return ids.indexOf(el) < 0; }).forEach(function (el) {
-                    XDmvc.connectTo(el);
+                ids = this.XDd2d.connectedDevices.map(function (el) {
+                    return el.id;
                 });
+                msg.data.filter(function (el) {
+                    return ids.indexOf(el) < 0;
+                }).forEach(function (el) {
+                    this.XDd2d.connectTo(el);
+                }, this);
                 break;
+            case 'id':
+                this.handleId(msg.data);
+                break;
+            default :
+                console.warn("received unhandled msg type");
+                console.warn(msg);
+        }
+    }
+
+            /*
             case 'data':
                 XDmvc.emit('XDdata', {'detail': msg.data});
                 break;
@@ -633,7 +641,6 @@ ConnectedDevice.prototype.handleError = function handleError (err){
 
 ConnectedDevice.prototype.handleOpen = function handleOpen (){
  //   this.XDd2d.emit("XDopen", this);
-    console.log("open called " +this.id);
 //    this.XDd2d.addConnectedDevice(this);
     this.send("id", this.XDd2d.deviceId);
     // TODO do this in another module
@@ -652,11 +659,8 @@ ConnectedDevice.prototype.handleOpen = function handleOpen (){
     */
 };
 ConnectedDevice.prototype.handleId = function handleId (id){
-    console.log("id received " +id );
-    console.log(arguments);
     this.id = id;
     this.XDd2d.addConnectedDevice(this);
-//    this.send("id", this.XDd2d.deviceId);
     // TODO do this in another module
     /*
      if (XDmvc.storedPeers.indexOf(this.id) === -1) {
@@ -675,6 +679,7 @@ ConnectedDevice.prototype.handleId = function handleId (id){
      this.send("roles", XDmvc.roles);
      this.send("device", XDmvc.device);
      */
+    console.info("Connection established to " +id);
     this.XDd2d.emit("XDopen", this);
 };
 
@@ -687,7 +692,6 @@ ConnectedDevice.prototype.send = function send (msgType, data){
     if (this.connection && this.connection.open) {
         this.connection.send({type: msgType, data: data });
     } else {
-        console.log(this.connection);
         console.warn("Can not send message to device. Not connected to " +this.id );
     }
 };
