@@ -5,7 +5,7 @@
 function XDd2d(deviceId, host, portPeer, portSocketIo, ajaxPort, iceServers){
     XDEmitter.call(this);
 
-    this.connectedDevices = []; // TODO maybe rename?
+    this.connectedDevices = [];
     this.attemptedConnections = [];
     this.deviceId = deviceId;
     this.availableDevices = [];
@@ -129,7 +129,7 @@ XDd2d.prototype.connect = function connect () {
             // For the SocketIO connection
             if(this.isHybrid() || this.isClientServer()) {
                 if (!this.serverSocket) {
-                    var socket = io.connect(this.socketIoAddress, {'forceNew': true}); //TODO:make port editable
+                    var socket = io.connect(this.socketIoAddress, {'forceNew': true});
 
                     this.serverSocket = socket;
                     socket.on('connect', function () {
@@ -172,9 +172,8 @@ XDd2d.prototype.connect = function connect () {
             window.setInterval(function(){
                 XDd2d.requestAvailableDevices();}, 5000);
 
-            this.emit('XDserver');
+            this.emit('XDserverReady');
 
-            // TODO the server may not have the peer yet. This should be sent a bit later
 
             //TODO do this in other module
             /*
@@ -298,7 +297,7 @@ XDd2d.prototype.handleError = function handleError (err){
         console.warn(err);
     }
 
-    this.emit('XDerror');
+    this.emit('XDerror', err);
 };
 
 XDd2d.prototype.handleConnection = function handleConnection (connection){
@@ -367,7 +366,7 @@ XDd2d.prototype.removeConnection = function (connection) {
         this.attemptedConnections.splice(index, 1);
     }
 
-    this.emit('XDdisconnection', {'detail': connection});
+    this.emit('XDdisconnection', connection.id);
 };
 
 
@@ -652,7 +651,7 @@ ConnectedDevice.prototype.handleError = function handleError (err){
             this.XDd2d.removeConnection(this);
         }
     }
-    this.XDd2d.emit('XDerror', {"detail": err})
+    this.XDd2d.emit('XDconnectionError',  err, this);
 };
 
 ConnectedDevice.prototype.handleOpen = function handleOpen (){
@@ -701,7 +700,6 @@ ConnectedDevice.prototype.handleId = function handleId (id){
 
 ConnectedDevice.prototype.handleClose = function handleClose (){
     this.XDd2d.removeConnection(this);
-    this.XDd2d.emit('XDdisconnect', {'detail' : this.id});
 };
 
 ConnectedDevice.prototype._send = function _send (msgType, data){
@@ -727,7 +725,7 @@ ConnectedDevice.prototype.installHandlers = function installHandlers(conn){
     conn.on('data', this.handleData.bind(this));
     conn.on('close', this.handleClose.bind(this));
 
-    this.XDd2d.emit('XDconnection', {'detail' : this});
+ //   this.XDd2d.emit('XDconnectionReceived', this);
 };
 
 
