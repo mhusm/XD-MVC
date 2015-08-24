@@ -385,8 +385,8 @@ XDd2d.prototype.disconnectAll = function disconnectAll() {
     });
 };
 
-XDd2d.prototype.getConnectedDevice = function (peerId) {
-    return this.connectedDevices.find(function (c) {return c.id === peerId; });
+XDd2d.prototype.getConnectedDevice = function (deviceId) {
+    return this.connectedDevices.find(function (c) {return c.id === deviceId; });
 };
 
 
@@ -429,6 +429,13 @@ XDd2d.prototype.getAttemptedConnection = function (peerId) {
     });
 };
 
+XDd2d.prototype._sendToAll = function (msgType, data) {
+    var len = this.connectedDevices.length,
+        i;
+    for (i = 0; i < len; i++) {
+        this.connectedDevices[i]._send(msgType, data);
+    }
+};
 
 XDd2d.prototype.sendToAll = function (msgType, data) {
     var len = this.connectedDevices.length,
@@ -437,7 +444,12 @@ XDd2d.prototype.sendToAll = function (msgType, data) {
         this.connectedDevices[i].send(msgType, data);
     }
 };
-
+XDd2d.prototype.sendTo = function (deviceId, msgType, data) {
+    var device = this.getConnectedDevice(deviceId);
+    if (device) {
+        device.send(msgType, data);
+    }
+};
 
 /*
  Virtual Connection for Client-Server Architecture
@@ -549,6 +561,10 @@ ConnectedDevice.prototype.handleData = function(msg){
             case 'id':
                 this.handleId(msg.data);
                 break;
+            case 'customMsg':
+                console.log(msg.data);
+                this.XDd2d.emit(msg.data.label, msg.data.payload, this);
+                break;
             default :
                 console.warn("received unhandled msg type");
                 console.warn(msg);
@@ -642,7 +658,7 @@ ConnectedDevice.prototype.handleError = function handleError (err){
 ConnectedDevice.prototype.handleOpen = function handleOpen (){
  //   this.XDd2d.emit("XDopen", this);
 //    this.XDd2d.addConnectedDevice(this);
-    this.send("id", this.XDd2d.deviceId);
+    this._send("id", this.XDd2d.deviceId);
     // TODO do this in another module
 /*
     if (XDmvc.storedPeers.indexOf(this.id) === -1) {
@@ -672,7 +688,7 @@ ConnectedDevice.prototype.handleId = function handleId (id){
     var thisDevice = this;
     var others = this.XDd2d.connectedDevices.filter(function (el) {return el.id !== thisDevice.id; })
         .map(function (el) {return el.id; });
-    this.send('connections', others);
+    this._send('connections', others);
 
     // TODO do this in another module
     /*
@@ -688,12 +704,16 @@ ConnectedDevice.prototype.handleClose = function handleClose (){
     this.XDd2d.emit('XDdisconnect', {'detail' : this.id});
 };
 
-ConnectedDevice.prototype.send = function send (msgType, data){
+ConnectedDevice.prototype._send = function _send (msgType, data){
     if (this.connection && this.connection.open) {
         this.connection.send({type: msgType, data: data });
     } else {
         console.warn("Can not send message to device. Not connected to " +this.id );
     }
+};
+
+ConnectedDevice.prototype.send = function send (label, data){
+    this._send("customMsg", {label: label, payload: data});
 };
 
 ConnectedDevice.prototype.disconnect = function disconnect (){
