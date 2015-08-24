@@ -120,7 +120,7 @@ XDd2d.prototype.connect = function connect () {
                             XDd2d.send('deviceId', {peerId: id});
                         });
                     } else {
-                        console.warn("Already connected.")
+                        console.warn("Already connected to PeerJS");
                     }
                 } else {
                     console.log("PeerJS not supported");
@@ -277,7 +277,7 @@ XDd2d.prototype.connectTo = function connectTo (deviceId) {
       */
         }
     } else {
-        console.warn("already connected");
+        console.warn("already connected to " +deviceId);
     }
 };
 
