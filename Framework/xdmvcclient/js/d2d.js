@@ -7,7 +7,7 @@ function XDd2d(deviceId, host, portPeer, portSocketIo, ajaxPort, iceServers){
 
     this.connectedDevices = []; // TODO maybe rename?
     this.attemptedConnections = [];
-    this.deviceId = deviceId? deviceId:  "Id"+Date.now();
+    this.deviceId = deviceId;
     this.availableDevices = [];
     this.server = null;
 
@@ -90,86 +90,97 @@ XDd2d.prototype.supportsPeerJS = function() {
 
 XDd2d.prototype.connect = function connect () {
     var XDd2d = this;
-    // For the PeerJS connection
-    if (this.isHybrid()  || this.isPeerToPeer() ) {
-        if(this.isPeerToPeer() || this.supportsPeerJS()) {
-            if (!this.peer) {
-                this.peer = new Peer({
-                    host: this.host,
-                    port: this.portPeer,
-                    //                           debug: 3,
-                    config: {
-                        'iceServers': this.iceServers
+    this.send("id", undefined, function(msg){
+        var result = JSON.parse(msg);
+        if (result.error) {
+            console.error("Could not connect to server. ID is already taken: " +this.deviceId);
+        } else {
+            this.deviceId = result.id;
+
+            // For the PeerJS connection
+            if (this.isHybrid()  || this.isPeerToPeer() ) {
+                if(this.isPeerToPeer() || this.supportsPeerJS()) {
+                    if (!this.peer) {
+                        this.peer = new Peer({
+                            host: this.host,
+                            port: this.portPeer,
+                            //                           debug: 3,
+                            config: {
+                                'iceServers': this.iceServers
+                            }
+                        });
+                        this.peer.on('connection', function (conn) {
+                            XDd2d.handleConnection(conn);
+                        });
+                        this.peer.on('error', function (err) {
+                            XDd2d.handleError(err);
+                        });
+
+                        this.peer.on('open', function(id) {
+                            XDd2d.send('deviceId', {peerId: id});
+                        });
+                    } else {
+                        console.warn("Already connected.")
                     }
-                });
-                this.peer.on('connection', function (conn) {
-                    XDd2d.handleConnection(conn);
-                });
-                this.peer.on('error', function (err) {
-                    XDd2d.handleError(err);
-                });
-
-                this.peer.on('open', function(id) {
-                    XDd2d.send('deviceId', {peerId: id});
-                });
-             } else {
-                console.warn("Already connected.")
+                } else {
+                    console.log("PeerJS not supported");
+                }
             }
-        } else {
-            console.log("PeerJS not supported");
+            // For the SocketIO connection
+            if(this.isHybrid() || this.isClientServer()) {
+                if (!this.serverSocket) {
+                    var socket = io.connect(this.socketIoAddress, {'forceNew': true}); //TODO:make port editable
+
+                    this.serverSocket = socket;
+                    socket.on('connect', function () {
+                        socket.emit('id', XDd2d.deviceId);
+                    });
+
+                    // another Peer called virtualConnect(...)
+                    socket.on('connectTo', function (msg) {
+                        var conn = new VirtualConnection(this, msg.sender);
+                        XDd2d.handleConnection(conn);
+                        //send readyForOpen
+                        socket.emit('readyForOpen', {recA: XDd2d.deviceId, recB: msg.sender});
+                    });
+
+                    socket.on('wrapMsg', function (msg) {
+                        var sender = XDd2d.getConnectedDevice(msg.sender);
+                        if (sender !== undefined)
+                            sender.connection.handleEvent(msg.eventTag, msg);
+                    });
+
+                    socket.on('error', function (err) {
+                        console.warn(err);
+                    });
+
+                } else {
+                    console.warn("Already connected.")
+                }
+            }
+            if (this.reconnect) {
+                this.connectToStoredPeers();
+            }
+
+            // Check periodically who is connected.
+            // TODO could use socket.io connection for this?
+            this.requestAvailableDevices();
+            window.setInterval(function(){
+                XDd2d.requestAvailableDevices();}, 5000);
+
+            this.emit('XDserver');
+
+            // TODO the server may not have the peer yet. This should be sent a bit later
+
+            //TODO do this in other module
+            /*
+             this.send('device', XDmvc.device);
+             this.send('roles', XDmvc.roles);
+             */
+
         }
-    }
-    // For the SocketIO connection
-    if(this.isHybrid() || this.isClientServer()) {
-        if (!this.serverSocket) {
-            var socket = io.connect(this.socketIoAddress, {'forceNew': true}); //TODO:make port editable
 
-            this.serverSocket = socket;
-            socket.on('connect', function () {
-                socket.emit('id', XDd2d.deviceId);
-            });
-
-            // another Peer called virtualConnect(...)
-            socket.on('connectTo', function (msg) {
-                var conn = new VirtualConnection(this, msg.sender);
-                XDd2d.handleConnection(conn);
-                //send readyForOpen
-                socket.emit('readyForOpen', {recA: XDd2d.deviceId, recB: msg.sender});
-            });
-
-            socket.on('wrapMsg', function (msg) {
-                var sender = XDd2d.getConnectedDevice(msg.sender);
-                if (sender !== undefined)
-                    sender.connection.handleEvent(msg.eventTag, msg);
-            });
-
-            socket.on('error', function (err) {
-                console.warn(err);
-            });
-
-        } else {
-            console.warn("Already connected.")
-        }
-    }
-    if (this.reconnect) {
-        this.connectToStoredPeers();
-    }
-
-    // Check periodically who is connected.
-    // TODO could use socket.io connection for this?
-    this.requestAvailableDevices();
-    window.setInterval(function(){
-        XDd2d.requestAvailableDevices();}, 5000);
-
-    this.emit('XDserver');
-
-    // TODO the server may not have the peer yet. This should be sent a bit later
-
-    //TODO do this in other module
-/*
-    this.send('device', XDmvc.device);
-    this.send('roles', XDmvc.roles);
-    */
+    }.bind(this));
 };
 
 XDd2d.prototype.send = function send (type, data, callback){
@@ -199,7 +210,7 @@ XDd2d.prototype.requestAvailableDevices = function requestAvailableDevices (){
     }.bind(this));
 };
 
-XDd2d.prototype.connectToDevice = function connectToDevice (deviceId) {
+XDd2d.prototype.connectTo = function connectTo (deviceId) {
     // Check if connection exists already
     if (!this.connectedDevices.concat(this.attemptedConnections)
             .some(function (el) {return el.id === deviceId; })) {
@@ -291,7 +302,6 @@ XDd2d.prototype.removeConnection = function (connection) {
     var index = this.connectedDevices.indexOf(connection);
     if (index > -1) {
         this.connectedDevices.splice(index, 1);
-        this.sortConnections(XDmvc.compareConnections.bind(this));
         this.updateOthersRoles(connection.roles, []);
 
         if (connection.device) {
@@ -308,9 +318,6 @@ XDd2d.prototype.removeConnection = function (connection) {
 };
 
 
-XDd2d.prototype.connectTo = function (deviceId) {
-    this.server.connectToDevice(deviceId);
-};
 
 XDd2d.prototype.disconnect = function disconnect(peerId) {
     var conn = this.getConnectedDevice(peerId);
@@ -334,7 +341,6 @@ XDd2d.prototype.addConnectedDevice = function(connection){
     if (!conDev){
         conDev = new ConnectedDevice(connection, connection.peer, this);
         this.connectedDevices.push(conDev);
-        this.sortConnections(this.compareConnections.bind(this));
         //TODO test this
         var index = this.attemptedConnections.findIndex(function(element){ return element.id === connection.peer});
         if (index > -1) {
@@ -348,28 +354,6 @@ XDd2d.prototype.getAttemptedConnection = function (peerId) {
     return this.attemptedConnections.find(function (c) {
         return c.id === peerId;
     });
-};
-
-// TODO maybe the developer/user should be able to specify an order.
-// Order is not enough for some cases, take into account device roles?
-XDd2d.prototype.compareConnections = function (connection1, connection2) {
-    if (connection1.id > connection2.id) {
-        return 1;
-    }
-    if (connection1.id < connection2.id) {
-        return -1;
-    }
-    return 0;
-};
-
-XDd2d.prototype.sortConnections = function (compareFunc) {
-
-    this.connectedDevices.sort(compareFunc);
-    var thisConn = {peer: this.deviceId};
-    var idx = this.connectedDevices.findIndex(function (element) {
-        return compareFunc(thisConn, element) < 0;
-    });
-    this.myPosition.value = idx > -1 ? idx : this.connectedDevices.length;
 };
 
 

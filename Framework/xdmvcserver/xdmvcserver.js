@@ -24,22 +24,24 @@ function XDmvcServer() {
     this.peers = {}; //union of socketIoPeers and peerJsPeers
     this.sessions = {};
     this.configuredRoles = {};
+    this.idBase = 0;
 }
 util.inherits(XDmvcServer, EventEmitter);
 
-XDmvcServer.prototype.addPeerJsPeer = function addPeerJsPeer(id, peerId) {
-    if(this.peers[id]) //peer was already registered by socketIo
-        this.peers[id].usesPeerJs = true;
-    else
+
+XDmvcServer.prototype.addPeer = function addPeer(id) {
         this.peers[id] = {
             'id': id,
             'name': undefined,
             'role': undefined,
             'roles': [],
             'session': undefined,
-            'usesPeerJs': true,
+            'usesPeerJs': false,
             'usesSocketIo': false
         };
+};
+XDmvcServer.prototype.addPeerJsPeer = function addPeerJsPeer(id, peerId) {
+    this.peers[id].usesPeerJs = true;
 
     this.peerJsPeers[id] = {
         'id': id,
@@ -52,18 +54,7 @@ XDmvcServer.prototype.addPeerJsPeer = function addPeerJsPeer(id, peerId) {
 };
 
 XDmvcServer.prototype.addSocketIoPeer = function addSocketIoPeer(id, socketioId) {
-    if(this.peers[id]) //peer was already registered by peerJs
-        this.peers[id].usesSocketIo = true;
-    else
-        this.peers[id] = {
-            'id': id,
-            'name': undefined,
-            'role': undefined,
-            'roles': [],
-            'session': undefined,
-            'usesPeerJs': false,
-            'usesSocketIo': true
-        };
+    this.peers[id].usesSocketIo = true;
     this.socketIoPeers[id] = {
         'id': id,
         'socketioId': socketioId,
@@ -125,8 +116,8 @@ XDmvcServer.prototype.startPeerSever = function(port){
                 delete that.sessions[that.peerJsPeers[deviceId].session];
             }
         }
-        that.deletePeerJsPeer(id);
-        that.emit("disconnected", id);
+        that.deletePeerJsPeer(deviceId);
+        that.emit("disconnected", deviceId);
     });
 
 };
@@ -246,16 +237,19 @@ XDmvcServer.prototype.startSocketIoServer = function startSocketIoServer(port) {
 
 
 XDmvcServer.prototype.startAjaxServer = function(port){
+    /*
     var that = this;
+
     var ajax = function(req, res, next){
-        return that.handleAjaxRequest(req,res,next, that);
+        return that.handleAjaxRequest(req,res,next);
     };
-    var app = connect().use(bodyParser.json({limit: '50mb'})).use(allowCrossDomain).use(ajax);
+    */
+    var app = connect().use(bodyParser.json({limit: '50mb'})).use(allowCrossDomain).use(this.handleAjaxRequest.bind(this));
     var server = http.createServer(app);
     server.listen(port);
 };
 
-XDmvcServer.prototype.handleAjaxRequest = function(req, res, next, xdmvcServer){
+XDmvcServer.prototype.handleAjaxRequest = function(req, res, next){
     var parameters = url.parse(req.url, true);
     var query = parameters.query;
 
@@ -272,40 +266,62 @@ XDmvcServer.prototype.handleAjaxRequest = function(req, res, next, xdmvcServer){
     switch (query.type){
         case 'listAllPeers':
             // return list of all peers
-            var peersArray = Object.keys(xdmvcServer.peers).map(function (key) {return xdmvcServer.peers[key]});
-            res.write('{"peers": ' + JSON.stringify(peersArray) + ', "sessions": ' + JSON.stringify(xdmvcServer.sessions) + '}');
+            var peersArray = Object.keys(this.peers).map(function (key) {return this.peers[key]}, this);
+            res.write('{"peers": ' + JSON.stringify(peersArray) + ', "sessions": ' + JSON.stringify(this.sessions) + '}');
             res.end();
             break;
 
         case 'sync':
-             xdmvcServer.emit("objectChanged", query.data);
+             this.emit("objectChanged", query.data);
              res.end();
              break;
         case 'roles':
             // only store role information, if the peer is already connected
-            if (xdmvcServer.peers[query.id]){
-                xdmvcServer.peers[query.id].roles = query.data;
+            if (this.peers[query.id]){
+                this.peers[query.id].roles = query.data;
             }
             res.end();
             break;
         case 'device':
             // only store device information, if the peer is already connected
-            if (xdmvcServer.peers[query.id]){
-                xdmvcServer.peers[query.id].device = query.data
+            if (this.peers[query.id]){
+                this.peers[query.id].device = query.data
             }
             res.end();
             break;
         case 'deviceId':
-            console.log(query);
             this.addPeerJsPeer(query.id, query.data.peerId);
-            this.emit("connected", query.id);
-/*
-            if (xdmvcServer.peers[query.peerId]){
-                xdmvcServer.peers[query.peerId].deviceId = query.deviceId
-            }
-            */
             res.end();
             break;
+        case 'peerForId':
+            console.log(query);
+            //         this.emit("connected", query.id);
+            /*
+             if (xdmvcServer.peers[query.peerId]){
+             xdmvcServer.peers[query.peerId].deviceId = query.deviceId
+             }
+             */
+            var peerID = this.peerJsPeers[id]? this.peerJsPeers[id].peerId : undefined;
+            res.write(JSON.stringify({peerID: peerID}));
+            res.end();
+            break;
+        case 'id':
+            console.log(query);
+            var id = query.id;
+            var error = false;
+            if (!id) {
+                id = this.generateID();
+            } else if (!this.idIsFree(id)){
+                error = true;
+            }
+            if (!error) {
+                this.emit("connected", id);
+                this.addPeer(id);
+            }
+            res.write(JSON.stringify({id: id, error: error}));
+            res.end();
+            break;
+
         default :
             // someone tried to call a not supported method
             // answer with 404
@@ -316,6 +332,20 @@ XDmvcServer.prototype.handleAjaxRequest = function(req, res, next, xdmvcServer){
             res.write(parameters.pathname);
             res.end();
     }
+};
+
+XDmvcServer.prototype.generateID = function() {
+    this.idBase++;
+    var id = "ID"+this.idBase;
+    while (!this.idIsFree(id)) {
+        this.idBase++;
+        id = "ID"+this.idBase;
+    }
+    return id;
+};
+
+XDmvcServer.prototype.idIsFree = function(id) {
+    return (!this.peers[id]);
 };
 
 XDmvcServer.prototype.start = function(portPeer, portSocketIo, portAjax) {
