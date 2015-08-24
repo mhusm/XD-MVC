@@ -90,7 +90,7 @@ XDd2d.prototype.supportsPeerJS = function() {
 
 XDd2d.prototype.connect = function connect () {
     var XDd2d = this;
-    this.send("id", undefined, function(msg){
+    this.sendToServer("id", undefined, function(msg){
         var result = JSON.parse(msg);
         if (result.error) {
             console.error("Could not connect to server. ID is already taken: " +this.deviceId);
@@ -162,9 +162,12 @@ XDd2d.prototype.connect = function connect () {
                     console.warn("Already connected.")
                 }
             }
+            //TODO do this in another module
+/*
             if (this.reconnect) {
                 this.connectToStoredPeers();
             }
+*/
 
             // Check periodically who is connected.
             // TODO could use socket.io connection for this?
@@ -186,7 +189,7 @@ XDd2d.prototype.connect = function connect () {
     }.bind(this));
 };
 
-XDd2d.prototype.send = function send (type, data, callback){
+XDd2d.prototype.sendToServer = function send (type, data, callback){
     var url = window.location.protocol +"//" +this.host +":" +this.ajaxPort;
     ajax.postJSON(url, {type: type, data:data, id: this.deviceId},
         function(reply){
@@ -200,7 +203,7 @@ XDd2d.prototype.send = function send (type, data, callback){
 
 XDd2d.prototype.requestAvailableDevices = function requestAvailableDevices (callback){
     var XDd2d = this;
-    this.send("listAllPeers", null, function(msg){
+    this.sendToServer("listAllPeers", null, function(msg){
         var peers = JSON.parse(msg).peers;
         XDd2d.availableDevices.length = 0;
         // Filter out self and peers that we are connected to already
@@ -391,7 +394,6 @@ XDd2d.prototype.getConnectedDevice = function (deviceId) {
 
 XDd2d.prototype.addConnectedDevice = function(conDev){
     this.connectedDevices.push(conDev);
-    //TODO test this
     var index = this.attemptedConnections.findIndex(function(element){ return element.connection === conDev.connection});
     if (index > -1) {
         this.attemptedConnections.splice(index, 1);
@@ -404,7 +406,6 @@ XDd2d.prototype.addConnectedDevice = function(connection){
     if (!conDev){
         conDev = new ConnectedDevice(connection, connection.peer, this);
         this.connectedDevices.push(conDev);
-        //TODO test this
         var index = this.attemptedConnections.findIndex(function(element){ return element.id === connection.peer});
         if (index > -1) {
             this.attemptedConnections.splice(index, 1);
@@ -655,23 +656,7 @@ ConnectedDevice.prototype.handleError = function handleError (err){
 };
 
 ConnectedDevice.prototype.handleOpen = function handleOpen (){
- //   this.XDd2d.emit("XDopen", this);
-//    this.XDd2d.addConnectedDevice(this);
     this._send("id", this.XDd2d.deviceId);
-    // TODO do this in another module
-/*
-    if (XDmvc.storedPeers.indexOf(this.id) === -1) {
-        XDmvc.storedPeers.push(this.id);
-        XDmvc.storePeers();
-    }
-    */
-
-
-    // TODO do this in another module
-    /*
-    this.send("roles", XDmvc.roles);
-    this.send("device", XDmvc.device);
-    */
 };
 ConnectedDevice.prototype.handleId = function handleId (id){
     this.id = id;
