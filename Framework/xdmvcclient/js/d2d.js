@@ -138,7 +138,7 @@ XDd2d.prototype.connect = function connect () {
 
                     // another Peer called virtualConnect(...)
                     socket.on('connectTo', function (msg) {
-                        var conn = new VirtualConnection(this, msg.sender);
+                        var conn = new VirtualConnection(this, msg.sender, XDd2d);
                         XDd2d.handleConnection(conn);
                         //send readyForOpen
                         socket.emit('readyForOpen', {recA: XDd2d.deviceId, recB: msg.sender});
@@ -195,7 +195,7 @@ XDd2d.prototype.send = function send (type, data, callback){
     );
 };
 
-XDd2d.prototype.requestAvailableDevices = function requestAvailableDevices (){
+XDd2d.prototype.requestAvailableDevices = function requestAvailableDevices (callback){
     var XDd2d = this;
     this.send("listAllPeers", null, function(msg){
         var peers = JSON.parse(msg).peers;
@@ -207,28 +207,70 @@ XDd2d.prototype.requestAvailableDevices = function requestAvailableDevices (){
         .forEach(function (peer) {
             XDd2d.availableDevices.push(peer);
         });
+        if (callback) {
+            callback();
+        }
     }.bind(this));
 };
 
 XDd2d.prototype.connectTo = function connectTo (deviceId) {
     // Check if connection exists already
-    if (!this.connectedDevices.concat(this.attemptedConnections)
-            .some(function (el) {return el.id === deviceId; })) {
-        var conn = null;
+    var internalConnect = function(device) {
         var usePeerJS = this.usePeerToPeer(deviceId); //check which technology/architecture to use
         if(this.isPeerToPeer() || (this.isHybrid() && usePeerJS)){
-            conn = this.peer.connect(deviceId, {serialization : 'binary', reliable: true});
+            conn = this.peer.connect(device.peerId, {serialization : 'binary', reliable: true});
             console.log('use peerJS to connect to ' + deviceId);
         }else if(this.isClientServer() || (this.isHybrid() && !usePeerJS)){
-            conn = new VirtualConnection(this.serverSocket, deviceId);
+            conn = new VirtualConnection(this.serverSocket, deviceId, this);
+            conn.virtualConnect(deviceId);
             console.log('use socketIO to connect to ' + deviceId);
         }
 
         var connDev = this.addConnectedDevice(conn);
         connDev.installHandlers(conn);
         this.attemptedConnections.push(connDev);
-        if(conn instanceof VirtualConnection) //just for socketIO
-            conn.virtualConnect(deviceId);
+
+    }.bind(this);
+
+
+    if (!this.connectedDevices.concat(this.attemptedConnections)
+            .some(function (el) {return el.id === deviceId; })) {
+        var conn = null;
+        var device = this.availableDevices.find(function(avDev){return avDev.id === deviceId; });
+        // If the device is not in the list or appears to be not ready yet, update the list and then try to connect.
+        if (!device || (!device.usesPeerJS && !device.usesSocketIo)) {
+            this.requestAvailableDevices(
+                function(){
+                    var device = this.availableDevices.find(function(avDev){return avDev.id === deviceId; });
+                    if (device) {
+                        internalConnect(device);
+                    } else {
+                        console.warn("Could not connect. Device is not available. Device ID: " +deviceId);
+                    }
+                }.bind(this)
+            );
+        } else {
+            internalConnect(device);
+            /*
+            var usePeerJS = this.usePeerToPeer(deviceId); //check which technology/architecture to use
+            if(this.isPeerToPeer() || (this.isHybrid() && usePeerJS)){
+                conn = this.peer.connect(device.peerId, {serialization : 'binary', reliable: true});
+                console.log('use peerJS to connect to ' + deviceId);
+            }else if(this.isClientServer() || (this.isHybrid() && !usePeerJS)){
+                conn = new VirtualConnection(this.serverSocket, deviceId);
+                conn.virtualConnect(deviceId);
+                console.log('use socketIO to connect to ' + deviceId);
+            }
+
+            var connDev = this.addConnectedDevice(conn);
+            connDev.installHandlers(conn);
+            this.attemptedConnections.push(connDev);
+            */
+     /*
+            if(conn instanceof VirtualConnection) //just for socketIO
+                conn.virtualConnect(deviceId);
+      */
+        }
     } else {
         console.warn("already connected");
     }
@@ -371,11 +413,12 @@ XDd2d.prototype.sendToAll = function (msgType, data) {
  ------------------------------------------------
  */
 
-function VirtualConnection(serverSocket, peerId) {
+function VirtualConnection(serverSocket, peerId, XDd2d) {
     this.server = serverSocket;
     this.peer = peerId;
     this.callbackMap = {};
     this.open = false;
+    this.XDd2d = XDd2d;
 }
 
 
@@ -385,14 +428,14 @@ VirtualConnection.prototype.send = function send(msg) {
 
 VirtualConnection.prototype.virtualSend = function virtualSend( originalMsg, eventTag) {
     originalMsg.receiver = this.peer;
-    originalMsg.sender = XDmvc.deviceId;
+    originalMsg.sender = this.XDd2d.deviceId;
     originalMsg.eventTag = eventTag;
     this.server.emit('wrapMsg', originalMsg);
 };
 
 // connect to another peer by sending an open to the other peer, via the server
 VirtualConnection.prototype.virtualConnect = function virtualConnect(remoteDeviceId) {
-    this.server.emit('connectTo', {receiver:remoteDeviceId, sender:XDmvc.deviceId});
+    this.server.emit('connectTo', {receiver:remoteDeviceId, sender: this.XDd2d.deviceId});
     this.open = true;
 };
 

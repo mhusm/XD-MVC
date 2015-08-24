@@ -42,6 +42,7 @@ XDmvcServer.prototype.addPeer = function addPeer(id) {
 };
 XDmvcServer.prototype.addPeerJsPeer = function addPeerJsPeer(id, peerId) {
     this.peers[id].usesPeerJs = true;
+    this.peers[id].peerId = peerId;
 
     this.peerJsPeers[id] = {
         'id': id,
@@ -291,18 +292,6 @@ XDmvcServer.prototype.handleAjaxRequest = function(req, res, next){
             break;
         case 'deviceId':
             this.addPeerJsPeer(query.id, query.data.peerId);
-            res.end();
-            break;
-        case 'peerForId':
-            console.log(query);
-            //         this.emit("connected", query.id);
-            /*
-             if (xdmvcServer.peers[query.peerId]){
-             xdmvcServer.peers[query.peerId].deviceId = query.deviceId
-             }
-             */
-            var peerID = this.peerJsPeers[id]? this.peerJsPeers[id].peerId : undefined;
-            res.write(JSON.stringify({peerID: peerID}));
             res.end();
             break;
         case 'id':
