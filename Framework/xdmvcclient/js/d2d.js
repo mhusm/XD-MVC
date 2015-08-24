@@ -146,8 +146,12 @@ XDd2d.prototype.connect = function connect () {
 
                     socket.on('wrapMsg', function (msg) {
                         var sender = XDd2d.getConnectedDevice(msg.sender);
-                        if (sender !== undefined)
+                        if (!sender) {
+                            sender = XDd2d.getAttemptedConnection(msg.sender);
+                        }
+                        if (sender) {
                             sender.connection.handleEvent(msg.eventTag, msg);
+                        }
                     });
 
                     socket.on('error', function (err) {
@@ -226,9 +230,11 @@ XDd2d.prototype.connectTo = function connectTo (deviceId) {
             console.log('use socketIO to connect to ' + deviceId);
         }
 
-        var connDev = this.addConnectedDevice(conn);
+//        var connDev = this.addConnectedDevice(conn);
+        var connDev = this.createConnectedDevice(conn, deviceId);
         connDev.installHandlers(conn);
         this.attemptedConnections.push(connDev);
+        console.log("attempted connection" +connDev.id);
 
     }.bind(this);
 
@@ -283,7 +289,7 @@ XDd2d.prototype.handleError = function handleError (err){
     if (err.type === "peer-unavailable") {
         var peerError = "Could not connect to peer ";
         var peer = err.message.substring(peerError.length);
-        var conn = this.getAttemptedConnection(peer);
+        var conn = this.attemptedConnections.find(function (c) {return c.connection.peer === peer; });
         var index = this.attemptedConnections.indexOf(conn);
         if (index > -1) {
             this.attemptedConnections.splice(index, 1);
@@ -297,11 +303,18 @@ XDd2d.prototype.handleError = function handleError (err){
 };
 
 XDd2d.prototype.handleConnection = function handleConnection (connection){
-    var conDev = this.addConnectedDevice(connection);
-    conDev.installHandlers(connection);
-    this.attemptedConnections.push(conDev);
+//    var conDev = this.addConnectedDevice(connection);
+    var id;
+    if (connection instanceof VirtualConnection) {
+        id = connection.peer;
+    }
 
-    this.emit("connection", conDev.id);
+    var conDev = this.createConnectedDevice(connection, id);
+    conDev.installHandlers(connection);
+    console.log(connection);
+    this.attemptedConnections.push(conDev);
+    console.log("handle connection " +conDev.id);
+
     //TODO do this in other module
 /*
     Object.keys(XDmvc.syncData).forEach(function(key) {
@@ -356,7 +369,7 @@ XDd2d.prototype.removeConnection = function (connection) {
         this.attemptedConnections.splice(index, 1);
     }
 
-    this.emit('XDconnection', {'detail': connection});
+    this.emit('XDdisconnection', {'detail': connection});
 };
 
 
@@ -378,6 +391,17 @@ XDd2d.prototype.getConnectedDevice = function (peerId) {
     return this.connectedDevices.find(function (c) {return c.id === peerId; });
 };
 
+
+XDd2d.prototype.addConnectedDevice = function(conDev){
+    this.connectedDevices.push(conDev);
+    //TODO test this
+    var index = this.attemptedConnections.findIndex(function(element){ return element.connection === conDev.connection});
+    if (index > -1) {
+        this.attemptedConnections.splice(index, 1);
+    }
+};
+
+/*
 XDd2d.prototype.addConnectedDevice = function(connection){
     var conDev =  this.connectedDevices.find(function (c) {return c.connection === connection; });
     if (!conDev){
@@ -388,6 +412,15 @@ XDd2d.prototype.addConnectedDevice = function(connection){
         if (index > -1) {
             this.attemptedConnections.splice(index, 1);
         }
+    }
+    return conDev;
+};
+*/
+
+XDd2d.prototype.createConnectedDevice = function(connection, deviceId){
+    var conDev =  this.connectedDevices.concat(this.attemptedConnections).find(function (c) {return c.connection === connection; });
+    if (!conDev){
+        conDev = new ConnectedDevice(connection, deviceId, this);
     }
     return conDev;
 };
@@ -436,7 +469,7 @@ VirtualConnection.prototype.virtualSend = function virtualSend( originalMsg, eve
 // connect to another peer by sending an open to the other peer, via the server
 VirtualConnection.prototype.virtualConnect = function virtualConnect(remoteDeviceId) {
     this.server.emit('connectTo', {receiver:remoteDeviceId, sender: this.XDd2d.deviceId});
-    this.open = true;
+  //  this.open = true;
 };
 
 
@@ -445,7 +478,10 @@ VirtualConnection.prototype.on = function on(eventTag, callback){
 };
 
 VirtualConnection.prototype.handleEvent = function(tag, msg) {
-    this.open = tag === 'open';
+    if (tag  === 'open') {
+        this.open = true;
+    }
+    console.log("virtual connection open");
     this.callbackMap[tag](msg); //call the handler that was set in the on(...) method
 };
 
@@ -457,14 +493,14 @@ VirtualConnection.prototype.close = function() {
  Connected Devices
  -----------------
  */
-function ConnectedDevice(connection, id, server){
+function ConnectedDevice(connection, id, XDd2d){
     this.connection = connection;
     this.id = id;
     this.roles = [];
     this.device = {};
     this.latestData = {};
     this.initial = [];
-    this.server = server;
+    this.XDd2d = XDd2d;
 }
 // TODO do this in another module
 /*
@@ -499,6 +535,9 @@ ConnectedDevice.prototype.handleRoles = function(roles){
 ConnectedDevice.prototype.handleData = function(msg){
     var ids;
     console.log(msg);
+    if (msg.type === "id") {
+        this.handleId(msg.data);
+    }
     /*
     if (Object.prototype.toString.call(msg) === "[object Object]") {
         // Connect to the ones we are not connected to yet
@@ -581,19 +620,22 @@ ConnectedDevice.prototype.handleError = function handleError (err){
     if(this.usesPeerJS()) {
         console.warn("Error in PeerConnection:");
         console.warn(err);
-        this.server.cleanUpConnections();
+        this.XDd2d.cleanUpConnections();
     } else {
         console.warn("Error in Socketio Connection:" + err.message );
         console.warn(err);
         if(err.type === 'peer-unavailable') {
-            this.server.removeConnection(this);
+            this.XDd2d.removeConnection(this);
         }
     }
-    this.server.emit('XDerror', {"detail": err})
+    this.XDd2d.emit('XDerror', {"detail": err})
 };
 
 ConnectedDevice.prototype.handleOpen = function handleOpen (){
-    this.server.emit("XDopen", this);
+ //   this.XDd2d.emit("XDopen", this);
+    console.log("open called " +this.id);
+//    this.XDd2d.addConnectedDevice(this);
+    this.send("id", this.XDd2d.deviceId);
     // TODO do this in another module
 /*
     if (XDmvc.storedPeers.indexOf(this.id) === -1) {
@@ -602,10 +644,6 @@ ConnectedDevice.prototype.handleOpen = function handleOpen (){
     }
     */
 
-    var thisDevice = this;
-    var others = this.server.connectedDevices.filter(function (el) {return el.id !== thisDevice.id; })
-        .map(function (el) {return el.id; });
-    this.send('connections', others);
 
     // TODO do this in another module
     /*
@@ -613,23 +651,50 @@ ConnectedDevice.prototype.handleOpen = function handleOpen (){
     this.send("device", XDmvc.device);
     */
 };
+ConnectedDevice.prototype.handleId = function handleId (id){
+    console.log("id received " +id );
+    console.log(arguments);
+    this.id = id;
+    this.XDd2d.addConnectedDevice(this);
+//    this.send("id", this.XDd2d.deviceId);
+    // TODO do this in another module
+    /*
+     if (XDmvc.storedPeers.indexOf(this.id) === -1) {
+     XDmvc.storedPeers.push(this.id);
+     XDmvc.storePeers();
+     }
+     */
+
+    var thisDevice = this;
+    var others = this.XDd2d.connectedDevices.filter(function (el) {return el.id !== thisDevice.id; })
+        .map(function (el) {return el.id; });
+    this.send('connections', others);
+
+    // TODO do this in another module
+    /*
+     this.send("roles", XDmvc.roles);
+     this.send("device", XDmvc.device);
+     */
+    this.XDd2d.emit("XDopen", this);
+};
 
 ConnectedDevice.prototype.handleClose = function handleClose (){
-    this.server.removeConnection(this);
-    this.server.emit('XDdisconnect', {'detail' : this.id});
+    this.XDd2d.removeConnection(this);
+    this.XDd2d.emit('XDdisconnect', {'detail' : this.id});
 };
 
 ConnectedDevice.prototype.send = function send (msgType, data){
     if (this.connection && this.connection.open) {
         this.connection.send({type: msgType, data: data });
     } else {
+        console.log(this.connection);
         console.warn("Can not send message to device. Not connected to " +this.id );
     }
 };
 
 ConnectedDevice.prototype.disconnect = function disconnect (){
     this.connection.close();
-    this.server.removeConnection(this);
+    this.XDd2d.removeConnection(this);
 };
 
 ConnectedDevice.prototype.installHandlers = function installHandlers(conn){
@@ -638,7 +703,7 @@ ConnectedDevice.prototype.installHandlers = function installHandlers(conn){
     conn.on('data', this.handleData.bind(this));
     conn.on('close', this.handleClose.bind(this));
 
-    this.server.emit('XDconnection', {'detail' : conn});
+    this.XDd2d.emit('XDconnection', {'detail' : this});
 };
 
 
