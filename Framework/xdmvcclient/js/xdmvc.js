@@ -935,7 +935,7 @@ ConnectedDevice.prototype.isInterested = function(dataId){
 
 ConnectedDevice.prototype.usesPeerJS = function() {
     return ! this.connection instanceof VirtualConnection;
-}
+};
 
 ConnectedDevice.prototype.handleRoles = function(roles){
     var old = this.roles;

@@ -117,7 +117,7 @@ XDd2d.prototype.connect = function connect () {
                         });
 
                         this.peer.on('open', function(id) {
-                            XDd2d.send('deviceId', {peerId: id});
+                            XDd2d.sendToServer('deviceId', {peerId: id});
                         });
                     } else {
                         console.warn("Already connected to PeerJS");
@@ -187,6 +187,11 @@ XDd2d.prototype.connect = function connect () {
         }
 
     }.bind(this));
+
+    window.addEventListener("unload", function(){
+        this.disconnect();
+    }.bind(this));
+
 };
 
 XDd2d.prototype.sendToServer = function send (type, data, callback){
@@ -357,11 +362,14 @@ XDd2d.prototype.removeConnection = function (connection) {
     var index = this.connectedDevices.indexOf(connection);
     if (index > -1) {
         this.connectedDevices.splice(index, 1);
+/*
         this.updateOthersRoles(connection.roles, []);
 
         if (connection.device) {
             this.othersDevices[connection.device.type] -= 1;
         }
+  */
+        this.emit('XDdisconnection', connection);
     }
 
     index = this.attemptedConnections.indexOf(connection);
@@ -369,7 +377,6 @@ XDd2d.prototype.removeConnection = function (connection) {
         this.attemptedConnections.splice(index, 1);
     }
 
-    this.emit('XDdisconnection', connection.id);
 };
 
 

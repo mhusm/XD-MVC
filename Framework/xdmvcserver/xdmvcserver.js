@@ -30,15 +30,16 @@ util.inherits(XDmvcServer, EventEmitter);
 
 
 XDmvcServer.prototype.addPeer = function addPeer(id) {
-        this.peers[id] = {
-            'id': id,
-            'name': undefined,
-            'role': undefined,
-            'roles': [],
-            'session': undefined,
-            'usesPeerJs': false,
-            'usesSocketIo': false
-        };
+    console.log("Adding peer " + id);
+    this.peers[id] = {
+        'id': id,
+        'name': undefined,
+        'role': undefined,
+        'roles': [],
+        'session': undefined,
+        'usesPeerJs': false,
+        'usesSocketIo': false
+    };
 };
 XDmvcServer.prototype.addPeerJsPeer = function addPeerJsPeer(id, peerId) {
     this.peers[id].usesPeerJs = true;
@@ -55,6 +56,7 @@ XDmvcServer.prototype.addPeerJsPeer = function addPeerJsPeer(id, peerId) {
 };
 
 XDmvcServer.prototype.addSocketIoPeer = function addSocketIoPeer(id, socketioId) {
+    console.log("adding socketio peer " + id + " " + socketioId);
     this.peers[id].usesSocketIo = true;
     this.socketIoPeers[id] = {
         'id': id,
@@ -172,6 +174,9 @@ XDmvcServer.prototype.startSocketIoServer = function startSocketIoServer(port) {
                 console.log('user '+ deviceId + ' disconnected --> server sent close event to connected socketIoPeers: ' + connPeers);
             } else
                 console.log('peer was not in socketIoPeers --> TODO:check logic');
+                console.log('socket.id ' +socket.id);
+                console.log('socketiopeers');
+                  console.log(xdServer.socketIoPeers);
         });
 
         socket.on('connectTo', function(msg) {
