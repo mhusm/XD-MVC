@@ -61,17 +61,9 @@ XDMVC.prototype.getConnectedDevice = function getConnectedDevice (deviceId){
 
 XDMVC.prototype.getDevices = function getDevices (){
     //TODO map the connections to the device information
+    // Do we even need this?
 };
 
-/*
-XDMVC.prototype.sendToServer = function(type, data, callback){
-    if (this.server) {
-        this.server.send(type, data, callback);
-    } else {
-        console.warn("Send to server failed. Not connected to server");
-    }
-};
-*/
 XDMVC.prototype.handleOpen = function handleOpen (connectedDevice){
     connectedDevice.send("roles", this.roles);
     connectedDevice.send("device", this.device);
@@ -89,13 +81,10 @@ XDMVC.prototype.handleOpen = function handleOpen (connectedDevice){
         });
     }
 
-
-
     if (this.storedPeers.indexOf(connectedDevice.id) === -1) {
         this.storedPeers.push(connectedDevice.id);
         this.storePeers();
     }
-    //TODO emit an event. but not here, on device instead
 };
 
 XDMVC.prototype.handleDisconnection = function handleDisconnection (connectedDevice){
@@ -106,6 +95,7 @@ XDMVC.prototype.handleDisconnection = function handleDisconnection (connectedDev
 
     this.updateOthersRoles(connectedDevice.roles, []);
 
+    this.emit("XDdisconnection", device);
 };
 
 XDMVC.prototype.handleDevice = function handleDevice (device, sender){
@@ -177,10 +167,6 @@ XDMVC.prototype.handleSync = function handleSync (data, sender){
     } else {
         sender.initial[msg.id] = false;
     }
-
-    console.log("sync received");
-    console.log(data);
-    console.log(sender);
 };
 
 XDMVC.prototype.handleServerReady = function handleServerReady(){

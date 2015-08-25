@@ -551,7 +551,6 @@ ConnectedDevice.prototype.handleRoles = function(roles){
 
 ConnectedDevice.prototype.handleData = function(msg){
     var ids;
-    console.log(msg);
     if (Object.prototype.toString.call(msg) === "[object Object]") {
         // Connect to the ones we are not connected to yet
         switch (msg.type) {
@@ -569,7 +568,6 @@ ConnectedDevice.prototype.handleData = function(msg){
                 this.handleId(msg.data);
                 break;
             case 'customMsg':
-                console.log(msg.data);
                 this.XDd2d.emit(msg.data.label, msg.data.payload, this);
                 break;
             default :

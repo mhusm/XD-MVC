@@ -186,6 +186,9 @@ function initialize() {
     XDmvc.on('XDconnection', function(event){
         updateDevices();
     });
+    XDmvc.on('XDdisconnection', function(event){
+        updateDevices();
+    });
 
 }
 
