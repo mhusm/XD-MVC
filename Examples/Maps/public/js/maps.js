@@ -19,7 +19,7 @@ function initialize() {
     $("#inputDeviceId").val(XDmvc.deviceId);
     XDmvc.removeRole("sync-all");
     XDmvc.addRole("mirror");
-    document.addEventListener("XDdisconnect", function(event){
+    document.addEventListener("XDdisconnection", function(event){
         if (XDmvc.hasRole("overview")) {
             views[event.detail].setMap(null);
             delete views[event.detail];

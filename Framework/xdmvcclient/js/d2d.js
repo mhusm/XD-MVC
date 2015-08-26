@@ -162,12 +162,6 @@ XDd2d.prototype.connect = function connect () {
                     console.warn("Already connected.")
                 }
             }
-            //TODO do this in another module
-/*
-            if (this.reconnect) {
-                this.connectToStoredPeers();
-            }
-*/
 
             // Check periodically who is connected.
             // TODO could use socket.io connection for this?
@@ -176,14 +170,6 @@ XDd2d.prototype.connect = function connect () {
                 XDd2d.requestAvailableDevices();}, 5000);
 
             this.emit('XDserverReady');
-
-
-            //TODO do this in other module
-            /*
-             this.send('device', XDmvc.device);
-             this.send('roles', XDmvc.roles);
-             */
-
         }
 
     }.bind(this));
@@ -263,25 +249,6 @@ XDd2d.prototype.connectTo = function connectTo (deviceId) {
             );
         } else {
             internalConnect(device);
-            /*
-            var usePeerJS = this.usePeerToPeer(deviceId); //check which technology/architecture to use
-            if(this.isPeerToPeer() || (this.isHybrid() && usePeerJS)){
-                conn = this.peer.connect(device.peerId, {serialization : 'binary', reliable: true});
-                console.log('use peerJS to connect to ' + deviceId);
-            }else if(this.isClientServer() || (this.isHybrid() && !usePeerJS)){
-                conn = new VirtualConnection(this.serverSocket, deviceId);
-                conn.virtualConnect(deviceId);
-                console.log('use socketIO to connect to ' + deviceId);
-            }
-
-            var connDev = this.addConnectedDevice(conn);
-            connDev.installHandlers(conn);
-            this.attemptedConnections.push(connDev);
-            */
-     /*
-            if(conn instanceof VirtualConnection) //just for socketIO
-                conn.virtualConnect(deviceId);
-      */
         }
     } else {
         console.warn("already connected to " +deviceId);
@@ -309,7 +276,6 @@ XDd2d.prototype.handleError = function handleError (err){
 };
 
 XDd2d.prototype.handleConnection = function handleConnection (connection){
-//    var conDev = this.addConnectedDevice(connection);
     var id;
     if (connection instanceof VirtualConnection) {
         id = connection.peer;
@@ -320,12 +286,6 @@ XDd2d.prototype.handleConnection = function handleConnection (connection){
     conDev.initiator = false;
     this.attemptedConnections.push(conDev);
 
-    //TODO do this in other module
-/*
-    Object.keys(XDmvc.syncData).forEach(function(key) {
-        conDev.initial[key] = true;
-    });
-    */
 };
 
 XDd2d.prototype.disconnect = function disconnect (){
@@ -362,13 +322,6 @@ XDd2d.prototype.removeConnection = function (connection) {
     var index = this.connectedDevices.indexOf(connection);
     if (index > -1) {
         this.connectedDevices.splice(index, 1);
-/*
-        this.updateOthersRoles(connection.roles, []);
-
-        if (connection.device) {
-            this.othersDevices[connection.device.type] -= 1;
-        }
-  */
         this.emit('XDdisconnection', connection);
     }
 
@@ -381,8 +334,8 @@ XDd2d.prototype.removeConnection = function (connection) {
 
 
 
-XDd2d.prototype.disconnect = function disconnect(peerId) {
-    var conn = this.getConnectedDevice(peerId);
+XDd2d.prototype.disconnectDevice = function disconnectDevice(deviceId) {
+    var conn = this.getConnectedDevice(deviceId);
     if (conn) {
         conn.disconnect();
     }
@@ -401,26 +354,16 @@ XDd2d.prototype.getConnectedDevice = function (deviceId) {
 
 XDd2d.prototype.addConnectedDevice = function(conDev){
     this.connectedDevices.push(conDev);
+
     var index = this.attemptedConnections.findIndex(function(element){ return element.connection === conDev.connection});
     if (index > -1) {
         this.attemptedConnections.splice(index, 1);
     }
-};
-
-/*
-XDd2d.prototype.addConnectedDevice = function(connection){
-    var conDev =  this.connectedDevices.find(function (c) {return c.connection === connection; });
-    if (!conDev){
-        conDev = new ConnectedDevice(connection, connection.peer, this);
-        this.connectedDevices.push(conDev);
-        var index = this.attemptedConnections.findIndex(function(element){ return element.id === connection.peer});
-        if (index > -1) {
-            this.attemptedConnections.splice(index, 1);
-        }
+    index = this.availableDevices.findIndex(function(element){ return element.id === conDev.id});
+    if (index > -1) {
+        this.availableDevices.splice(index, 1);
     }
-    return conDev;
 };
-*/
 
 XDd2d.prototype.createConnectedDevice = function(connection, deviceId){
     var conDev =  this.connectedDevices.concat(this.attemptedConnections).find(function (c) {return c.connection === connection; });
@@ -519,35 +462,11 @@ function ConnectedDevice(connection, id, XDd2d){
     this.initiator = true; // Indicates if this device initiated the connection
     this.XDd2d = XDd2d;
 }
-// TODO do this in another module
-/*
-ConnectedDevice.prototype.isInterested = function(dataId){
-    return this.roles.indexOf(XDmvc.defaultRole) > -1 || this.roles.some(function(role){
-            return XDmvc.configuredRoles[role] && typeof XDmvc.configuredRoles[role][dataId] !== "undefined" ;
-        }) ;
-};
-*/
+
 ConnectedDevice.prototype.usesPeerJS = function() {
     return ! this.connection instanceof VirtualConnection;
 };
-// TODO do this in another module
-/*
-ConnectedDevice.prototype.handleRoles = function(roles){
-    var old = this.roles;
-    this.roles = roles;
-    XDmvc.updateOthersRoles(old, this.roles);
-    // sends the current state, the every time it receives roles from another device
-    Object.keys(XDmvc.syncData).forEach(function (element) {
-        if (this.isInterested(element)){
-            var msg = {type: 'sync', data: XDmvc.syncData[element].data, id: element};
-            this.connection.send(msg);
-        }
-    }, this);
-    Platform.performMicrotaskCheckpoint();
 
-};
-
-*/
 
 ConnectedDevice.prototype.handleData = function(msg){
     var ids;
@@ -576,70 +495,6 @@ ConnectedDevice.prototype.handleData = function(msg){
         }
     }
 
-            /*
-            case 'data':
-                XDmvc.emit('XDdata', {'detail': msg.data});
-                break;
-            case 'roles':
-                this.handleRoles(msg.data);
-                break;
-            case 'device':
-                // Device type changed (due to window resize usually)
-                if (this.device && this.device.type) {
-                    XDmvc.othersDevices[this.device.type] -=1;
-                }
-                this.device = msg.data;
-                XDmvc.othersDevices[msg.data.type] +=1;
-                XDmvc.emit('XDdevice', {'detail': msg.data});
-                Platform.performMicrotaskCheckpoint();
-                break;
-            case 'sync':
-                if (!this.latestData[msg.id])  {
-                    this.latestData[msg.id] = msg.data;
-                }  else {
-                    XDmvc.updateOld(this.latestData[msg.id], msg.data, msg.arrayDelta, msg.objectDelta);
-                }
-                var data = this.latestData[msg.id];
-
-                // Don't update when the device freshly connected and it initiated the connection
-                if (!this.initial[msg.id]) {
-                    // First all role specific callbacks
-                    var callbacks = XDmvc.getRoleCallbacks(msg.id);
-                    //TODO data can now be a delta, this must be accounted for in the callbacks. maybe the last object should be cached
-                    //TODO also, initially, the complete object should always be sent. otherwise the connected device may not have all information.
-                    //TODO maybe on connection each device should already send all synchronised data to all devices?
-                    if (callbacks.length > 0) {
-                        callbacks.forEach(function(callback){
-                            callback(msg.id, data, this.id);
-                        }, this);
-                    }
-                    // Else object specific callbacks
-                    else if (XDmvc.syncData[msg.id].callback) {
-                        XDmvc.syncData[msg.id].callback(msg.id, data, this.id);
-                        // Else default merge behaviour
-                    } else {
-                        XDmvc.update(msg.data, msg.id, msg.arrayDelta, msg.objectDelta);
-                    }
-
-                    XDmvc.emit('XDsync', {'detail': {dataId: msg.id, data: msg.data, sender: this.id}});
-                } else {
-                    this.initial[msg.id] = false;
-                }
-
-                break;
-            case 'role':
-                if (msg.operation === "add") {
-                    XDmvc.addRole(msg.role);
-                } else {
-                    XDmvc.removeRole(msg.role);
-                }
-                break;
-            default :
-                console.warn("received unhandled msg type");
-                console.warn(msg);
-        }
-    }
-    */
 
 };
 
@@ -666,24 +521,11 @@ ConnectedDevice.prototype.handleOpen = function handleOpen (){
 ConnectedDevice.prototype.handleId = function handleId (id){
     this.id = id;
     this.XDd2d.addConnectedDevice(this);
-    // TODO do this in another module
-    /*
-     if (XDmvc.storedPeers.indexOf(this.id) === -1) {
-     XDmvc.storedPeers.push(this.id);
-     XDmvc.storePeers();
-     }
-     */
-
     var thisDevice = this;
     var others = this.XDd2d.connectedDevices.filter(function (el) {return el.id !== thisDevice.id; })
         .map(function (el) {return el.id; });
     this._send('connections', others);
 
-    // TODO do this in another module
-    /*
-     this.send("roles", XDmvc.roles);
-     this.send("device", XDmvc.device);
-     */
     console.info("Connection established to " +id);
     this.XDd2d.emit("XDopen", this);
 };

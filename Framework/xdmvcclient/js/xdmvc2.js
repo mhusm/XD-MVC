@@ -95,7 +95,7 @@ XDMVC.prototype.handleDisconnection = function handleDisconnection (connectedDev
 
     this.updateOthersRoles(connectedDevice.roles, []);
 
-    this.emit("XDdisconnection", device);
+    this.emit("XDdisconnection", connectedDevice);
 };
 
 XDMVC.prototype.handleDevice = function handleDevice (device, sender){
@@ -111,7 +111,7 @@ XDMVC.prototype.handleDevice = function handleDevice (device, sender){
 
     if (!sender.initalized) {
         sender.initalized = true;
-        this.emit("XDconnection");
+        this.emit("XDconnection", sender);
     }
 
     this.emit("XDdevice", device);
@@ -139,7 +139,7 @@ XDMVC.prototype.handleSync = function handleSync (data, sender){
     if (!sender.latestData[msg.id])  {
         sender.latestData[msg.id] = msg.data;
     }  else {
-        this.updateOld(sender.latestData[msg.id], msg.data, msg.arrayDelta, msg.objectDelta);
+        this.update(sender.latestData[msg.id], msg.data, msg.arrayDelta, msg.objectDelta);
     }
     var data = sender.latestData[msg.id];
 
@@ -160,7 +160,7 @@ XDMVC.prototype.handleSync = function handleSync (data, sender){
             this.syncData[msg.id].callback(msg.id, data, sender.id);
             // Else default merge behaviour
         } else {
-            this.update(msg.data, msg.id, msg.arrayDelta, msg.objectDelta);
+            this.update(msg.data, this.syncData[msg.id], msg.arrayDelta, msg.objectDelta, msg.id);
         }
 
         this.emit('XDsync', {dataId: msg.id, data: msg.data, sender: this.id});
@@ -313,6 +313,62 @@ XDMVC.prototype.synchronize = function (data, callback, id, updateServer, update
     }
 };
 
+
+XDMVC.prototype.update = function(old, data, arrayDelta, objectDelta, id){
+    var changed;
+    var removed;
+    var added = {};
+    var key;
+    var splices;
+    var summary;
+    if (Array.isArray(old)) {
+        if (arrayDelta) {
+            splices = data;
+        } else {
+            // No delta, replace old with new
+            var args= [0, old.length].concat(data);
+            splices = [args];
+        }
+
+        splices.forEach(function(spliceArgs){
+            Array.prototype.splice.apply(old, spliceArgs);
+        });
+        summary = splices;
+
+    } else {
+        if (objectDelta) {
+            added = data[0];
+            removed = data[1];
+            changed = data[2];
+        }
+        else{
+            var delta = this.getDelta(old, data);
+            added = delta[0];
+            removed = delta[1];
+            changed = delta[2];
+
+        }
+
+        // Deleted properties
+        for (key in removed) {
+            old[key] = undefined; // TODO this is not exactly the same as delete
+        }
+        // New and changed properties
+        for (key in changed) {
+            old[key]= changed[key];
+        }
+        for (key in added) {
+            old[key]= added[key];
+        }
+
+        summary = delta;
+    }
+
+    if (id) {
+        this.emit("XDupdate", id, summary);
+    }
+};
+/*
 // TODO there is some redundancy with the update function. This should be fixed
 XDMVC.prototype.updateOld = function(old, data, arrayDelta, objectDelta){
     var changedOrAdded;
@@ -409,9 +465,10 @@ XDMVC.prototype.update = function (data, id, arrayDelta, objectDelta, keepChange
 
     this.emit('XDupdate', {dataId: id, data: observed.data});
 };
-
+*/
 XDMVC.prototype.getDelta = function(oldObj, newObj){
-    var addedOrChanged = {};
+    var added = {};
+    var changed = {};
     var removed = {};
     var key;
     // No delta, replace all old with new properties
@@ -423,11 +480,13 @@ XDMVC.prototype.getDelta = function(oldObj, newObj){
     }
     // New and changed properties
     for (key in newObj) {
-        if (newObj.hasOwnProperty(key)) {
-            addedOrChanged[key] = newObj[key];
+        if (newObj.hasOwnProperty(key) && oldObj.hasOwnProperty(key)) {
+            changed[key] = newObj[key];
+        } else{
+            added[key] = newObj[key];
         }
     }
-    return [removed, addedOrChanged];
+    return [added, removed, changed];
 
 };
 
@@ -574,11 +633,11 @@ XDMVC.prototype.changeDeviceId = function (newId){
         localStorage.deviceId = newId;
         this.device.id = this.deviceId;
         // If connected, disconnect and reconnect
-        if (this.server) {
-            this.server.disconnect();
-            var oldServer = this.server;
-            this.server = null;
-            this.disconnectAll();
+        if (this.XDd2d) {
+            this.XDd2d.disconnectAll();
+            this.XDd2d.disconnect();
+            var oldServer = this.XDd2d;
+            this.XDd2d = null;
             this.connectToServer(oldServer.host, oldServer.port, oldServer.portSocketio, oldServer.ajaxPort, oldServer.iceServers);
             // TODO reconnect previous connections?
         }
