@@ -18,17 +18,31 @@
         },
 
         ready: function() {
-            var sync = this.objects;
-            var that = this;
             Object.keys(this.objects).forEach(function (key) {
                 XDmvc.synchronize(
-                        sync[key],
+                        this.objects[key],
                         undefined,
-                        key, that.updateServer,
-                        function(id, key, value) {that.updateObject(id, key, value)},
-                        function(id, splices) {that.updateArray(id, splices)}
+                        key, this.updateServer
                 );
-            });
+            },this);
+            XDmvc.on("XDupdate", function(id, summary){
+                if (this.objects.hasOwnProperty(id)) {
+                    if (Array.isArray(this.objects[id])) {
+
+                    } else {
+                        var key;
+                        for (key in summary[0]){
+                            this.notifyPath("objects." +id +"." +key, this.objects[id][key]);
+                        }
+                        for (key in summary[1]){
+                            this.notifyPath("objects." +id +"." +key, undefined);
+                        }
+                        for (key in summary[2]){
+                            this.notifyPath("objects." +id +"." +key, this.objects[id][key]);
+                        }
+                    }
+                }
+            }.bind(this));
         },
 
         updateObject: function(id, key, value){

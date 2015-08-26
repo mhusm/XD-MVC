@@ -42,11 +42,12 @@ TODO reflect changes in XDmvc (e.g. different ports ect.) back into this element
         attached: function(){
             XDmvc.init(this.reconnect);
             XDmvc.reconnect = this.reconnect;
-            if (this.architecture === XDmvc.clientServer) {
-                XDmvc.setClientServer();
-            } else if (this.architecture === XDmvc.peer) {
-                XDmvc.setPeerToPeer();
+            if (this.architecture === XDmvc.XDd2d.clientServer) {
+                XDmvc.XDd2d.setClientServer();
+            } else if (this.architecture === XDmvc.XDd2d.peerToPeer) {
+                XDmvc.XDd2d.setPeerToPeer();
             }
+            // TODO  handle device Id
             XDmvc.connectToServer(this.url, this.peerport, this.socketport, this.ajaxport);
         },
 

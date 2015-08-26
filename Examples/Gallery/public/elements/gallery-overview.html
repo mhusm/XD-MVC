@@ -60,7 +60,6 @@
         },
         albumClicked: function(event) {
             this.set("currentAlbum", event.model.index);
-            this.set("currentImage", 0);
             Platform.performMicrotaskCheckpoint();
         }
     });

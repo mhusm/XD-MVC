@@ -10,6 +10,7 @@ function XDd2d(deviceId, host, portPeer, portSocketIo, ajaxPort, iceServers){
     this.deviceId = deviceId;
     this.availableDevices = [];
     this.server = null;
+    this.serverReady = false;
 
     /*
      ---------
@@ -52,8 +53,9 @@ function XDd2d(deviceId, host, portPeer, portSocketIo, ajaxPort, iceServers){
     ];
 
     // for Client-Server
-    this.socketIoAddress = this.host + ':' + this.portSocketio;
     this.serverSocket = null;
+    this.socketIoAddress = this.host + ':' + this.portSocketio;
+
 }
 
 XDd2d.prototype = Object.create(XDEmitter.prototype);
@@ -86,6 +88,17 @@ XDd2d.prototype.usePeerToPeer = function usePeerToPeer(remoteId) {
 
 XDd2d.prototype.supportsPeerJS = function() {
     return DetectRTC.isWebRTCSupported && !DetectRTC.browser.isFirefox;
+};
+
+XDd2d.prototype.configure = function configure (deviceId, host, portPeer, portSocketIo, ajaxPort, iceServers) {
+    this.deviceId = deviceId? deviceId : this.deviceId;
+    this.ajaxPort = ajaxPort ? ajaxPort: this.ajaxPort;
+    this.portPeer = portPeer? portPeer: this.portPeer;
+    this.portSocketio = portSocketIo ? portSocketIo : this.portSocketio;
+    this.host = host? host: this.host;
+    this.iceServers = iceServers ? iceServers : this.iceServers;
+    this.socketIoAddress = this.host + ':' + this.portSocketio;
+
 };
 
 XDd2d.prototype.connect = function connect () {
@@ -170,6 +183,7 @@ XDd2d.prototype.connect = function connect () {
                 XDd2d.requestAvailableDevices();}, 5000);
 
             this.emit('XDserverReady');
+            this.serverReady = true;
         }
 
     }.bind(this));
@@ -213,26 +227,34 @@ XDd2d.prototype.requestAvailableDevices = function requestAvailableDevices (call
 XDd2d.prototype.connectTo = function connectTo (deviceId) {
     // Check if connection exists already
     var internalConnect = function(device) {
-        var usePeerJS = this.usePeerToPeer(deviceId); //check which technology/architecture to use
-        if(this.isPeerToPeer() || (this.isHybrid() && usePeerJS)){
-            conn = this.peer.connect(device.peerId, {serialization : 'binary', reliable: true});
-            console.info('using peerJS to connect to ' + deviceId);
-        }else if(this.isClientServer() || (this.isHybrid() && !usePeerJS)){
-            conn = new VirtualConnection(this.serverSocket, deviceId, this);
-            conn.virtualConnect(deviceId);
-            console.info('using socketIO to connect to ' + deviceId);
+        if (!this.connectedDevices.concat(this.attemptedConnections)
+                .some(function (el) {
+                    return el.id === device.id;
+                })) {
+
+                var usePeerJS = this.usePeerToPeer(deviceId);
+             //check which technology/architecture to use
+            if (this.isPeerToPeer() || (this.isHybrid() && usePeerJS)) {
+                conn = this.peer.connect(device.peerId, {serialization: 'binary', reliable: true});
+                console.info('using peerJS to connect to ' + deviceId);
+            } else if (this.isClientServer() || (this.isHybrid() && !usePeerJS)) {
+                conn = new VirtualConnection(this.serverSocket, deviceId, this);
+                conn.virtualConnect(deviceId);
+                console.info('using socketIO to connect to ' + deviceId);
+            }
+
+    //        var connDev = this.addConnectedDevice(conn);
+            var connDev = this.createConnectedDevice(conn, deviceId);
+            connDev.installHandlers(conn);
+            this.attemptedConnections.push(connDev);
+        } else {
+          console.warn("already connected to " +deviceId);
         }
-
-//        var connDev = this.addConnectedDevice(conn);
-        var connDev = this.createConnectedDevice(conn, deviceId);
-        connDev.installHandlers(conn);
-        this.attemptedConnections.push(connDev);
-
     }.bind(this);
 
 
     if (!this.connectedDevices.concat(this.attemptedConnections)
-            .some(function (el) {return el.id === deviceId; })) {
+           .some(function (el) {return el.id === deviceId; })) {
         var conn = null;
         var device = this.availableDevices.find(function(avDev){return avDev.id === deviceId; });
         // If the device is not in the list or appears to be not ready yet, update the list and then try to connect.
@@ -283,7 +305,7 @@ XDd2d.prototype.handleConnection = function handleConnection (connection){
 
     var conDev = this.createConnectedDevice(connection, id);
     conDev.installHandlers(connection);
-    conDev.initiator = false;
+    conDev.initiator = true;
     this.attemptedConnections.push(conDev);
 
 };
@@ -299,6 +321,7 @@ XDd2d.prototype.disconnect = function disconnect (){
         this.serverSocket.disconnect();
         this.serverSocket = null;
     }
+    this.serverReady = false;
 };
 
 /*
@@ -459,7 +482,7 @@ function ConnectedDevice(connection, id, XDd2d){
     this.device = {};
     this.latestData = {};
     this.initial = [];
-    this.initiator = true; // Indicates if this device initiated the connection
+    this.initiator = false; // Indicates if this device initiated the connection
     this.XDd2d = XDd2d;
 }
 

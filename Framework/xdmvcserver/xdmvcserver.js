@@ -174,9 +174,6 @@ XDmvcServer.prototype.startSocketIoServer = function startSocketIoServer(port) {
                 console.log('user '+ deviceId + ' disconnected --> server sent close event to connected socketIoPeers: ' + connPeers);
             } else
                 console.log('peer was not in socketIoPeers --> TODO:check logic');
-                console.log('socket.id ' +socket.id);
-                console.log('socketiopeers');
-                  console.log(xdServer.socketIoPeers);
         });
 
         socket.on('connectTo', function(msg) {
@@ -300,7 +297,6 @@ XDmvcServer.prototype.handleAjaxRequest = function(req, res, next){
             res.end();
             break;
         case 'id':
-            console.log(query);
             var id = query.id;
             var error = false;
             if (!id) {

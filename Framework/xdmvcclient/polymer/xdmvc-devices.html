@@ -12,35 +12,13 @@
                 readOnly: true,
                 notify: true,
                 value: function(){return {thisDevice: {}, availableDevices: [], connectedDevices: [], othersDevices: {}}}
-            },
-            /*
-            device: {
-                type: Object,
-                notify: true,
-                value: XDmvc.device
-            },
-            othersDevices: {
-                type: Object,
-                notify: true,
-                value: XDmvc.othersDevices
-            },
-            connectedDevices: {
-                type: Array,
-                notify: true,
-                value: XDmvc.connectedDevices
-            } ,
-            availableDevices: {
-                type: Array,
-                notify: true,
-                value: XDmvc.availableDevices
             }
-            */
         },
 
 
         created: function(){
-            synchronizeArray("devices.connectedDevices", XDmvc.connectedDevices, this);
-            synchronizeArray("devices.availableDevices", XDmvc.availableDevices, this);
+            synchronizeArray("devices.connectedDevices", XDmvc.getConnectedDevices(), this);
+            synchronizeArray("devices.availableDevices", XDmvc.getAvailableDevices(), this);
             synchronizeObject("devices.othersDevices", XDmvc.othersDevices, this);
             synchronizeObject("devices.thisDevice", XDmvc.device, this);
         }

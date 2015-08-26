@@ -4,12 +4,6 @@
 /*global console, Peer, Event */
 'use strict';
 /*jslint plusplus: true */
-ConnectedDevice.prototype.isInterested = function(dataId){
-    return this.roles.indexOf(XDmvc.defaultRole) > -1 || this.roles.some(function(role){
-            return XDmvc.configuredRoles[role] && typeof XDmvc.configuredRoles[role][dataId] !== "undefined" ;
-        }) ;
-};
-
 function XDMVC () {
     XDEmitter.call(this);
     this.defaultRole = "sync-all";
@@ -23,7 +17,13 @@ function XDMVC () {
     this.roles = []; // roles that this peer has
     this.othersRoles = {}; // roles that other peers have
     this.configuredRoles = {}; // roles that have been configured in the system
-    this.XDd2d = null;
+    this.XDd2d = new XDd2d();
+    this.XDd2d.on("XDserverReady", this.handleServerReady.bind(this));
+    this.XDd2d.on("XDopen", this.handleOpen.bind(this));
+    this.XDd2d.on("XDdisconnection", this.handleDisconnection.bind(this));
+    this.XDd2d.on("device", this.handleDevice.bind(this));
+    this.XDd2d.on("roles", this.handleRoles.bind(this));
+    this.XDd2d.on("sync", this.handleSync.bind(this));
 }
 
 
@@ -36,14 +36,8 @@ XDMVC.prototype.constructor = XDMVC;
  --------------------
  */
 XDMVC.prototype.connectToServer = function connectToServer (host, portPeer, portSocketIo, ajaxPort, iceServers){
-    this.XDd2d = new XDd2d(this.deviceId, host, portPeer, portSocketIo, ajaxPort, iceServers);
+    this.XDd2d.configure(this.deviceId, host, portPeer, portSocketIo, ajaxPort, iceServers);
     this.XDd2d.connect();
-    this.XDd2d.on("XDserverReady", this.handleServerReady.bind(this));
-    this.XDd2d.on("XDopen", this.handleOpen.bind(this));
-    this.XDd2d.on("XDdisconnection", this.handleDisconnection.bind(this));
-    this.XDd2d.on("device", this.handleDevice.bind(this));
-    this.XDd2d.on("roles", this.handleRoles.bind(this));
-    this.XDd2d.on("sync", this.handleSync.bind(this));
 };
 
 
@@ -120,13 +114,14 @@ XDMVC.prototype.handleDevice = function handleDevice (device, sender){
 
 XDMVC.prototype.handleRoles = function handleRoles (roles, sender){
     var old = sender.roles;
+    var oldInterests = this.getDeviceInterests(sender);
     sender.roles = roles;
     this.updateOthersRoles(old, sender.roles);
-    // sends the current state, the every time it receives roles from another device
-    Object.keys(this.syncData).forEach(function (element) {
-        if (sender.isInterested(element)){
-//            var msg = {type: 'sync', data: this.syncData[element].data, id: element};
-            sender.send('sync', { data: this.syncData[element].data, id: element });
+    var newInterest = this.getDeviceInterests(sender);
+    // sends the current state, every time it receives roles from another device
+    newInterest.forEach(function(dataId){
+        if (oldInterests.indexOf(dataId) === -1) {
+            sender.send('sync', { data: this.syncData[dataId].data, id: dataId });
         }
     }, this);
     Platform.performMicrotaskCheckpoint();
@@ -160,7 +155,7 @@ XDMVC.prototype.handleSync = function handleSync (data, sender){
             this.syncData[msg.id].callback(msg.id, data, sender.id);
             // Else default merge behaviour
         } else {
-            this.update(msg.data, this.syncData[msg.id], msg.arrayDelta, msg.objectDelta, msg.id);
+            this.update(this.syncData[msg.id].data, msg.data, msg.arrayDelta, msg.objectDelta, msg.id);
         }
 
         this.emit('XDsync', {dataId: msg.id, data: msg.data, sender: this.id});
@@ -236,6 +231,8 @@ XDMVC.prototype.loadPeers = function () {
  */
 
 XDMVC.prototype.sendSyncToAll = function (changes, id) {
+//    console.log(changes[2]);
+//    console.log(id);
     var arrayDelta = [];
     var objectDelta = [];
     var data;
@@ -267,10 +264,10 @@ XDMVC.prototype.sendSyncToAll = function (changes, id) {
         i;
 
     connectedDevices.forEach(function(device){
-        if (device.isInterested(id)) {
+        if (this.deviceIsInterested(device, id)) {
             device.send('sync', {data: data, id: id, arrayDelta: arrayDelta.length>0, objectDelta: objectDelta.length >0});
         }
-    });
+    }, this);
 /*
     for (i = 0; i < len; i++) {
         var conDev = this.connectedDevices[i];
@@ -286,22 +283,14 @@ XDMVC.prototype.sendSyncToAll = function (changes, id) {
     this.emit('XDsyncData', id);
 };
 
-XDMVC.prototype.synchronize = function (data, callback, id, updateServer, updateObjectFunction, updateArrayFunction) {
+XDMVC.prototype.synchronize = function (data, callback, id, updateServer) {
     // if no id given, generate one. Though this may not always work. It could be better to enforce IDs.
     id = typeof id !== 'undefined' ? id : 'sync' + (XDmvc.lastSyncId++);
     var sync = function (data) {return XDmvc.sendSyncToAll(arguments, id); };
-    var updateObject = updateObjectFunction?  updateObjectFunction : function(id, key, value){ this.syncData[id].data[key] = value}.bind(this);
-    var updateArray = updateArrayFunction?  updateArrayFunction : function(id, splices){
-        splices.forEach(function(spliceArgs){
-            Array.prototype.splice.apply(this.syncData[id].data, spliceArgs);
-        }.bind(this));
-    };
     this.syncData[id] = {data: data,
         callback: callback,
         syncFunction: sync,
         updateServer: updateServer,
-        updateObjectFunction: updateObject,
-        updateArrayFunction: updateArray
     };
     if (Array.isArray(data)){
         this.syncData[id].observer = new ArrayObserver(data);
@@ -351,7 +340,7 @@ XDMVC.prototype.update = function(old, data, arrayDelta, objectDelta, id){
 
         // Deleted properties
         for (key in removed) {
-            old[key] = undefined; // TODO this is not exactly the same as delete
+            delete old[key];
         }
         // New and changed properties
         for (key in changed) {
@@ -361,11 +350,17 @@ XDMVC.prototype.update = function(old, data, arrayDelta, objectDelta, id){
             old[key]= added[key];
         }
 
-        summary = delta;
+        summary = objectDelta ? data : delta;
     }
 
     if (id) {
+        console.log("updating " + id);
+        console.log(  this.syncData[id].data);
         this.emit("XDupdate", id, summary);
+
+        // Discard changes that were caused by the update
+        this.syncData[id].observer.discardChanges();
+
     }
 };
 /*
@@ -579,6 +574,7 @@ XDMVC.prototype.updateOthersRoles = function (oldRoles, newRoles) {
 
     // TODO check whether there really was a change? Report added and removed?
     this.emit('XDothersRolesChanged');
+    return [added, removed];
 };
 
 XDMVC.prototype.changeRoleForPeer = function (role, isAdd, peer) {
@@ -597,6 +593,28 @@ XDMVC.prototype.getRoleCallbacks = function (dataId) {
         }
     }.bind(this));
     return result;
+};
+
+XDMVC.prototype.deviceIsInterested = function(device, dataId){
+    return device.roles.indexOf(this.defaultRole) > -1 || device.roles.some(function(role){
+        return this.isInterested(role, dataId);
+    }, this) ;
+};
+
+XDMVC.prototype.getDeviceInterests = function getDeviceInterests (device){
+    return Object.keys(this.syncData).filter(function(key){
+        return this.deviceIsInterested(device, key);
+    }, this);
+};
+
+XDMVC.prototype.isInterested = function(role, dataId){
+    return this.configuredRoles[role] && typeof this.configuredRoles[role][dataId] !== "undefined" ;
+    /*
+    return this.roles.indexOf(XDmvc.defaultRole) > -1 || this.roles.some(function(role){
+            return XDmvc.configuredRoles[role] && typeof XDmvc.configuredRoles[role][dataId] !== "undefined" ;
+        }) ;
+        */
+
 };
 
 
@@ -636,9 +654,7 @@ XDMVC.prototype.changeDeviceId = function (newId){
         if (this.XDd2d) {
             this.XDd2d.disconnectAll();
             this.XDd2d.disconnect();
-            var oldServer = this.XDd2d;
-            this.XDd2d = null;
-            this.connectToServer(oldServer.host, oldServer.port, oldServer.portSocketio, oldServer.ajaxPort, oldServer.iceServers);
+            this.connectToServer();
             // TODO reconnect previous connections?
         }
     }

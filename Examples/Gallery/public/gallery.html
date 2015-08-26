@@ -23,7 +23,7 @@
     <body>
         <dom-module id="my-app">
             <template>
-                <xdmvc-connection reconnect="true" architecture="client-server" socketport="3001"></xdmvc-connection>
+                <xdmvc-connection architecture="client-server" socketport="3001"></xdmvc-connection>
 
                 <xdmvc-synchronised id="sync"
                                objects='{{synced}}'>
@@ -137,6 +137,8 @@
                         return this.synced.gallery.currentAlbum > -1 ? this.albums[this.synced.gallery.currentAlbum].large : undefined;
                     },
                     albumClicked: function() {
+                        console.log("album clicked");
+                        this.set("synced.gallery.currentImage", 0);
                         this.$.roles.removeRole('albums');
                         this.$.roles.addRole('album');
                     },
@@ -185,10 +187,10 @@
                     },
 
                     ready: function(){
-                        if (XDmvc.server) {
+                        if (XDmvc.XDd2d.serverReady) {
                             this.onServerReady();
                         } else { // not yet connected to server, wait for the connection event
-                            XDmvc.on("XDserver", this.onServerReady.bind(this));
+                            XDmvc.XDd2d.on("XDserverReady", this.onServerReady.bind(this));
                         }
                     },
 
