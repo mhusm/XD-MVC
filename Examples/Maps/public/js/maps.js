@@ -19,10 +19,11 @@ function initialize() {
     $("#inputDeviceId").val(XDmvc.deviceId);
     XDmvc.removeRole("sync-all");
     XDmvc.addRole("mirror");
-    document.addEventListener("XDdisconnection", function(event){
+
+    XDmvc.on('XDdisconnection', function(device){
         if (XDmvc.hasRole("overview")) {
-            views[event.detail].setMap(null);
-            delete views[event.detail];
+            views[device.id].setMap(null);
+            delete views[device.id];
         }
     });
 

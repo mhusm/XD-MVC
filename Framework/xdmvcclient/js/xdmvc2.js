@@ -131,31 +131,37 @@ XDMVC.prototype.handleRoles = function handleRoles (roles, sender){
 
 XDMVC.prototype.handleSync = function handleSync (data, sender){
     var msg = data;
+    var data;
+
     if (!sender.latestData[msg.id])  {
         sender.latestData[msg.id] = msg.data;
-    }  else {
+    }
+    /*
+    else {
         this.update(sender.latestData[msg.id], msg.data, msg.arrayDelta, msg.objectDelta);
     }
     var data = sender.latestData[msg.id];
-
+*/
     // Don't update when the device freshly connected and it initiated the connection
     if (!sender.initial[msg.id]) {
-        // First all role specific callbacks
+        // All role specific callbacks
         var callbacks = this.getRoleCallbacks(msg.id);
-        //TODO data can now be a delta, this must be accounted for in the callbacks. maybe the last object should be cached
-        //TODO also, initially, the complete object should always be sent. otherwise the connected device may not have all information.
-        //TODO maybe on connection each device should already send all synchronised data to all devices?
-        if (callbacks.length > 0) {
-            callbacks.forEach(function(callback){
-                callback(msg.id, data, sender.id);
-            });
-        }
-        // Else object specific callbacks
-        else if (this.syncData[msg.id].callback) {
-            this.syncData[msg.id].callback(msg.id, data, sender.id);
-            // Else default merge behaviour
+
+        // Default merge behaviour, if nothing else is specified
+        if (callbacks.length === 0 && !this.syncData[msg.id].callback) {
+            data = this.update(this.syncData[msg.id].data, msg.data, msg.arrayDelta, msg.objectDelta, msg.id);
+            sender.latestData[msg.id] = data;
         } else {
-            this.update(this.syncData[msg.id].data, msg.data, msg.arrayDelta, msg.objectDelta, msg.id);
+            // If specified, role specific callbacks
+            data = this.update(sender.latestData[msg.id], msg.data, msg.arrayDelta, msg.objectDelta);
+            if (callbacks.length > 0) {
+                callbacks.forEach(function(callback){
+                    callback(msg.id, data, sender.id);
+                });
+                // Object specific callbacks
+            } else {
+                this.syncData[msg.id].callback(msg.id, data, sender.id);
+            }
         }
 
         this.emit('XDsync', {dataId: msg.id, data: msg.data, sender: this.id});
@@ -361,105 +367,9 @@ XDMVC.prototype.update = function(old, data, arrayDelta, objectDelta, id){
         this.syncData[id].observer.discardChanges();
 
     }
-};
-/*
-// TODO there is some redundancy with the update function. This should be fixed
-XDMVC.prototype.updateOld = function(old, data, arrayDelta, objectDelta){
-    var changedOrAdded;
-    var removed;
-    var added = {};
-    var key;
-    var splices;
-    if (Array.isArray(old)) {
-        if (arrayDelta) {
-            splices = data;
-        } else {
-            // No delta, replace old with new
-            var args= [0, old.length].concat(data);
-            splices = [args];
-        }
-
-        splices.forEach(function(spliceArgs){
-            Array.prototype.splice.apply(old, spliceArgs);
-        });
-    } else {
-        if (objectDelta) {
-            added = data[0];
-            removed = data[1];
-            var changed = data[2];
-            changedOrAdded = changed;
-        }
-        else{
-            var delta = XDmvc.getDelta(old, data);
-            removed = delta[0];
-            changedOrAdded = delta[1];
-
-        }
-
-        // Deleted properties
-        for (key in removed) {
-            old[key] = undefined; // TODO this is not exactly the same as delete
-        }
-        // New and changed properties
-        for (key in changedOrAdded) {
-            old[key]= changedOrAdded[key];
-        }
-        for (key in added) {
-            old[key]= changedOrAdded[key];
-        }
-    }
+    return old;
 };
 
-XDMVC.prototype.update = function (data, id, arrayDelta, objectDelta, keepChanges) {
-    var observed =  this.syncData[id];
-    var changedOrAdded;
-    var removed;
-    var added = {};
-    var key;
-    var splices;
-    if (Array.isArray(observed.data)) {
-        if (arrayDelta) {
-            splices = data;
-        } else {
-            // No delta, replace old with new
-            var args= [0, observed.data.length].concat(data);
-            splices = [args];
-        }
-
-        observed.updateArrayFunction(id, splices);
-    } else {
-        if (objectDelta) {
-            added = data[0];
-            removed = data[1];
-            changedOrAdded = data[2];
-        }
-        else{
-            var delta = this.getDelta(observed.data, data);
-            removed = delta[0];
-            changedOrAdded = delta[1];
-
-        }
-
-        // Deleted properties
-        for (key in removed) {
-            observed.updateObjectFunction(id, key, undefined); // TODO this is not exactly the same as delete
-        }
-        // New and changed properties
-        for (key in changedOrAdded) {
-            observed.updateObjectFunction(id, key, changedOrAdded[key]);
-        }
-        for (key in added) {
-            observed.updateObjectFunction(id, key, added[key]);
-        }
-    }
-    // Discard changes that were caused by the update
-    if (!keepChanges) {
-        observed.observer.discardChanges();
-    }
-
-    this.emit('XDupdate', {dataId: id, data: observed.data});
-};
-*/
 XDMVC.prototype.getDelta = function(oldObj, newObj){
     var added = {};
     var changed = {};
@@ -625,10 +535,9 @@ XDMVC.prototype.isInterested = function(role, dataId){
  */
 
 XDMVC.prototype.init = function () {
-    // Check if there is an id, otherwise generate ones
+    // Check if there is an id, otherwise will get one from the server upon connection
     this.deviceId = localStorage.getItem("deviceId");
 
-//        XDmvc.setClientServer()
     this.loadPeers();
     this.detectDevice();
     this.host = document.location.hostname;
@@ -643,7 +552,6 @@ XDMVC.prototype.init = function () {
 };
 
 
-// TODO update and test
 XDMVC.prototype.changeDeviceId = function (newId){
     if (newId !== this.deviceId) {
         this.deviceId = newId;
