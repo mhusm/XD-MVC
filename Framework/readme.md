@@ -42,9 +42,9 @@ Import the elements that you are going to use in the header.
 
 ### Connecting to the server
 None of the attributes are required as there are defaults that match the server-side component.
-If `reconnect` is set to `true`, the device will automatically try to reconnect to previously connected devices.
+If `reconnect` is set, the device will automatically try to reconnect to previously connected devices.
 ```html
-<xdmvc-connection server="darroch.inf.ethz.ch" socketport="3000" ajaxPort="9001" reconnect="true" architecture="client-server"></xdmvc-connection>
+<xdmvc-connection server="darroch.inf.ethz.ch" socketport="3000" ajaxPort="9001" reconnect architecture="client-server"></xdmvc-connection>
 ```
 
 ### Specifying objects for synchronisation.
@@ -73,11 +73,11 @@ properties: {
                objects='{{synced}}'>
 </xdmvc-synchronised>
 ```
-If `updateServer` is set to `true`, changes to these object are send to the server and produce an `objectChanged` event.
+If `updateServer` is set, changes to these object are send to the server and produce an `objectChanged` event.
 ```html
 <xdmvc-synchronised id="persistent"
                     objects='{{persisted}}'
-                    update-server="true">
+                    update-server >
 </xdmvc-synchronised>
 ```
 

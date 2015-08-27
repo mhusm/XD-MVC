@@ -31,7 +31,7 @@
                 </xdmvc-synchronised>
                 <xdmvc-synchronised id="persistent"
                                     objects='{{persisted}}'
-                                    update-server="true">
+                                    update-server>
                 </xdmvc-synchronised>
 
                 <xdmvc-roles id="roles"
@@ -139,7 +139,6 @@
                         return this.synced.gallery.currentAlbum > -1 ? this.albums[this.synced.gallery.currentAlbum].large : undefined;
                     },
                     albumClicked: function() {
-                        console.log("album clicked");
                         this.set("synced.gallery.currentImage", 0);
                         this.$.roles.removeRole('albums');
                         this.$.roles.addRole('album');

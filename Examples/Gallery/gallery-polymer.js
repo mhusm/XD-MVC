@@ -1,4 +1,5 @@
 var XDmvcServer = require('xd-mvc/xdmvcserver.js');
+var path = require('path');
 var xdmvc = new XDmvcServer();
 
 var connect = require('connect'),
@@ -8,12 +9,12 @@ var connect = require('connect'),
 
 var url = require('url');
 
-var app = connect().use(bodyParser.json()).use(serveStatic(__dirname + '/public'));
+var app = connect().use(bodyParser.json()).use(serveStatic(path.join(__dirname, 'public')));
 app.use("/gallery", handleGallery);
 
 var server = http.createServer(app);
 var fs = require('fs');
-var basePath = "\public\\images";
+var basePath = path.join('public', 'images');
 var albums = [];
 
 function createModel() {
@@ -22,14 +23,14 @@ function createModel() {
         album;
 
     files.forEach(function (file) {
-        thumbs = fs.readdirSync(basePath + "\\" + file + "\\thumbs");
+        thumbs = fs.readdirSync(path.join(basePath, file, 'thumbs'));
         album = {title: file, url: "images/" + file + "/thumbs/" + thumbs[0]};
         albums.push(album);
     });
 
     albums.forEach(function(album){
         var title = album.title;
-        var files = fs.readdirSync(basePath + "\\" + title + "\\thumbs");
+        var files = fs.readdirSync(path.join(basePath, title, 'thumbs'));
         var largePath = "images/" + title + "/large/";
         var thumbsPath = "images/" + title + "/thumbs/";
         // Read images from directory
