@@ -18,29 +18,35 @@
         },
 
         ready: function() {
-            var sync = this.objects;
-            var that = this;
             Object.keys(this.objects).forEach(function (key) {
                 XDmvc.synchronize(
-                        sync[key],
+                        this.objects[key],
                         undefined,
-                        key, that.updateServer,
-                        function(id, key, value) {that.updateObject(id, key, value)},
-                        function(id, splices) {that.updateArray(id, splices)}
+                        key, this.updateServer
                 );
-            });
-        },
+            },this);
+            XDmvc.on("XDupdate", function(id, summary){
+                if (this.objects.hasOwnProperty(id)) {
+                    if (Array.isArray(this.objects[id])) {
+                        summary.forEach(function(splice) {
+                             // Using a Polymer internal function here. This is not ideal. Maybe Polymer will provide an API in the future
+                             this._notifySplice(this.objects[id], "objects." +id, splice[0], splice[1], splice[2]);
+                        }, this);
 
-        updateObject: function(id, key, value){
-            this.set(['objects', id, key], value);
-        },
-
-        updateArray: function(id, splices){
-            var that = this;
-            splices.forEach(function(spliceArgs){
-                var args= ["objects."+id].concat(spliceArgs);
-                that.splice.apply(that, args);
-            });
+                    } else {
+                        var key;
+                        for (key in summary[0]){
+                            this.notifyPath("objects." +id +"." +key, this.objects[id][key]);
+                        }
+                        for (key in summary[1]){
+                            this.notifyPath("objects." +id +"." +key, undefined);
+                        }
+                        for (key in summary[2]){
+                            this.notifyPath("objects." +id +"." +key, this.objects[id][key]);
+                        }
+                    }
+                }
+            }.bind(this));
         }
 
     });

@@ -2,7 +2,7 @@
 
 There are two versions of the gallery example. The first one uses photos stored on the server (gallery.html).
 The second one allows the user to choose photos from their device and sends no data to the server (galleryp2p.html).
-Additionally, in the first one, the devices communicate via the server, while in the second one their is direct peer-to-peer communication.
+Additionally, in the first one, the devices communicate via the server, while in the second is configured to use hybrid communication and thus uses peer-to-peer communication where supported.
 
 ## Installation
 This project requires [node.js](nodejs.org) and [bower](bower.io).
@@ -27,5 +27,3 @@ For the peer-to-peer version:
 ## Configuration
 You can add your own photos to the image folder, just use the same folder structure as the example albums.
 
-##Photo Credits
-Some photos (the nice ones) in the Bike album have been taken by Reto Conconi.

@@ -7,7 +7,7 @@ function initialize() {
             var evt = document.createEvent( 'CustomEvent' );
             evt.initCustomEvent( event, params.bubbles, params.cancelable, params.detail );
             return evt;
-        };
+        }
 
         CustomEvent.prototype = window.Event.prototype;
         window.CustomEvent = CustomEvent;
@@ -19,10 +19,11 @@ function initialize() {
     $("#inputDeviceId").val(XDmvc.deviceId);
     XDmvc.removeRole("sync-all");
     XDmvc.addRole("mirror");
-    document.addEventListener("XDdisconnect", function(event){
+
+    XDmvc.on('XDdisconnection', function(device){
         if (XDmvc.hasRole("overview")) {
-            views[event.detail].setMap(null);
-            delete views[event.detail];
+            views[device.id].setMap(null);
+            delete views[device.id];
         }
     });
 
@@ -183,14 +184,18 @@ function initialize() {
 
     updateDevices();
 
-    document.addEventListener('XDConnection', function(event){
+    XDmvc.on('XDconnection', function(event){
+        updateDevices();
+    });
+    XDmvc.on('XDdisconnection', function(event){
         updateDevices();
     });
 
 }
 
 function updateDevices() {
-    XDmvc.server.requestAvailableDevices();
+//TODO
+//    XDmvc.server.requestAvailableDevices();
     window.setTimeout(addAvailableDevices, 1000);
     window.setTimeout(addConnectedDevices, 1000);
 }
@@ -199,8 +204,9 @@ function addAvailableDevices() {
     // list container
     var listContainer = $('#availableDeviceList');
     listContainer.empty();
-    for (var i=0; i<XDmvc.availableDevices.length; i++) {
-        var dev = XDmvc.availableDevices[i];
+    var devices = XDmvc.getAvailableDevices();
+    for (var i=0; i<devices.length; i++) {
+        var dev = devices[i];
         var availableConnections = '  (' + (dev.usesPeerJs ? 'peerJS':'') + ' / ' + (dev.usesSocketIo ? 'socketIo': '') + ')';
         listContainer.prepend('<a href="#" class="list-group-item"> <p class="id">'+dev.id + '</p><p><small>' +  availableConnections + '</small></p></a>');
     }
@@ -215,16 +221,17 @@ function addConnectedDevices() {
     // list container
     var listContainer = $('#connectedDeviceList');
     listContainer.empty();
-    var length = XDmvc.connectedDevices.length;
+    var devices = XDmvc.getConnectedDevices();
+    var length = devices.length;
     for (var i=0; i<length; i++) {
-        var dev = XDmvc.connectedDevices[i];
+        var dev = devices[i];
         var usesSocketIo = dev.connection instanceof VirtualConnection;
         var connString = ' (' + (usesSocketIo ? 'socketIO':'peerJS') + ')';
         listContainer.prepend('<li class="list-group-item" id='+dev.id+'>' + dev.id + connString + '</li>');
     }
     //style the buttons
     for (var i=0; i<length; i++) {
-        var dev = XDmvc.connectedDevices[i];
+        var dev = devices[i];
         var usesSocketIo = dev.connection instanceof VirtualConnection;
         var color = usesSocketIo ? 'orange':'yellow'
         $('#'+dev.id).css('background-color', color );

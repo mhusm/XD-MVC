@@ -10,6 +10,7 @@
         <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-connection.html">
         <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-roles.html">
         <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-devices.html">
+        <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-url-pairing.html">
         <link rel="import" href="bower_components/paper-button/paper-button.html">
         <link rel="import" href="elements/image-element.html">
         <link rel="import" href="elements/gallery-element.html">
@@ -23,14 +24,14 @@
     <body>
         <dom-module id="my-app">
             <template>
-                <xdmvc-connection reconnect="true" architecture="client-server" socketport="3001"></xdmvc-connection>
+                <xdmvc-connection architecture="client-server" socketport="3001"></xdmvc-connection>
 
                 <xdmvc-synchronised id="sync"
                                objects='{{synced}}'>
                 </xdmvc-synchronised>
                 <xdmvc-synchronised id="persistent"
                                     objects='{{persisted}}'
-                                    update-server="true">
+                                    update-server>
                 </xdmvc-synchronised>
 
                 <xdmvc-roles id="roles"
@@ -39,6 +40,7 @@
                              roles='{{roles}}'>
                 </xdmvc-roles>
                 <xdmvc-devices id="devices" devices="{{devices}}"></xdmvc-devices>
+                <xdmvc-url-pairing connector="visitor" connectee="owner"></xdmvc-url-pairing>
 
                 <gallery-overview id='overview'
                                   hidden$="{{!albumsVisible}}"
@@ -137,6 +139,7 @@
                         return this.synced.gallery.currentAlbum > -1 ? this.albums[this.synced.gallery.currentAlbum].large : undefined;
                     },
                     albumClicked: function() {
+                        this.set("synced.gallery.currentImage", 0);
                         this.$.roles.removeRole('albums');
                         this.$.roles.addRole('album');
                     },
@@ -182,34 +185,8 @@
                         this.set(["albums", gallery.currentAlbum, "url"], thumbnail);
                         this.set("persisted.album.cover", thumbnail);
                         this.set("persisted.album.id", gallery.currentAlbum);
-                    },
-
-                    ready: function(){
-                        var that = this;
-                        if (XDmvc.server) {
-                            this.onServerReady();
-                        } else { // not yet connected to server, wait for the connection event
-                            document.addEventListener("XDServer", function(){
-                                that.onServerReady();
-                            });
-                        }
-                    },
-
-                    onServerReady: function(){
-                        var connect = getQueryParams(window.location.search).connect;
-                        if (!connect){
-                            var connectString = 'connect='+XDmvc.deviceId;
-                            window.history.pushState('', '', window.location.search.length > 0? window.location.search +"&" +connectString : '?'+connectString);
-                            this.$.roles.addRole('owner');
-                        } else {
-                            if (connect !== XDmvc.deviceId) {
-                                XDmvc.connectTo(connect);
-                                this.$.roles.addRole('visitor');
-                            } else {
-                                this.$.roles.addRole('owner');
-                            }
-                        }
                     }
+
                 });
             });
         </script>

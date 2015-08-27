@@ -1,0 +1,47 @@
+<link rel="import" href="../../polymer/polymer.html">
+<link rel="import" href="xdmvc.html">
+
+<script>
+    Polymer({
+        is: "xdmvc-url-pairing",
+
+        properties: {
+            connector: {
+                type: String,
+            },
+            connectee: {
+                type: String
+            }
+        },
+
+        ready: function() {
+            if (XDmvc.XDd2d.serverReady) {
+                this.onServerReady();
+            } else { // not yet connected to server, wait for the connection event
+                XDmvc.XDd2d.on("XDserverReady", this.onServerReady.bind(this));
+            }
+        },
+        onServerReady: function(){
+            var connect = getQueryParams(window.location.search).connect;
+            if (!connect){
+                var connectString = 'connect='+XDmvc.deviceId;
+                window.history.pushState('', '', window.location.search.length > 0? window.location.search +"&" +connectString : '?'+connectString);
+                if (this.connectee) {
+                    XDmvc.addRole(this.connectee);
+                }
+            } else {
+                if (connect !== XDmvc.deviceId) {
+                    XDmvc.connectTo(connect);
+                    if (this.connector) {
+                        XDmvc.addRole(this.connector);
+                    }
+                } else {
+                    if (this.connectee) {
+                        XDmvc.addRole(this.connectee);
+                    }
+                }
+            }
+        }
+
+    });
+</script>
