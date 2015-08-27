@@ -10,6 +10,7 @@
         <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-connection.html">
         <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-roles.html">
         <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-devices.html">
+        <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-url-pairing.html">
         <link rel="import" href="bower_components/paper-button/paper-button.html">
         <link rel="import" href="elements/image-element.html">
         <link rel="import" href="elements/gallery-element.html">
@@ -39,6 +40,7 @@
                              roles='{{roles}}'>
                 </xdmvc-roles>
                 <xdmvc-devices id="devices" devices="{{devices}}"></xdmvc-devices>
+                <xdmvc-url-pairing connector="visitor" connectee="owner"></xdmvc-url-pairing>
 
                 <gallery-overview id='overview'
                                   hidden$="{{!albumsVisible}}"
@@ -184,31 +186,8 @@
                         this.set(["albums", gallery.currentAlbum, "url"], thumbnail);
                         this.set("persisted.album.cover", thumbnail);
                         this.set("persisted.album.id", gallery.currentAlbum);
-                    },
-
-                    ready: function(){
-                        if (XDmvc.XDd2d.serverReady) {
-                            this.onServerReady();
-                        } else { // not yet connected to server, wait for the connection event
-                            XDmvc.XDd2d.on("XDserverReady", this.onServerReady.bind(this));
-                        }
-                    },
-
-                    onServerReady: function(){
-                        var connect = getQueryParams(window.location.search).connect;
-                        if (!connect){
-                            var connectString = 'connect='+XDmvc.deviceId;
-                            window.history.pushState('', '', window.location.search.length > 0? window.location.search +"&" +connectString : '?'+connectString);
-                            this.$.roles.addRole('owner');
-                        } else {
-                            if (connect !== XDmvc.deviceId) {
-                                XDmvc.connectTo(connect);
-                                this.$.roles.addRole('visitor');
-                            } else {
-                                this.$.roles.addRole('owner');
-                            }
-                        }
                     }
+
                 });
             });
         </script>
