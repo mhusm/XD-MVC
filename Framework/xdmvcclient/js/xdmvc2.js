@@ -136,12 +136,7 @@ XDMVC.prototype.handleSync = function handleSync (data, sender){
     if (!sender.latestData[msg.id])  {
         sender.latestData[msg.id] = msg.data;
     }
-    /*
-    else {
-        this.update(sender.latestData[msg.id], msg.data, msg.arrayDelta, msg.objectDelta);
-    }
-    var data = sender.latestData[msg.id];
-*/
+
     // Don't update when the device freshly connected and it initiated the connection
     if (!sender.initial[msg.id]) {
         // All role specific callbacks
@@ -237,8 +232,6 @@ XDMVC.prototype.loadPeers = function () {
  */
 
 XDMVC.prototype.sendSyncToAll = function (changes, id) {
-//    console.log(changes[2]);
-//    console.log(id);
     var arrayDelta = [];
     var objectDelta = [];
     var data;
@@ -274,15 +267,7 @@ XDMVC.prototype.sendSyncToAll = function (changes, id) {
             device.send('sync', {data: data, id: id, arrayDelta: arrayDelta.length>0, objectDelta: objectDelta.length >0});
         }
     }, this);
-/*
-    for (i = 0; i < len; i++) {
-        var conDev = this.connectedDevices[i];
-        var con = conDev.connection;
-        if (con.open &&  conDev.isInterested(id)){
-            con.send(msg);
-        }
-    }
-*/
+
     if (this.syncData[id].updateServer) {
         this.sendToServer("sync", {type: 'sync', data: this.syncData[id].data});
     }
@@ -518,16 +503,9 @@ XDMVC.prototype.getDeviceInterests = function getDeviceInterests (device){
 
 XDMVC.prototype.isInterested = function(role, dataId){
     return this.configuredRoles[role] && typeof this.configuredRoles[role][dataId] !== "undefined" ;
-    /*
-    return this.roles.indexOf(XDmvc.defaultRole) > -1 || this.roles.some(function(role){
-            return XDmvc.configuredRoles[role] && typeof XDmvc.configuredRoles[role][dataId] !== "undefined" ;
-        }) ;
-        */
-
 };
 
 
-// subclass extends superclass
 /*
  --------------------------------
  Initialisation and configuration
