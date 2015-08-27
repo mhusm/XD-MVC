@@ -184,7 +184,7 @@ XDMVC.prototype.sendToAll = function sendToAll(msgType, data){
 };
 
 XDMVC.prototype.sendToServer = function sendToServer(msgType, data){
-    if (this.XDd2d) {
+    if (this.XDd2d.serverReady) {
         this.XDd2d.sendToServer(msgType, data);
     }
 };
@@ -311,6 +311,7 @@ XDMVC.prototype.update = function(old, data, arrayDelta, objectDelta, id){
     var splices;
     var summary;
     if (Array.isArray(old)) {
+        summary = [];
         if (arrayDelta) {
             splices = data;
         } else {
@@ -320,9 +321,10 @@ XDMVC.prototype.update = function(old, data, arrayDelta, objectDelta, id){
         }
 
         splices.forEach(function(spliceArgs){
-            Array.prototype.splice.apply(old, spliceArgs);
+            var rem = Array.prototype.splice.apply(old, spliceArgs);
+            var sum = [spliceArgs[0], spliceArgs.length -2, rem];
+            summary.push(sum);
         });
-        summary = splices;
 
     } else {
         if (objectDelta) {
@@ -354,10 +356,7 @@ XDMVC.prototype.update = function(old, data, arrayDelta, objectDelta, id){
     }
 
     if (id) {
-        console.log("updating " + id);
-        console.log(  this.syncData[id].data);
         this.emit("XDupdate", id, summary);
-
         // Discard changes that were caused by the update
         this.syncData[id].observer.discardChanges();
 

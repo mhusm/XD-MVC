@@ -20,7 +20,7 @@
     <body>
         <dom-module id="my-app">
             <template>
-                <xdmvc-connection reconnect="true" peerport="9005" ajaxport="9006"></xdmvc-connection>
+                <xdmvc-connection peerport="9005" ajaxport="9006"></xdmvc-connection>
                 <xdmvc-synchronised id="sync"
                                     objects='{{synced}}'>
                 </xdmvc-synchronised>
@@ -30,7 +30,9 @@
                 </xdmvc-roles>
                 <xdmvc-devices id="devices" devices="{{devices}}"></xdmvc-devices>
 
-                <template is="dom-if" if="{{roles.isselected.owner}}">
+
+                 <template is="dom-if" if="{{roles.isselected.owner}}">
+                    <h1>Share your photos!</h1>
                     <input is="core-input" type="file" multiple accept="image/*" on-change="handleFiles"  label="Choose photos"/>
                     <gallery-element id='gallery'
                                      images="{{synced.images}}"
@@ -43,7 +45,6 @@
                                    cursor="{{synced.cursor}}"
                                    show-controls="{{roles.isselected.owner}}"></image-element>
                 </template>
-
 
             </template>
 
@@ -98,31 +99,33 @@
                     },
 
                     ready: function() {
+                        if (XDmvc.XDd2d.serverReady) {
+                            this.onServerReady();
+                        } else { // not yet connected to server, wait for the connection event
+                            XDmvc.XDd2d.on("XDserverReady", this.onServerReady.bind(this));
+                        }
+                    },
+                    onServerReady: function(){
                         var connect = getQueryParams(window.location.search).connect;
-                        if (!connect) {
-                            var connectString = 'connect=' + XDmvc.deviceId;
-                            window.history.pushState('', '', window.location.search.length > 0 ? window.location.search + "&" + connectString : '?' + connectString);
+                        if (!connect){
+                            var connectString = 'connect='+XDmvc.deviceId;
+                            window.history.pushState('', '', window.location.search.length > 0? window.location.search +"&" +connectString : '?'+connectString);
                             this.$.roles.addRole('owner');
                         } else {
                             if (connect !== XDmvc.deviceId) {
-                                if (XDmvc.server) {
-                                    XDmvc.connectTo(getQueryParams(window.location.search).connect);
-                                } else { // not yet connected to server, wait for the connection event
-                                    XDmvc.on("XDserver", function(){
-                                        XDmvc.connectTo(getQueryParams(window.location.search).connect);
-                                    });
-                                }
+                                XDmvc.connectTo(connect);
                                 this.$.roles.addRole('visitor');
                             } else {
                                 this.$.roles.addRole('owner');
                             }
                         }
                     }
+
+
                 });
             });
         </script>
 
-		<h1>Share your photos!</h1>
         <my-app></my-app>
 
     </body>
