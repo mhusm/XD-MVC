@@ -1,8 +1,8 @@
 {
-  "name": "xd-mvc",
+  "name": "XD-MVC",
   "version": "0.1.0",
   "author": "Maria Husmann <husmann@inf.ethz.ch>",
-  "description" : "Cross-device MVC",
+  "description" : "Cross-device MVC framework",
   "private": true,
   
   "engines": {
