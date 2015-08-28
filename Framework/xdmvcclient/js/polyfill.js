@@ -1,3 +1,7 @@
+/*
+ Taken from Mozilla Developer Network https://developer.mozilla.org
+ */
+
 if (!Array.prototype.find) {
   Array.prototype.find = function(predicate) {
     if (this == null) {
@@ -20,6 +24,7 @@ if (!Array.prototype.find) {
     return undefined;
   };
 }
+
 if (!Array.prototype.findIndex) {
   Array.prototype.findIndex = function(predicate) {
     if (this == null) {

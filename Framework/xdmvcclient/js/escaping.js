@@ -34,8 +34,8 @@ var htmlEscape = {
           string = string == null ? '' : '' + string;
           return testRegexp.test(string) ? string.replace(replaceRegexp, escaper) : string;
         };
-    },
-}
+    }
+};
 
 htmlEscape.unescapeMap = htmlEscape.invert(htmlEscape.escapeMap);
 htmlEscape.escape = htmlEscape.createEscaper(htmlEscape.escapeMap);

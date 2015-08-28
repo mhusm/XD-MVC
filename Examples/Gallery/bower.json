@@ -1,7 +1,7 @@
 {
   "name": "XD-Gallery",
-  "version": "0.0.0",
-  "license": "MIT",
+  "version": "0.0.1",
+  "license": "GPL-3.0",
   "ignore": [
     "**/.*",
     "node_modules",
@@ -21,6 +21,7 @@
     "polymer": "^1.0.0",
     "webcomponentsjs": "^0.7.2",
     "paper-button": "1.0.0",
-    "paper-ripple": "^1.0.0"
+    "paper-ripple": "^1.0.0",
+    "font-roboto": "^1.0.1"
   }
 }
