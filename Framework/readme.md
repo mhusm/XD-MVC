@@ -1,7 +1,7 @@
 # Cross-device MVC
 
-Here is a quick introduction to the framework using [Polymer](http://www.polymer-project.org). Please look at the examples for more details on usage. 
-If you don't want to use Polymer, look at the maps example.
+Here is a quick introduction to the framework using [Polymer](http://www.polymer-project.org). Please look at the [gallery examples](../Examples/Gallery/readme.md) for more details on usage. 
+If you don't want to use Polymer, look at the [maps example](../Examples/Maps/readme.md).
 
 ## Server
 
@@ -160,5 +160,5 @@ This will load the code and run the associated scripts, but not show the element
 ```
 
 With version 1.0 expressions in data binding were removed from Polymer. If you want more complex rules for UI distribution, you need to use computed bindings.
-Have a look at the gallery for some examples.
+Have a look at the [gallery](../Examples/Gallery/readme.md) for some examples.
 
