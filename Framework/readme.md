@@ -44,7 +44,7 @@ Import the elements that you are going to use in the header.
 None of the attributes are required as there are defaults that match the server-side component.
 If `reconnect` is set, the device will automatically try to reconnect to previously connected devices.
 ```html
-<xdmvc-connection server="darroch.inf.ethz.ch" socketport="3000" ajaxPort="9001" reconnect architecture="client-server"></xdmvc-connection>
+<xdmvc-connection server="xdmvc.inf.ethz.ch" peerport="9000" socketport="3000" ajaxport="9001" reconnect architecture="client-server"></xdmvc-connection>
 ```
 
 ### Specifying objects for synchronisation.
