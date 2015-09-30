@@ -15,4 +15,4 @@ If peer-to-peer communication is used, that is the only browser that is fully su
 If client-server or hybrid communication is used, also Firefox and Safari should work. For applications built with Polymer we have seen best results with Chrome, however, thanks to polyfills all modern browsers should be suppported. Internet Explorer support has not been tested. 
 
 ## About this Project
-XD-MVC is under development at the [Globis Group at ETH Zürich](https://globis.ethz.ch). The project is coordinated by [Maria Husmann](https://globis.ethz.ch/#!/person/maria-husmann/). Fabian Stutz, Silvan Egli, and Marko Zivkovic have contributed to XD-MVC.
+XD-MVC is under development at the [Globis Group at ETH Zürich](https://globis.ethz.ch). The project is coordinated by [Maria Husmann](https://globis.ethz.ch/#!/person/maria-husmann/). [Fabian Stutz](https://github.com/fabwid), Silvan Egli, and Marko Zivkovic have contributed to XD-MVC.
