@@ -90,7 +90,9 @@ XDmvcServer.prototype.addSocketIoPeer = function addSocketIoPeer(id, socketioId)
 };
 
 XDmvcServer.prototype.deletePeerJsPeer = function deletePeerJsPeer(id) {
-    delete this.peerJsPeers[id];
+    if (this.peerJsPeers[id]) {
+        delete this.peerJsPeers[id];
+    }
     if(this.peers[id])
         if(this.peers[id].usesSocketIo) //peer is still used with socketio
             this.peers[id].usesPeerJs = false;
@@ -100,11 +102,26 @@ XDmvcServer.prototype.deletePeerJsPeer = function deletePeerJsPeer(id) {
 
 XDmvcServer.prototype.deleteSocketIoPeer = function deleteSocketIoPeer(id) {
     delete this.socketIoPeers[id];
-    if(this.peers[id])
-        if(this.peers[id].usesPeerJs)//peer is still used with peerJS
-            this.peers[id].usesSocketIo = false;
-        else
-            delete this.peers[id];
+    if(this.peers[id]) {
+        /* As PeerJS does not always properly disconnect, assume that
+         * the PeerJS connection will also be dead and remove the peer.
+         * If this PeerJS is fixed, this could be adapted to the old version below
+         */
+        if(this.peers[id].usesPeerJs) {
+            delete this.peerJsPeers[id];
+        }
+        delete this.peers[id];
+    }
+
+    /* old version
+     delete this.socketIoPeers[id];
+     if(this.peers[id])
+     if(this.peers[id].usesPeerJs)//peer is still used with peerJS
+     this.peers[id].usesSocketIo = false;
+     else
+     delete this.peers[id];
+
+     */
 };
 
 XDmvcServer.prototype.startPeerSever = function(port){
