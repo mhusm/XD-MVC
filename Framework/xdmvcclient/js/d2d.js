@@ -339,7 +339,7 @@ XDd2d.prototype.disconnect = function disconnect (){
         this.peer = null;
     }
     //for SocketIO
-    if(this.isClientServer() || this.isHybrid()) {
+    if(this.serverSocket) {
         this.serverSocket.disconnect();
         this.serverSocket = null;
     }
