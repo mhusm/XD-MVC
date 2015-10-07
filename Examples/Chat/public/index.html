@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <script src="bower_components/detectrtc/DetectRTC.min.js"></script>
+    <script src="js/events.js"></script>
+    <script src="bower_components/peerjs/peer.js"></script>
+    <script src="bower_components/socket.io-client/socket.io.js"></script>
+    <script src="js/ajax.js"></script>
+    <script src="js/d2d.js"></script>
+    <title></title>
+    <style>
+        #chat {
+            height: 400px;
+            max-width: 400px;
+            border: 1px solid black;
+            overflow: auto;
+        }
+
+        #idspan{
+            font-weight: bold;
+        }
+
+        div, ul, input {
+            margin: 5px;
+        }
+
+
+
+    </style>
+</head>
+<body>
+<div>My ID is <span id="idspan"></span></div>
+<input id="idinput" type="text" placeholder="Enter a device ID" />
+<button id="connect" >Connect</button>
+<div>Connections</div>
+<ul id="connections">
+
+
+</ul>
+
+<div id="chat"></div>
+<input id="chatinput" type="text"  placeholder="Message"  />
+<button id="send">Send</button>
+
+
+<script>
+
+    var idinput = document.querySelector("#idinput");
+    var chatinput = document.querySelector("#chatinput");
+    var chat = document.querySelector("#chat");
+    var connections = document.querySelector("#connections");
+    var D2D = new XDd2d();
+    D2D.connect();
+    D2D.on("chat", function(data, sender){
+        var line = document.createElement("div");
+        line.innerHTML = sender.id +": " + data;
+        chat.appendChild(line);
+    });
+
+    D2D.on("XDserverReady", function(){
+        document.querySelector("#idspan").innerHTML = D2D.deviceId;
+    });
+
+    D2D.on("XDopen", function(device){
+        var line = document.createElement("ul");
+        line.innerHTML = device.id;
+        line.id= device.id;
+        connections.appendChild(line);
+    });
+
+    D2D.on("XDdisconnection", function(device){
+        document.querySelector("#" +device.id).remove();
+    });
+
+    document.querySelector("#connect").addEventListener("click", function(){
+        D2D.connectTo(idinput.value);
+        idinput.value = "";
+    });
+    document.querySelector("#send").addEventListener("click", function(){
+        var line = document.createElement("div");
+        line.innerHTML = D2D.deviceId +": " + chatinput.value;
+        chat.appendChild(line);
+        D2D.sendToAll("chat", chatinput.value);
+        chatinput.value = "";
+    });
+
+
+
+</script>
+
+</body>
+</html>
