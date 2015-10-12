@@ -500,7 +500,6 @@ VirtualConnection.prototype.close = function() {
 function ConnectedDevice(connection, id, XDd2d){
     this.connection = connection;
     this.id = id;
-    this.roles = [];
     this.device = {};
     this.latestData = {};
     this.initial = [];

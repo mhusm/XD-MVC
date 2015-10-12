@@ -1,9 +1,11 @@
 Examples/Gallery/node_modules
 Examples/Maps/node_modules
 Examples/Todo/node_modules
+Examples/Chat/node_modules
 Framework/todos.txt
 Examples/Gallery/public/bower_components
 Examples/Gallery/public/test.html
 Examples/Maps/public/bower_components
+Examples/Chat/public/bower_components
 Examples/Todo
 .idea
