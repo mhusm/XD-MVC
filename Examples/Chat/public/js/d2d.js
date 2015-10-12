@@ -45,6 +45,7 @@ function XDd2d(deviceId, host, portPeer, portSocketIo, ajaxPort, iceServers){
     this.defaultPeerPort = 9000;
     this.defaultAjaxPort = 9001;
     this.defaultSocketIoPort = 3000;
+    this.pollIntervall = 5000;
 
     /*
      --------------------
@@ -200,9 +201,14 @@ XDd2d.prototype.connect = function connect () {
 
             // Check periodically who is connected.
             // TODO could use socket.io connection for this?
+            /* Even though the server could push this information,
+             we opted not to implement this, as this could result to lots of push messages
+             in a system with lots of devices.
+              */
+
             this.requestAvailableDevices();
             window.setInterval(function(){
-                XDd2d.requestAvailableDevices();}, 5000);
+                XDd2d.requestAvailableDevices();}, XDd2d.pollIntervall);
 
             this.emit('XDserverReady');
             this.serverReady = true;
