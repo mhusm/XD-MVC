@@ -31,6 +31,12 @@
 </head>
 <body>
 <div>My ID is <span id="idspan"></span></div>
+<div>Available Devices <button id="refresh">Refresh</button></div>
+<ul id="available">
+
+
+</ul>
+
 <input id="idinput" type="text" placeholder="Enter a device ID" />
 <button id="connect" >Connect</button>
 <div>Connections</div>
@@ -50,6 +56,8 @@
     var chatinput = document.querySelector("#chatinput");
     var chat = document.querySelector("#chat");
     var connections = document.querySelector("#connections");
+    var available = document.querySelector("#available");
+
     var D2D = new XDd2d();
     D2D.connect();
     D2D.on("chat", function(data, sender){
@@ -60,13 +68,16 @@
 
     D2D.on("XDserverReady", function(){
         document.querySelector("#idspan").innerHTML = D2D.deviceId;
+        D2D.requestAvailableDevices(updateAvailable);
+
     });
 
     D2D.on("XDopen", function(device){
         var line = document.createElement("ul");
         line.innerHTML = device.id;
-        line.id= device.id;
+        line.id = device.id;
         connections.appendChild(line);
+        updateAvailable();
     });
 
     D2D.on("XDdisconnection", function(device){
@@ -84,6 +95,20 @@
         D2D.sendToAll("chat", chatinput.value);
         chatinput.value = "";
     });
+
+    document.querySelector("#refresh").addEventListener("click", function(){
+        D2D.requestAvailableDevices(updateAvailable);
+    });
+
+    var updateAvailable = function updateAvailable () {
+        available.innerHTML = "";
+        D2D.availableDevices.forEach(function(device) {
+            var line = document.createElement("ul");
+            line.innerHTML = device.id;
+            line.id = device.id;
+            available.appendChild(line);
+        })
+    }
 
 
 
