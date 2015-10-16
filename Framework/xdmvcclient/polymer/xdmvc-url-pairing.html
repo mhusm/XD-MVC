@@ -34,6 +34,10 @@
             },
             connectee: {
                 type: String
+            },
+            url: {
+                type: String,
+                notify: true
             }
         },
 
@@ -64,6 +68,7 @@
                     }
                 }
             }
+            this.url = window.location.toString();
         }
 
     });

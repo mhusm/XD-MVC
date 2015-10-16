@@ -23,6 +23,7 @@
 
 html,body {
     font-family: 'RobotoDraft', sans-serif;
+    font-size: 14px;
 }
 
 #image {
@@ -31,10 +32,21 @@ html,body {
     margin: auto;
 }
 
-paper-button {
+#back {
     margin-left: 10%;
     margin-top: 1em;
     margin-bottom: 1em;
 }
 
+paper-icon-button {
+    background-color: #ddd;
+    padding: 3px;
+    border-radius: 3px;
+    margin-left: 10px;
+    margin-right: 10px;
+}
 
+paper-badge {
+    margin-left: 10px;
+    margin-top: 15px;
+}
