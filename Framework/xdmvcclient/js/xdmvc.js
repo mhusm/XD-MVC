@@ -194,6 +194,8 @@ XDMVC.prototype.handleServerReady = function handleServerReady(){
     if (this.reconnect) {
         this.connectToStoredPeers();
     }
+
+    this.emit("XDserverReady");
 };
 
 XDMVC.prototype.sendToAll = function sendToAll(msgType, data){

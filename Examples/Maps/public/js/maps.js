@@ -36,8 +36,10 @@ function initialize() {
     XDmvc.init();
     XDmvc.reconnect = false;
     XDmvc.connectToServer();
-    $("#myDeviceId").text(XDmvc.deviceId);
-    $("#inputDeviceId").val(XDmvc.deviceId);
+    XDmvc.on("XDserverReady", function(){
+        $("#myDeviceId").text(XDmvc.deviceId);
+        $("#inputDeviceId").val(XDmvc.deviceId);
+    });
     XDmvc.removeRole("sync-all");
     XDmvc.addRole("mirror");
 

@@ -21,6 +21,7 @@
 var util         = require("util");
 var EventEmitter = require("events").EventEmitter;
 var PeerServer = require('peer').PeerServer;
+var shortid = require('shortid');
 var connect = require('connect'),
     http = require('http'),
     bodyParser = require('body-parser'),
@@ -337,7 +338,7 @@ XDmvcServer.prototype.handleAjaxRequest = function(req, res, next){
             var id = query.id;
             var error = false;
             if (!id) {
-                id = this.generateID();
+                id = shortid.generate();
             } else if (!this.idIsFree(id)){
                 error = true;
             }
@@ -361,15 +362,6 @@ XDmvcServer.prototype.handleAjaxRequest = function(req, res, next){
     }
 };
 
-XDmvcServer.prototype.generateID = function() {
-    this.idBase++;
-    var id = "ID"+this.idBase;
-    while (!this.idIsFree(id)) {
-        this.idBase++;
-        id = "ID"+this.idBase;
-    }
-    return id;
-};
 
 XDmvcServer.prototype.idIsFree = function(id) {
     return (!this.peers[id]);
