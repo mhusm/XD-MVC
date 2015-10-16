@@ -85,12 +85,12 @@
 	var getRelativePosition = function getRelativePosition(offset, target){
 		var	style = target.currentStyle || window.getComputedStyle(target, null),
 				rect = target.getBoundingClientRect();
-		return {x: offset.x/rect.width, y: offset.y/rect.height};
+		return {x: (offset.x)/rect.width, y: (offset.y)/rect.height};
 	};
 
 	var getAbsolutePosition = function getAbsolutePosition(relative, target){
 		var rect = target.getBoundingClientRect();
-		return {x: relative.x * rect.width, y: relative.y * rect.height};
+		return {x: relative.x * rect.width - 10, y: relative.y * rect.height -10}; // -10 to account for pointer size
 	};
 
     var throttle = function (func, delay) {

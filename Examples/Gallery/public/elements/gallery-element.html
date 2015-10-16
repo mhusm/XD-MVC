@@ -64,8 +64,9 @@
 
 
         imageHandler: function(event){
+            var old = this.current;
 			this.current = event.model.index;
-			this.fire('image');
+			this.fire('image', {oldInd: old, newInd: this.current});
             Platform.performMicrotaskCheckpoint();
 		},
 

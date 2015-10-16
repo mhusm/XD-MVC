@@ -34,11 +34,12 @@
         <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-roles.html">
         <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-devices.html">
         <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-url-pairing.html">
+        <link rel="import" href="bower_components/paper-button/paper-button.html">
         <link rel="import" href="elements/image-element.html">
         <link rel="import" href="elements/gallery-element.html">
-
+        <link href="css/main.css" rel="stylesheet" >
         <meta name="viewport" content="width=device-width, user-scalable=no">
-
+        <title>Show your photos!</title>
     </head>
     <body>
         <dom-module id="my-app">
@@ -56,19 +57,30 @@
 
 
                  <template is="dom-if" if="{{roles.isselected.owner}}">
-                    <h1>Share your photos!</h1>
-                    <input is="core-input" type="file" multiple accept="image/*" on-change="handleFiles"  label="Choose photos"/>
-                    <gallery-element id='gallery'
-                                     images="{{synced.images}}"
-                                     current="{{synced.current.index}}">
-                    </gallery-element>
-                </template>
-                <template is="dom-if" if="{{showImage}}">
-                    <image-element id="image" images="{{synced.images}}"
+                     <template is="dom-if" if="{{!showImage}}">
+                         <h1>Show your photos!</h1>
+                         <input is="core-input" type="file" multiple accept="image/*" on-change="handleFiles"  label="Choose photos"/>
+                         <div>
+                            <gallery-element id='gallery'
+                                             images="{{synced.images}}"
+                                             current="{{synced.current.index}}" on-image="handleImage">
+                            </gallery-element>
+                         </div>
+                     </template>
+                     <template is="dom-if" if="{{showImage}}">
+                         <paper-button on-click="hideImage" raised>Back</paper-button>
+                         <image-element id="image" images="{{synced.images}}"
+                                        current="{{synced.current.index}}"
+                                        cursor="{{synced.cursor}}"
+                                        show-controls="{{roles.isselected.owner}}"></image-element>
+                     </template>
+                 </template>
+                 <template is="dom-if" if="{{roles.isselected.visitor}}">
+                    <image-element images="{{synced.images}}"
                                    current="{{synced.current.index}}"
                                    cursor="{{synced.cursor}}"
                                    show-controls="{{roles.isselected.owner}}"></image-element>
-                </template>
+                 </template>
 
             </template>
 
@@ -91,16 +103,18 @@
                             type: Boolean,
                             value: false,
                             notify: true
+                        },
+                    },
+
+                    handleImage: function(event){
+                        if (event.detail.newInd === event.detail.oldInd) {
+                            this.showImage = true;
                         }
                     },
 
-                    _computeShowImage: function() {
-                        this.showImage = !(this.roles.isselected.owner && this.devices.othersDevices.large > 0);
+                    hideImage: function() {
+                        this.showImage = false;
                     },
-
-                    observers: [
-                        '_computeShowImage(roles.*, devices.othersDevices.*, synced.images.*)'
-                    ],
 
 
                     handleFiles: function (event) {
