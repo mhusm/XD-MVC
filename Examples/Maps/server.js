@@ -1,4 +1,4 @@
-var XDmvcServer = require('xd-mvc/xdmvcserver.js');
+var XDmvcServer = require('XD-MVC/xdmvcserver.js');
 var xdmvc = new XDmvcServer();
 
 var connect = require('connect'),
