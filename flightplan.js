@@ -12,7 +12,7 @@ plan.target('cloud', [
     {
         host: 'xdmvc.link',
         username: username,
-        privateKey: 'C:/Users/siegli/Desktop/BaThe/.ssh/id_rsa',
+        privateKey: 'C:/Users/silvan_egli/.ssh/id_rsa',
         agent: process.env.SSH_AUTH_SOCK
     }
 ]);
@@ -31,7 +31,6 @@ plan.remote('all',function(remote) {
     var appFolders = ['Gallery','Maps','Performance'];
 
     remote.log('pull from origin '+ currBranch);
-    remote.exec('cd /root/code/xdmvc && git fetch origin');
     remote.exec('cd /root/code/xdmvc && git checkout ' + currBranch + ' git pull origin ' + currBranch);
 
 
@@ -57,8 +56,8 @@ plan.remote('performance',function(remote) {
     var appFolders = ['Performance'];
 
     remote.log('pull from origin '+ currBranch);
-    remote.exec('cd /root/code/xdmvc && git fetch origin');
     remote.exec('cd /root/code/xdmvc && git checkout ' + currBranch + ' git pull origin ' + currBranch);
+
 
     appFolders.forEach(function (appFolder) {
         remote.log('-----------------------------------------------------------')
@@ -67,9 +66,9 @@ plan.remote('performance',function(remote) {
     });
 
     remote.log('---------------------------------------------------------');
-    remote.log('Reload  Maps application');
-    remote.exec('forever stop ~/code/xdmvc/Examples/Maps/server.js', {failsafe: true});
-    remote.exec('forever start ~/code/xdmvc/Examples/Maps/server.js');
+    remote.log('Reload Performance application');
+    remote.exec('forever stop ~/code/xdmvc/Examples/Performance/perf_server.js', {failsafe: true});
+    remote.exec('forever start ~/code/xdmvc/Examples/Performance/perf_server.js');
 
 });
 
@@ -78,7 +77,6 @@ plan.remote('maps',function(remote) {
     var appFolders = ['Maps'];
 
     remote.log('pull from origin '+ currBranch);
-    remote.exec('cd /root/code/xdmvc && git fetch origin');
     remote.exec('cd /root/code/xdmvc && git checkout ' + currBranch + ' git pull origin ' + currBranch);
 
 
