@@ -24,13 +24,14 @@
 <html>
     <head>
        <!-- 1. Load platform support before any code that touches the DOM. -->
-        <script src="bower_components/webcomponentsjs/webcomponents-lite.min.js"></script>
+        <script src="bower_components/webcomponentsjs/webcomponents.min.js"></script>
         <link rel="import" href="bower_components/polymer/polymer.html">
         <!-- 2. Load the component using an HTML Import -->
         <script src="bower_components/xdmvcclient/js/queryParams.js"></script>
 
         <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-synchronised.html">
         <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-connection.html">
+        <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-connections.html">
         <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-roles.html">
         <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-devices.html">
         <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-url-pairing.html">
@@ -68,14 +69,10 @@
 
 
                  <template is="dom-if" if="{{roles.isselected.owner}}">
-                     <template is="dom-if" if="{{!showImage}}">
+                     <template is="dom-if" if="{{showOverview}}">
                          <h1>Show your photos!</h1>
-                         <div hidden$="{{!showQR}}">
-                             <qr-code  data="[[url]]"></qr-code>
-                         </div>
                          <input is="core-input" type="file" multiple accept="image/*" on-change="handleFiles"  label="Choose photos"/>
-                              <paper-icon-button id="butn" on-click="toggleQR" raised icon="hardware:cast">Connect a device</paper-icon-button>
-                              <paper-badge id="badge" for="butn" label="1"></paper-badge>
+                         <xdmvc-connections connections="[[devices.connectedDevices]]" url="[[url]]"></xdmvc-connections>
 
                          <div>
                             <gallery-element id='gallery'
@@ -85,7 +82,7 @@
                          </div>
                      </template>
                      <template is="dom-if" if="{{showImage}}">
-                         <paper-button id="back" on-click="hideImage" raised>Back</paper-button>
+                         <paper-button id="back" on-click="hideImage" hidden$="{{!showOverview}}" raised>Back</paper-button>
                          <image-element id="image" images="{{synced.images}}"
                                         current="{{synced.current.index}}"
                                         cursor="{{synced.cursor}}"
@@ -121,9 +118,9 @@
                             value: false,
                             notify: true
                         },
-                        showQR: {
+                        showOverview: {
                             type: Boolean,
-                            value: false,
+                            value: true,
                             notify: true
                         },
                         url:{
@@ -135,16 +132,16 @@
                     handleImage: function(event){
                         if (event.detail.newInd === event.detail.oldInd) {
                             this.showImage = true;
+                            if (this.devices.thisDevice === "small" ) {
+                                this.showOverview = false;
+                            }
+
                         }
                     },
 
                     hideImage: function() {
                         this.showImage = false;
-                    },
-
-                    toggleQR: function() {
-                        this.showQR = !this.showQR;
-                        this.$$("#badge").updatePosition();
+                        this.showOverview = true;
                     },
 
 
