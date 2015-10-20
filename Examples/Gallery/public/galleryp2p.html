@@ -68,8 +68,7 @@
                 <xdmvc-url-pairing connector="visitor" connectee="owner" url="{{url}}"></xdmvc-url-pairing>
 
 
-                 <template is="dom-if" if="{{roles.isselected.owner}}">
-                     <template is="dom-if" if="{{showOverview}}">
+                     <template is="dom-if" if="{{showOver(roles.isselected.*, devices.thisDevice.type, imageSelected)}}">
                          <h1>Show your photos!</h1>
                          <input is="core-input" type="file" multiple accept="image/*" on-change="handleFiles"  label="Choose photos"/>
                          <xdmvc-connections connections="[[devices.connectedDevices]]" url="[[url]]"></xdmvc-connections>
@@ -81,20 +80,14 @@
                             </gallery-element>
                          </div>
                      </template>
-                     <template is="dom-if" if="{{showImage}}">
-                         <paper-button id="back" on-click="hideImage" hidden$="{{!showOverview}}" raised>Back</paper-button>
+                     <template is="dom-if" if="{{showImg(roles.isselected.*, devices.thisDevice.type, imageSelected)}}">
+                         <paper-button id="back" on-click="hideImage" hidden$="{{!showButton(roles.isselected.*, devices.thisDevice.type)}}" raised>Back</paper-button>
                          <image-element id="image" images="{{synced.images}}"
                                         current="{{synced.current.index}}"
                                         cursor="{{synced.cursor}}"
                                         show-controls="{{roles.isselected.owner}}"></image-element>
                      </template>
-                 </template>
-                 <template is="dom-if" if="{{roles.isselected.visitor}}">
-                    <image-element images="{{synced.images}}"
-                                   current="{{synced.current.index}}"
-                                   cursor="{{synced.cursor}}"
-                                   show-controls="{{roles.isselected.owner}}"></image-element>
-                 </template>
+
 
             </template>
 
@@ -113,14 +106,9 @@
                                 "cursor" :{"x": -1, "y": -1}} } ,
                             notify: true
                         },
-                        showImage: {
+                        imageSelected: {
                             type: Boolean,
                             value: false,
-                            notify: true
-                        },
-                        showOverview: {
-                            type: Boolean,
-                            value: true,
                             notify: true
                         },
                         url:{
@@ -131,19 +119,24 @@
 
                     handleImage: function(event){
                         if (event.detail.newInd === event.detail.oldInd) {
-                            this.showImage = true;
-                            if (this.devices.thisDevice === "small" ) {
-                                this.showOverview = false;
-                            }
-
+                            this.imageSelected = true;
                         }
                     },
 
                     hideImage: function() {
-                        this.showImage = false;
-                        this.showOverview = true;
+                        this.imageSelected = false;
                     },
 
+                    showOver : function() {
+                        return this.roles.isselected.owner && (!this.imageSelected || this.devices.thisDevice.type !== "small");
+                    },
+
+                    showImg : function() {
+                        return !this.roles.isselected.owner || this.imageSelected || this.devices.thisDevice.type !== "small";
+                    },
+                    showButton : function() {
+                        return this.roles.isselected.owner && this.devices.thisDevice.type === "small";
+                    },
 
                     handleFiles: function (event) {
                         var files = event.target.files;
