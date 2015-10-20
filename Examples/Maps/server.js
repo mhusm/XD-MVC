@@ -1,4 +1,4 @@
-var XDmvcServer = require('xd-mvc/xdmvcserver.js');
+var XDmvcServer = require('XD-MVC/xdmvcserver.js');
 var xdmvc = new XDmvcServer();
 
 var connect = require('connect'),
@@ -7,7 +7,7 @@ var connect = require('connect'),
 var app = connect().use(serveStatic(__dirname + '/public'));
 var server = http.createServer(app);
 
-xdmvc.start(9000, 3000);
+xdmvc.start(9010, 3010, 9011);
 server.listen(8080);
 
 

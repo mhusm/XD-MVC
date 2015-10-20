@@ -35,7 +35,7 @@ function initialize() {
     })();
     XDmvc.init();
     XDmvc.reconnect = false;
-    XDmvc.connectToServer();
+    XDmvc.connectToServer(undefined, 9010, 3010, 9011 );
     XDmvc.on("XDserverReady", function(){
         $("#myDeviceId").text(XDmvc.deviceId);
         $("#inputDeviceId").val(XDmvc.deviceId);
