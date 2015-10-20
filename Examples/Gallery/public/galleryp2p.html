@@ -63,25 +63,29 @@
                 <xdmvc-url-pairing connector="visitor" connectee="owner" url="{{url}}"></xdmvc-url-pairing>
 
 
-                     <template is="dom-if" if="{{showOver(roles.isselected.*, devices.thisDevice.type, imageSelected)}}">
-                         <h1>Show your photos!</h1>
-                         <input is="core-input" type="file" multiple accept="image/*" on-change="handleFiles"  label="Choose photos"/>
-                         <xdmvc-connect connections="[[devices.connectedDevices]]" url="[[url]]"></xdmvc-connect>
+                 <template is="dom-if" if="{{showOver(roles.isselected.*, devices.thisDevice.type, imageSelected)}}">
+                     <h1>Show your photos!</h1>
+                     <input is="core-input" type="file" multiple accept="image/*" on-change="handleFiles"  label="Choose photos"/>
+                     <xdmvc-connect connections="[[devices.connectedDevices]]" url="[[url]]"></xdmvc-connect>
 
-                         <div>
-                            <gallery-element id='gallery'
-                                             images="{{synced.images}}"
-                                             current="{{synced.current.index}}" on-image="handleImage">
-                            </gallery-element>
-                         </div>
-                     </template>
-                     <template is="dom-if" if="{{showImg(roles.isselected.*, devices.thisDevice.type, imageSelected)}}">
-                         <paper-button id="back" on-click="hideImage" hidden$="{{!showButton(roles.isselected.*, devices.thisDevice.type)}}" raised>Back</paper-button>
-                         <image-element id="image" images="{{synced.images}}"
-                                        current="{{synced.current.index}}"
-                                        cursor="{{synced.cursor}}"
-                                        show-controls="{{roles.isselected.owner}}"></image-element>
-                     </template>
+                     <div>
+                        <gallery-element id='gallery'
+                                         images="{{synced.images}}"
+                                         current="{{synced.current.index}}" on-image="handleImage">
+                        </gallery-element>
+                     </div>
+                 </template>
+                 <template is="dom-if" if="{{showImg(roles.isselected.*, devices.thisDevice.type, imageSelected)}}">
+                     <paper-button id="back" on-click="hideImage" hidden$="{{!showButton(roles.isselected.*, devices.thisDevice.type)}}" raised>Back</paper-button>
+                     <image-element id="image" images="{{synced.images}}"
+                                    current="{{synced.current.index}}"
+                                    cursor="{{synced.cursor}}"
+                                    show-controls="{{roles.isselected.owner}}"></image-element>
+                 </template>
+
+                <template is="dom-if" if="{{showEmpty(roles.isselected.*, synced.images.length)}}">
+                    <div>No image selected</div>
+                </template>
 
 
             </template>
@@ -131,6 +135,11 @@
                     },
                     showButton : function() {
                         return this.roles.isselected.owner && this.devices.thisDevice.type === "small";
+                    },
+
+                    showEmpty: function() {
+                        console.log(this.synced.images.length === 0 && this.roles.isselected.visitor);
+                        return this.synced.images.length === 0 && this.roles.isselected.visitor;
                     },
 
                     handleFiles: function (event) {
