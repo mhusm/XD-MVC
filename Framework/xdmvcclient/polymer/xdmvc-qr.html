@@ -1,0 +1,27 @@
+<link rel="import" href="../../polymer/polymer.html">
+<script src="../../qrjs/qr.js"></script>
+<script src="../../qr-code/src/qr-code.js"></script>
+
+<dom-module id="xdmvc-qr">
+    <template>
+        <qr-code  data="[[url]]"></qr-code>
+        <div id="url"></div>
+    </template>
+</dom-module>/
+<script>
+    Polymer({
+        is: "xdmvc-qr",
+
+        properties: {
+            url:{
+                type: String,
+                notify: true,
+                observer: 'urlChanged'
+            }
+        },
+        urlChanged: function(){
+            this.$.url.innerHTML = this.url;
+        }
+
+    });
+</script>

@@ -1,39 +1,12 @@
 <link rel="import" href="../../polymer/polymer.html">
-<link rel="import" href="xdmvc.html">
 
 <dom-module id="xdmvc-connections">
-     <template>
-         <style>
-
-             paper-icon-button {
-                 background-color: #ddd;
-                 padding: 3px;
-                 border-radius: 3px;
-                 margin-left: 10px;
-                 margin-right: 10px;
-                 float: right;
-             }
-
-             paper-badge {
-                 margin-left: 10px;
-                 margin-top: 15px;
-                 float: right;
-             }
-
-         </style>
-         <paper-icon-button id="butn" on-click="toggleQR" raised icon="hardware:cast">Connect a device</paper-icon-button>
-         <paper-badge id="badge" for="butn" label="[[computeNumber(connections.length)]]"></paper-badge>
-         <div hidden$="{{!showQR}}">
-            <qr-code  data="[[url]]"></qr-code>
-
-            <ul>
-                <template is="dom-repeat" items="{{connections}}">
-                    <li>{{item.id}}</li>
-                </template>
-            </ul>
-
-        </div>
-
+    <template>
+        <ul>
+            <template is="dom-repeat" items="{{connections}}">
+                <li>{{item.id}}</li>
+            </template>
+        </ul>
     </template>
 </dom-module>/
 <script>
@@ -41,26 +14,9 @@
         is: "xdmvc-connections",
 
         properties: {
-            showQR: {
-                type: Boolean,
-                value: false,
-                notify: true
-            },
             connections: {
                 type: Array
-            },
-            url:{
-                type: String,
-                notify: true
             }
-        },
-        toggleQR: function() {
-            this.showQR = !this.showQR;
-            this.$$("#badge").updatePosition();
-        },
-        computeNumber: function() {
-            return this.connections.length;
         }
-
     });
 </script>

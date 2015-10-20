@@ -1,0 +1,51 @@
+<link rel="import" href="../../polymer/polymer.html">
+<link rel="import" href="xdmvc-qr.html">
+<link rel="import" href="../../paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../paper-badge/paper-badge.html">
+<link rel="import" href="../../iron-icons/hardware-icons.html">
+
+<dom-module id="xdmvc-badge">
+    <template>
+        <style>
+
+            paper-icon-button {
+                background-color: #ddd;
+                padding: 3px;
+                border-radius: 3px;
+                margin-left: 10px;
+                margin-right: 10px;
+                float: right;
+            }
+
+            paper-badge {
+                margin-left: 10px;
+                margin-top: 15px;
+                float: right;
+            }
+
+        </style>
+        <paper-icon-button id="butn" raised icon="hardware:cast"></paper-icon-button>
+        <paper-badge id="badge" for="butn" label="[[computeNumber(connections.length)]]"></paper-badge>
+
+    </template>
+</dom-module>/
+<script>
+    Polymer({
+        is: "xdmvc-badge",
+
+        properties: {
+            connections: {
+                type: Array
+            }
+        },
+
+        computeNumber: function() {
+            return this.connections.length;
+        },
+
+        updatePosition: function() {
+            this.$.badge.updatePosition();
+        }
+
+    });
+</script>

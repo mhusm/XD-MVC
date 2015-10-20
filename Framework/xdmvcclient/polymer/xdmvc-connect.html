@@ -1,0 +1,46 @@
+<link rel="import" href="../../polymer/polymer.html">
+<link rel="import" href="xdmvc-qr.html">
+<link rel="import" href="xdmvc-badge.html">
+<link rel="import" href="xdmvc-connections.html">
+
+<dom-module id="xdmvc-connect">
+    <template>
+        <xdmvc-badge id="badge" on-click="toggleQR" connections="[[connections]]"></xdmvc-badge>
+        <div hidden$="{{!showQR}}">
+            <xdmvc-qr url="[[url]]"></xdmvc-qr>
+            <xdmvc-connections connections="[[connections]]"></xdmvc-connections>
+
+        </div>
+
+    </template>
+</dom-module>/
+<script>
+    Polymer({
+        is: "xdmvc-connect",
+
+        properties: {
+            showQR: {
+                type: Boolean,
+                value: false,
+                notify: true
+            },
+            connections: {
+                type: Array
+            },
+            url:{
+                type: String,
+                notify: true
+            }
+        },
+        toggleQR: function() {
+            this.showQR = !this.showQR;
+            this.$.badge.updatePosition();
+        },
+
+        attached: function(){
+            this.async(function() {
+                this.$$('xdmvc-connection');
+            }.bind(this));
+        }
+    });
+</script>
