@@ -1,0 +1,35 @@
+<link rel="import" href="../../polymer/polymer.html">
+<link rel="import" href="../polymer/xdmvc-roles.html">
+
+<dom-module id="controller-layout">
+    <template>
+
+
+        <xdmvc-roles id="roles"
+                     available='["controller", "viewer"]'
+                     roles="{{roles}}">
+        </xdmvc-roles>
+
+
+        <template is="dom-if" if="{{roles.isselected.controller}}" restamp>
+            <content select=".controller">
+            </content>
+        </template>
+        <template is="dom-if" if="{{roles.isselected.viewer}}" restamp>
+            <content select=".viewer">
+            </content>
+        </template>
+
+
+    </template>
+</dom-module>
+<script>
+    Polymer({
+        is: "controller-layout",
+        roles:{
+            type: Object,
+            notify: true
+        }
+
+    });
+</script>

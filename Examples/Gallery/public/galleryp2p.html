@@ -24,9 +24,10 @@
 <html>
     <head>
        <!-- 1. Load platform support before any code that touches the DOM. -->
-        <script src="bower_components/webcomponentsjs/webcomponents.min.js"></script>
-        <link rel="import" href="bower_components/polymer/polymer.html">
-        <!-- 2. Load the component using an HTML Import -->
+        <!--       <script src="http://129.132.114.114/js/remote.js"></script> -->
+             <script src="bower_components/webcomponentsjs/webcomponents.min.js"></script>
+             <link rel="import" href="bower_components/polymer/polymer.html">
+             <!-- 2. Load the component using an HTML Import -->
         <script src="bower_components/xdmvcclient/js/queryParams.js"></script>
 
         <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-synchronised.html">
@@ -51,7 +52,7 @@
 
 
 
-                <xdmvc-connection peerport="9005" ajaxport="9006"></xdmvc-connection>
+                <xdmvc-connection peerport="9005" ajaxport="9006" socketport="3001"></xdmvc-connection>
                 <xdmvc-synchronised id="sync"
                                     objects='{{synced}}'>
                 </xdmvc-synchronised>
@@ -113,6 +114,14 @@
                         url:{
                             type: String,
                             notify: true
+                        },
+                        roles:{
+                            type: Object,
+                            notify: true
+                        },
+                        devices:{
+                            type: Object,
+                            notify: true
                         }
                     },
 
@@ -138,7 +147,6 @@
                     },
 
                     showEmpty: function() {
-                        console.log(this.synced.images.length === 0 && this.roles.isselected.visitor);
                         return this.synced.images.length === 0 && this.roles.isselected.visitor;
                     },
 

@@ -18,7 +18,8 @@
     "qr-code": "webcomponent-qr-code#~0.1.8",
     "xdmvcclient": "../../Framework/xdmvcclient",
     "iron-icons": "PolymerElements/iron-icons#~1.0.4",
-    "paper-badge": "PolymerElements/paper-badge#~1.0.4"
+    "paper-badge": "PolymerElements/paper-badge#~1.0.4",
+    "iron-pages": "PolymerElements/iron-pages#~1.0.3"
   },
   "resolutions": {
     "polymer": "^1.1.0",
