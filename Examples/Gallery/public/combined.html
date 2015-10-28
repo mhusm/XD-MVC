@@ -18,28 +18,33 @@
     <link rel="import" href="bower_components/xdmvcclient/layouts/controller-layout.html">
     <link rel="import" href="bower_components/paper-button/paper-button.html">
     <link rel="import" href="bower_components/xdmvcclient/layouts/lazy-page-layout.html">
-    <link rel="import" href="dom-if-test.html">
     <title></title>
 </head>
 <body>
+<style>
+    img {
+        max-width: 100%;
+    }
 
+</style>
 <dom-module id="my-app">
     <template>
-        <xdmvc-connection peerport="9005" ajaxport="9006" socketport="3001"></xdmvc-connection>
+        <xdmvc-connection peerport="9000" ajaxport="9001" socketport="3001"></xdmvc-connection>
 
         <xdmvc-synchronised id="sync"
                             objects='{{synced}}'>
         </xdmvc-synchronised>
-        <xdmvc-devices id="devices" devices="{{devices}}"></xdmvc-devices>
         <xdmvc-url-pairing connector="viewer" connectee="controller" url="{{url}}"></xdmvc-url-pairing>
-        <controller-layout roles="{{roles}}">
+        <controller-layout >
             <div class="controller">
-                Controller
+                <button on-click="prev">Previous</button>
+                <button on-click="next">Next</button>
+
             </div>
             <div class="viewer">
-                    <lazy-page-layout id="pages" current="{{current}}" selected="{{selected}}">
-                        <div>Page <span>{{selected}}</span></div>
-                    </lazy-page-layout>
+                <lazy-page-layout id="pages" current="{{current}}" selected="{{selected}}">
+                    <img on-tap="next" src="{{getSource(selected, albums)}}"/>
+                </lazy-page-layout>
             </div>
         </controller-layout>
 
@@ -60,15 +65,27 @@
                 selected: {
                     type: Number
                 },
-                roles: {
+                albums: {
                     type: Object
                 }
+            },
+
+            ready: function(){
+                ajax.get("/gallery", undefined,
+                        function (data) {
+                           this.albums= JSON.parse(data);
+                        }.bind(this), true
+                );
             },
             next: function() {
                 this.$.pages.selectNext();
             },
             prev: function() {
                 this.$.pages.selectPrevious();
+            },
+            getSource :function() {
+                return this.albums[Object.keys(this.albums)[0]].large[this.selected];
+
             }
 
         });
