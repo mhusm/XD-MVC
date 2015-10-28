@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+
+    <!-- 1. Load platform support before any code that touches the DOM. -->
+    <!--   <script src="http://129.132.114.114/js/remote.js"></script> -->
+    <script src="bower_components/webcomponentsjs/webcomponents.min.js"></script>
+    <link rel="import" href="bower_components/polymer/polymer.html">
+    <!-- 2. Load the component using an HTML Import -->
+    <script src="bower_components/xdmvcclient/js/queryParams.js"></script>
+
+    <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-synchronised.html">
+    <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-connect.html">
+    <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-connection.html">
+    <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-devices.html">
+    <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-url-pairing.html">
+    <link rel="import" href="bower_components/xdmvcclient/layouts/controller-layout.html">
+    <link rel="import" href="bower_components/paper-button/paper-button.html">
+    <link rel="import" href="bower_components/xdmvcclient/layouts/lazy-page-layout.html">
+    <link rel="import" href="dom-if-test.html">
+    <title></title>
+</head>
+<body>
+
+<dom-module id="my-app">
+    <template>
+        <xdmvc-connection peerport="9005" ajaxport="9006" socketport="3001"></xdmvc-connection>
+
+        <xdmvc-synchronised id="sync"
+                            objects='{{synced}}'>
+        </xdmvc-synchronised>
+        <xdmvc-devices id="devices" devices="{{devices}}"></xdmvc-devices>
+        <xdmvc-url-pairing connector="viewer" connectee="controller" url="{{url}}"></xdmvc-url-pairing>
+        <controller-layout roles="{{roles}}">
+            <div class="controller">
+                Controller
+            </div>
+            <div class="viewer">
+                    <lazy-page-layout id="pages" current="{{current}}" selected="{{selected}}">
+                        <div>Page <span>{{selected}}</span></div>
+                    </lazy-page-layout>
+            </div>
+        </controller-layout>
+
+    </template>
+
+
+</dom-module>
+<script>
+    HTMLImports.whenReady(function () {
+
+        Polymer({
+            is: "my-app",
+            properties: {
+                current: {
+                    type: Number,
+                    value: 0
+                },
+                selected: {
+                    type: Number
+                },
+                roles: {
+                    type: Object
+                }
+            },
+            next: function() {
+                this.$.pages.selectNext();
+            },
+            prev: function() {
+                this.$.pages.selectPrevious();
+            }
+
+        });
+    });
+</script>
+
+<my-app></my-app>
+
+
+</body>
+</html>

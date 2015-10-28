@@ -1,15 +1,18 @@
 <link rel="import" href="../../polymer/polymer.html">
-<link rel="import" href="../polymer/xdmvc-connection.html">
 <link rel="import" href="../polymer/xdmvc-synchronised.html">
 <link rel="import" href="../polymer/xdmvc-roles.html">
+<link rel="import" href="../polymer/xdmvc-devices.html">
 <link rel="import" href="../../iron-pages/iron-pages.html">
 
 <dom-module id="lazy-page-layout">
     <template>
         <xdmvc-devices id="devices" devices="{{devices}}"></xdmvc-devices>
-        <xdmvc-synchronised id="sync"
+         <xdmvc-synchronised id="sync"
                             objects='{{pages}}'>
         </xdmvc-synchronised>
+        <xdmvc-roles roles="{{roles}}"  available='["pages"]'>
+        </xdmvc-roles>
+
         <content></content>
     </template>
 </dom-module>
@@ -28,10 +31,14 @@
                 type: Object,
                 notify: true
             },
+            roles:{
+                type: Object,
+                notify: true
+            },
             selected: {
                 type: Number,
                 notify: true,
-                computed: 'computePage(pages.current.index, devices.connectedDevices.length)'
+                computed: 'computePage(pages.current.index, roles.othersRoles.pages, roles.isselected.pages)'
             },
             current: {
                 type: Number,
@@ -42,14 +49,34 @@
         },
         observers: [ 'computeCurrent(pages.current.index)'],
 
+        attached: function(){
+            XDmvc.addRole("pages");
+            // Make sure it is at least defined, otherwise computed function will not be called
+            if (!this.roles.othersRoles.pages) {
+                this.set("roles.othersRoles.pages", 0);
+            }
+        },
+
+        detached: function(){
+            XDmvc.removeRole("pages");
+        },
+
         computePage: function() {
             // Sorts device IDs alphabetically. Other orders could be implemented? E.g. size, connection time?
-            var arr = this.devices.connectedDevices.map(function(device){
-                return device.id;
-            });
-            arr.push(XDmvc.deviceId);
-            arr.sort();
-            return this.pages.current.index + arr.indexOf(XDmvc.deviceId);
+            if (XDmvc.hasRole("pages")) {
+                var arr = this.devices.connectedDevices
+                    .filter(function(device){
+                        return device.roles.indexOf("pages") > -1;
+                    }).map(function(device){
+                        return device.id;
+                    });
+                arr.push(XDmvc.deviceId);
+                arr.sort();
+                return this.pages.current.index + arr.indexOf(XDmvc.deviceId);
+            } else {
+                return 0;
+            }
+
         },
 
         computeCurrent: function() {
