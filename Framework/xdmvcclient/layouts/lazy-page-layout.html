@@ -4,20 +4,18 @@
 <link rel="import" href="../polymer/xdmvc-roles.html">
 <link rel="import" href="../../iron-pages/iron-pages.html">
 
-<dom-module id="page-layout">
+<dom-module id="lazy-page-layout">
     <template>
         <xdmvc-devices id="devices" devices="{{devices}}"></xdmvc-devices>
         <xdmvc-synchronised id="sync"
                             objects='{{pages}}'>
         </xdmvc-synchronised>
-        <iron-pages id="pages" selected="{{selected}}">
-            <content></content>
-        </iron-pages>
+        <content></content>
     </template>
 </dom-module>
 <script>
     Polymer({
-        is: "page-layout",
+        is: "lazy-page-layout",
         properties : {
             pages: {
                 type: Object,
@@ -51,26 +49,22 @@
             });
             arr.push(XDmvc.deviceId);
             arr.sort();
-            var index = this.pages.current.index + arr.indexOf(XDmvc.deviceId);
-            return this._bound(index);
+            this.pages.current.index + arr.indexOf(XDmvc.deviceId);
+            return this.pages.current.index + arr.indexOf(XDmvc.deviceId);
         },
 
         computeCurrent: function() {
             this.current = this.pages.current.index;
         },
 
-        _bound: function (index) {
-            return Math.max(Math.min(index, this.$.pages.children.length -1), 0);
-        },
-
         selectNext: function () {
-            this.set("pages.current.index",this._bound(this.pages.current.index +1));
+            this.set("pages.current.index", this.pages.current.index +1);
         },
         selectPrevious: function () {
-            this.set("pages.current.index",this._bound(this.pages.current.index -1));
+            this.set("pages.current.index", Math.max(0, this.pages.current.index -1));
         },
         select: function(index) {
-            this.set("pages.current.index",this._bound(index));
+            this.set("pages.current.index", index);
         }
 
 
