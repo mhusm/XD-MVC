@@ -1,11 +1,12 @@
 <link rel="import" href="../../polymer/polymer.html">
 <link rel="import" href="../polymer/xdmvc-synchronised.html">
 <link rel="import" href="../polymer/xdmvc-roles.html">
+<link rel="import" href="../polymer/xdmvc-devices.html">
 <link rel="import" href="../../iron-pages/iron-pages.html">
 
 <dom-module id="page-layout">
     <template>
-        <xdmvc-devices id="devices" devices="{{devices}}"></xdmvc-devices>
+        <xdmvc-devices id="devices" devices="{{devices}}" ></xdmvc-devices>
         <xdmvc-synchronised id="sync"
                             objects='{{pages}}'>
         </xdmvc-synchronised>

@@ -30,17 +30,11 @@
     <!-- 2. Load the component using an HTML Import -->
     <script src="bower_components/xdmvcclient/js/queryParams.js"></script>
 
-    <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-synchronised.html">
     <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-connection.html">
-    <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-connect.html">
-    <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-roles.html">
-    <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-devices.html">
     <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-url-pairing.html">
     <link rel="import" href="bower_components/paper-button/paper-button.html">
     <link rel="import" href="bower_components/xdmvcclient/layouts/page-layout.html">
 
-    <link rel="import" href="elements/image-element.html">
-    <link rel="import" href="elements/gallery-element.html">
     <link href="css/main.css" rel="stylesheet" >
 
 
@@ -52,10 +46,7 @@
     <template>
         <xdmvc-connection peerport="9005" ajaxport="9006" socketport="3001"></xdmvc-connection>
 
-        <xdmvc-devices id="devices" devices="{{devices}}"></xdmvc-devices>
         <xdmvc-url-pairing connector="viewer" connectee="controller" url="{{url}}"></xdmvc-url-pairing>
-        <xdmvc-roles on->
-        </xdmvc-roles>
         <page-layout id="pages" current="{{current}}" selected="{{selected}}">
             <div>page 1</div>
             <div>page 2</div>
@@ -64,8 +55,8 @@
             <div>page 5</div>
             <div>page 6</div>
         </page-layout>
-        <button on-click="prev">Previous</button>
-        <button on-click="next">Next</button>
+        <paper-button on-click="prev" raised>Previous</paper-button>
+        <paper-button on-click="next" raised>Next</paper-button>
         <div>Global current page: <span>{{current}}</span></div>
         <div>Selected page for this device: <span>{{selected}}</span></div>
 
@@ -84,8 +75,12 @@
                     value: 0
                 },
                 selected: {
-                    type: Number,
+                    type: Number
+                },
+                url: {
+                    type: String
                 }
+
             },
             next: function() {
                 this.$.pages.selectNext();

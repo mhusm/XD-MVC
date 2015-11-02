@@ -4,12 +4,10 @@
 <dom-module id="controller-layout">
     <template>
 
-
         <xdmvc-roles id="roles"
                      available='["controller", "viewer"]'
                      roles="{{roles}}">
         </xdmvc-roles>
-
 
         <template is="dom-if" if="{{roles.isselected.controller}}" restamp>
             <content select=".controller">
