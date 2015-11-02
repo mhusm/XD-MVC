@@ -28,7 +28,7 @@ var connect = require('connect'),
 var app = connect().use(serveStatic(path.join(__dirname, 'public')));
 var server = http.createServer(app);
 
-xdmvc.start(9005, 3000, 9006);
+xdmvc.start(9005, 3001, 9006);
 server.listen(8082);
 
 

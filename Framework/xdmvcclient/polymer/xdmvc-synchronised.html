@@ -51,11 +51,7 @@
             XDmvc.on("XDupdate", function(id, summary){
                 if (this.objects.hasOwnProperty(id)) {
                     if (Array.isArray(this.objects[id])) {
-                        summary.forEach(function(splice) {
-                             // Using a Polymer internal function here. This is not ideal. Maybe Polymer will provide an API in the future
-                             this._notifySplice(this.objects[id], "objects." +id, splice[0], splice[1], splice[2]);
-                        }, this);
-
+                        this.notifySplices("objects." +id, summary);
                     } else {
                         var key;
                         for (key in summary[0]){

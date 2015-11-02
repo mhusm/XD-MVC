@@ -1,0 +1,90 @@
+<!--
+/*
+* XD-MVC -- A framework for cross-device applications
+* Copyright (C) 2014-2015 Maria Husmann. All rights reserved.
+*
+* XD-MVC is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* XD-MVC is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with XD-MVC. If not, see <http://www.gnu.org/licenses/>.
+*
+* See the README and LICENSE files for further information.
+*
+*/
+-->
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- 1. Load platform support before any code that touches the DOM. -->
+    <!--       <script src="http://129.132.114.114/js/remote.js"></script> -->
+    <script src="bower_components/webcomponentsjs/webcomponents.min.js"></script>
+    <link rel="import" href="bower_components/polymer/polymer.html">
+    <!-- 2. Load the component using an HTML Import -->
+    <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-connection.html">
+    <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-url-pairing.html">
+    <link rel="import" href="bower_components/paper-button/paper-button.html">
+    <link rel="import" href="bower_components/xdmvcclient/layouts/lazy-page-layout.html">
+
+
+    <link href="css/main.css" rel="stylesheet" >
+
+
+    <meta name="viewport" content="width=device-width, user-scalable=no">
+    <title>Paging</title>
+</head>
+<body>
+<dom-module id="my-app">
+    <template>
+        <xdmvc-connection peerport="9005" ajaxport="9006" socketport="3001"></xdmvc-connection>
+        <xdmvc-url-pairing connector="viewer" connectee="controller" url="{{url}}"></xdmvc-url-pairing>
+        <lazy-page-layout id="pages" current="{{current}}" selected="{{selected}}" >
+            <div>Page <span>{{selected}}</span></div>
+        </lazy-page-layout>
+        <paper-button on-click="prev" raised>Previous</paper-button>
+        <paper-button on-click="next" raised>Next</paper-button>
+        <div>Global current page: <span>{{current}}</span></div>
+        <div>Selected page for this device: <span>{{selected}}</span></div>
+
+    </template>
+
+
+</dom-module>
+<script>
+    HTMLImports.whenReady(function () {
+
+        Polymer({
+            is: "my-app",
+            properties: {
+                current: {
+                    type: Number,
+                    value: 0
+                },
+                selected: {
+                    type: Number
+                },
+                url: {
+                    type: String
+                }            },
+            next: function() {
+                this.$.pages.selectNext();
+            },
+            prev: function() {
+                this.$.pages.selectPrevious();
+            }
+
+        });
+    });
+</script>
+
+<my-app></my-app>
+
+</body>
+</html>

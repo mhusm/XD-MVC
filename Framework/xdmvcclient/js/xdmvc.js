@@ -333,9 +333,10 @@ XDMVC.prototype.update = function(old, data, arrayDelta, objectDelta, id){
 
         splices.forEach(function(spliceArgs){
             var rem = Array.prototype.splice.apply(old, spliceArgs);
-            var sum = [spliceArgs[0], spliceArgs.length -2, rem];
-            summary.push(sum);
+            var splice = {index: spliceArgs[0], removed: rem, addedCount:spliceArgs.length -2, object: old, type: 'splice'};
+            summary.push(splice);
         });
+
 
     } else {
         if (objectDelta) {

@@ -1,0 +1,104 @@
+<link rel="import" href="../../polymer/polymer.html">
+<link rel="import" href="../polymer/xdmvc-synchronised.html">
+<link rel="import" href="../polymer/xdmvc-roles.html">
+<link rel="import" href="../polymer/xdmvc-devices.html">
+<link rel="import" href="../../iron-pages/iron-pages.html">
+
+<dom-module id="page-layout">
+    <template>
+        <xdmvc-devices id="devices" devices="{{devices}}" ></xdmvc-devices>
+        <xdmvc-synchronised id="sync"
+                            objects='{{pages}}'>
+        </xdmvc-synchronised>
+        <xdmvc-roles roles="{{roles}}"  available='["pages"]'>
+        </xdmvc-roles>
+
+        <iron-pages id="pages" selected="{{selected}}">
+            <content></content>
+        </iron-pages>
+    </template>
+</dom-module>
+<script>
+    Polymer({
+        is: "page-layout",
+        properties : {
+            pages: {
+                type: Object,
+                value: function(){
+                    return {"current": { "index":0} };
+                },
+                notify: true
+            },
+            devices:{
+                type: Object,
+                notify: true
+            },
+            roles:{
+                type: Object,
+                notify: true
+            },
+            selected: {
+                type: Number,
+                notify: true,
+                computed: 'computePage(pages.current.index, roles.othersRoles.pages, roles.isselected.pages)'
+            },
+            current: {
+                type: Number,
+                notify: true,
+                observer: 'select'
+            }
+
+        },
+        observers: [ 'computeCurrent(pages.current.index)'],
+
+        attached: function(){
+            XDmvc.addRole("pages");
+            // Make sure it is at least defined, otherwise computed function will not be called
+            if (!this.roles.othersRoles.pages) {
+                this.set("roles.othersRoles.pages", 0);
+            }
+        },
+
+        detached: function(){
+            XDmvc.removeRole("pages");
+        },
+
+        computePage: function() {
+            // Sorts device IDs alphabetically. Other orders could be implemented? E.g. size, connection time?
+            if (XDmvc.hasRole("pages")) {
+                var arr = this.devices.connectedDevices
+                        .filter(function(device){
+                            return device.roles.indexOf("pages") > -1;
+                        }).map(function(device){
+                            return device.id;
+                        });
+                arr.push(XDmvc.deviceId);
+                arr.sort();
+                return this._bound(this.pages.current.index + arr.indexOf(XDmvc.deviceId));
+            } else {
+                return 0;
+            }
+        },
+
+        computeCurrent: function() {
+            this.current = this.pages.current.index;
+        },
+
+        _bound: function (index) {
+            return Math.max(Math.min(index, this.$.pages.children.length -1), 0);
+        },
+
+        selectNext: function () {
+            this.set("pages.current.index",this._bound(this.pages.current.index +1));
+        },
+        selectPrevious: function () {
+            this.set("pages.current.index",this._bound(this.pages.current.index -1));
+        },
+        select: function(index) {
+            this.set("pages.current.index",this._bound(index));
+        }
+
+
+
+    });
+</script>
