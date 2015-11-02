@@ -30,10 +30,6 @@
 <dom-module id="my-app">
     <template>
         <xdmvc-connection peerport="9000" ajaxport="9001" socketport="3001"></xdmvc-connection>
-
-        <xdmvc-synchronised id="sync"
-                            objects='{{synced}}'>
-        </xdmvc-synchronised>
         <xdmvc-url-pairing connector="viewer" connectee="controller" url="{{url}}"></xdmvc-url-pairing>
         <controller-layout >
             <div class="controller">

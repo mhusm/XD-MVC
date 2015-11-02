@@ -52,14 +52,15 @@
 
         attached: function(){
             XDmvc.addRole("pages");
+            // Make sure it is at least defined, otherwise computed function will not be called
+            if (!this.roles.othersRoles.pages) {
+                this.set("roles.othersRoles.pages", 0);
+            }
         },
 
         detached: function(){
             XDmvc.removeRole("pages");
-            // Make sure it is at least defined, otherwise computed function will not be called
-            if (!this.roles.othersRoles.pages) {
-                this.set("roles.othersRoles.pages", 0);
-            }       },
+        },
 
         computePage: function() {
             // Sorts device IDs alphabetically. Other orders could be implemented? E.g. size, connection time?
