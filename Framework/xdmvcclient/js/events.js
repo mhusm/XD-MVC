@@ -33,7 +33,13 @@ XDEmitter.prototype.on = function (event, callback) {
 };
 
 XDEmitter.prototype.emit = function (event) {
-    var args = Array.prototype.slice.call(arguments, 1);
+//    var args = Array.prototype.slice.call(arguments, 1);
+    var args = new Array(arguments.length);
+    for(var i = 1; i < args.length; ++i) {
+        //i is always valid index in the arguments object
+        args[i-1] = arguments[i];
+    }
+
     if (this.callbackmap[event]) {
         this.callbackmap[event].forEach(function(callback){
             callback.apply(this, args);
