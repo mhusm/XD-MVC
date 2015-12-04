@@ -23,8 +23,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <!-- 1. Load platform support before any code that touches the DOM. -->
+    <!-- 1. Load platform support before any code that touches the DOM.
     <script src="http://129.132.114.114/js/remote.js"></script>
+     -->
     <script src="bower_components/webcomponentsjs/webcomponents.min.js"></script>
     <link rel="import" href="bower_components/polymer/polymer.html">
     <!-- 2. Load the component using an HTML Import -->
@@ -51,7 +52,7 @@
     <template>
 
 
-        <xdmvc-connection peerport="9005" ajaxport="9006" socketport="3001"></xdmvc-connection>
+        <xdmvc-connection peerport="9005" ajaxport="9006" socketport="3001" architecture="client-server"></xdmvc-connection>
 
         <xdmvc-synchronised id="sync"
                             objects='{{synced}}'>
@@ -75,6 +76,7 @@
                 <image-element id="image" images="{{synced.images}}"
                         current="{{synced.current.index}}"
                         cursor="{{synced.cursor}}" ></image-element>
+
             </div>
         </controller-layout>
 
