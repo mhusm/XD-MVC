@@ -43,13 +43,13 @@
 
                 <gallery-element id='gallery'
                                  images="{{synced.images}}"
-                                 current="{{synced.current.index}}">
+                                 current="{{synced.currentImage.index}}">
                 </gallery-element>
 
             </div>
             <div class="viewer">
-                <lazy-page-layout id="pages" selected="{{selected}}" >
-                    <img on-tap="next" src="{{getSource(synced.images.length, selected)}}" current="{{synced.current.index}}"/>
+                <lazy-page-layout id="pages" selected="{{selected}}" current="{{synced.currentImage.index}}">
+                    <img on-tap="next" src="{{getSource(synced.images.length, selected)}}" />
                 </lazy-page-layout>
             </div>
         </controller-layout>
@@ -80,7 +80,7 @@
             properties: {
                 synced: {
                     type: Object,
-                    value: function(){ return {"current": { "index":0}, "images": [],
+                    value: function(){ return {"currentImage": { "index":0}, "images": [],
                         "cursor" :{"x": -1, "y": -1}} } ,
                     notify: true
                 },
@@ -98,10 +98,11 @@
                 }
             },
             next: function() {
-                this.set("synced.current.index",  Math.min(this.synced.images.length -1, this.synced.current.index +1));
+                this.$.pages.selectNext();
+
             },
             prev: function() {
-                this.set("synced.current.index",  Math.max(0,this.synced.current.index -1));
+                this.$.pages.selectPrevious();
             },
 
             handleFiles: function (event) {
