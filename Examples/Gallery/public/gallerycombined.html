@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+
+    <!-- 1. Load platform support before any code that touches the DOM. -->
+    <!--    <script src="http://129.132.114.114/js/remote.js"></script>  -->
+    <script src="bower_components/webcomponentsjs/webcomponents.min.js"></script>
+    <link rel="import" href="bower_components/polymer/polymer.html">
+    <!-- 2. Load the component using an HTML Import -->
+    <script src="bower_components/xdmvcclient/js/queryParams.js"></script>
+
+    <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-connect.html">
+    <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-connection.html">
+    <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-url-pairing.html">
+    <link rel="import" href="bower_components/xdmvcclient/layouts/controller-layout.html">
+    <link rel="import" href="bower_components/paper-button/paper-button.html">
+    <link rel="import" href="bower_components/xdmvcclient/layouts/lazy-page-layout.html">
+    <link rel="import" href="elements/gallery-element.html">
+    <title></title>
+</head>
+<body>
+
+<dom-module id="my-app">
+    <template>
+        <xdmvc-connection peerport="9005" ajaxport="9006" socketport="3001" architecture="client-server"></xdmvc-connection>
+
+        <xdmvc-synchronised id="sync"
+                            objects='{{synced}}'>
+        </xdmvc-synchronised>
+        <xdmvc-devices id="devices" devices="{{devices}}"></xdmvc-devices>
+        <xdmvc-url-pairing connector="viewer" connectee="controller" url="{{url}}"></xdmvc-url-pairing>
+        <controller-layout >
+            <div class="controller">
+                <h1>Show your photos!</h1>
+                <input is="core-input" type="file" multiple accept="image/*" on-change="handleFiles"  label="Choose photos"/>
+                <xdmvc-connect connections="[[devices.connectedDevices]]" url="[[url]]"></xdmvc-connect>
+
+                <div id="buttons">
+                    <paper-button on-click="prev" raised>Previous</paper-button>
+                    <paper-button on-click="next" raised>Next</paper-button>
+                </div>
+
+                <gallery-element id='gallery'
+                                 images="{{synced.images}}"
+                                 current="{{synced.current.index}}">
+                </gallery-element>
+
+            </div>
+            <div class="viewer">
+                <lazy-page-layout id="pages" selected="{{selected}}" >
+                    <img on-tap="next" src="{{getSource(synced.images.length, selected)}}" current="{{synced.current.index}}"/>
+                </lazy-page-layout>
+            </div>
+        </controller-layout>
+
+        <style>
+
+            html,body {
+                font-family: 'RobotoDraft', sans-serif;
+            }
+
+            img {
+                max-width: 100%;
+            }
+
+            #buttons {
+                margin-top : 8px;
+                margin-left: -4px;
+            }
+
+        </style>
+    </template>
+</dom-module>
+<script>
+    HTMLImports.whenReady(function () {
+
+        Polymer({
+            is: "my-app",
+            properties: {
+                synced: {
+                    type: Object,
+                    value: function(){ return {"current": { "index":0}, "images": [],
+                        "cursor" :{"x": -1, "y": -1}} } ,
+                    notify: true
+                },
+                url:{
+                    type: String,
+                    notify: true
+                },
+                roles:{
+                    type: Object,
+                    notify: true
+                },
+                devices:{
+                    type: Object,
+                    notify: true
+                }
+            },
+            next: function() {
+                this.set("synced.current.index",  Math.min(this.synced.images.length -1, this.synced.current.index +1));
+            },
+            prev: function() {
+                this.set("synced.current.index",  Math.max(0,this.synced.current.index -1));
+            },
+
+            handleFiles: function (event) {
+                var files = event.target.files;
+                for (var i = 0; i < files.length; i++) {
+                    var file = files[i];
+                    var imageType = /image.*/;
+
+                    if (!file.type.match(imageType)) {
+                        continue;
+                    }
+
+                    var imgData = this.$.sync.objects.images;
+                    var reader = new FileReader();
+                    reader.onload = function(e) {
+                        this.push("synced.images", e.target.result);
+                    }.bind(this);
+                    reader.readAsDataURL(file);
+                }
+            },
+
+            getSource :function() {
+                if (this.synced.images.length == 0 ) {
+                    return "";
+                } else {
+                    return this.synced.images[Math.min(this.selected, this.synced.images.length -1)];
+                }
+            }
+
+        });
+    });
+</script>
+
+<my-app></my-app>
+
+
+</body>
+</html>
