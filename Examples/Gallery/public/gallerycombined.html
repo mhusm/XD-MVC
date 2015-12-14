@@ -23,7 +23,7 @@
 
 <dom-module id="my-app">
     <template>
-        <xdmvc-connection peerport="9005" ajaxport="9006" socketport="3001" architecture="client-server"></xdmvc-connection>
+        <xdmvc-connection peerport="9005" ajaxport="9006" socketport="3001" ></xdmvc-connection>
 
         <xdmvc-synchronised id="sync"
                             objects='{{synced}}'>
@@ -43,12 +43,12 @@
 
                 <gallery-element id='gallery'
                                  images="{{synced.images}}"
-                                 current="{{synced.currentImage.index}}">
+                                 current="{{currentIndex}}">
                 </gallery-element>
 
             </div>
             <div class="viewer">
-                <lazy-page-layout id="pages" selected="{{selected}}" current="{{synced.currentImage.index}}">
+                <lazy-page-layout id="pages" selected="{{selected}}" current="{{currentIndex}}">
                     <img on-tap="next" src="{{getSource(synced.images.length, selected)}}" />
                 </lazy-page-layout>
             </div>
@@ -80,8 +80,7 @@
             properties: {
                 synced: {
                     type: Object,
-                    value: function(){ return {"currentImage": { "index":0}, "images": [],
-                        "cursor" :{"x": -1, "y": -1}} } ,
+                    value: function(){ return {"images": [] }} ,
                     notify: true
                 },
                 url:{
@@ -95,6 +94,9 @@
                 devices:{
                     type: Object,
                     notify: true
+                },
+                currentIndex: {
+                    type: Number
                 }
             },
             next: function() {
