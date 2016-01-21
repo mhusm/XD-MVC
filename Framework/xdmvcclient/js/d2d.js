@@ -210,8 +210,8 @@ XDd2d.prototype.connect = function connect () {
             window.setInterval(function(){
                 XDd2d.requestAvailableDevices();}, XDd2d.pollIntervall);
 
-            this.emit('XDserverReady');
             this.serverReady = true;
+            this.emit('XDserverReady');
         }
 
     }.bind(this));
