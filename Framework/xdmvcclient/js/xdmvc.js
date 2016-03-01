@@ -32,6 +32,7 @@ function XDMVC () {
     this.lastSyncId = 0;
     this.storedPeers = [];
     this.reconnect = false;
+    this.persistIds = false;
     this.roles = []; // roles that this peer has
     this.othersRoles = {}; // roles that other peers have
     this.configuredRoles = {}; // roles that have been configured in the system
@@ -186,7 +187,9 @@ XDMVC.prototype.handleSync = function handleSync (data, sender){
 XDMVC.prototype.handleServerReady = function handleServerReady(){
     this.deviceId = this.XDd2d.deviceId;
     this.device.id = this.XDd2d.deviceId;
-    localStorage.setItem("deviceId", this.deviceId);
+    if (this.persistIds || this.reconnect) {
+        localStorage.setItem("deviceId", this.deviceId);
+    }
 
     this.XDd2d.sendToServer('device', this.device);
     this.XDd2d.sendToServer('roles', this.roles);
@@ -535,7 +538,9 @@ XDMVC.prototype.isInterested = function(role, dataId){
 
 XDMVC.prototype.init = function () {
     // Check if there is an id, otherwise will get one from the server upon connection
-    this.deviceId = localStorage.getItem("deviceId");
+    if (this.persistIds || this.reconnect) {
+        this.deviceId = localStorage.getItem("deviceId");
+    }
 
     this.loadPeers();
     this.detectDevice();
@@ -554,7 +559,10 @@ XDMVC.prototype.init = function () {
 XDMVC.prototype.changeDeviceId = function (newId){
     if (newId !== this.deviceId) {
         this.deviceId = newId;
-        localStorage.deviceId = newId;
+
+        if (this.persistIds || this.reconnect) {
+            localStorage.deviceId = newId;
+        }
         this.device.id = this.deviceId;
         // If connected, disconnect and reconnect
         if (this.XDd2d) {
