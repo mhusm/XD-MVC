@@ -24,10 +24,11 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <!-- 1. Load platform support before any code that touches the DOM. -->
+        <!-- 1. Load platform support before any code that touches the DOM.-->
+        <!-- <script src='http://ross.ethz.ch/js/remote.js'		></script> -->
         <script src="bower_components/webcomponentsjs/webcomponents.min.js"></script>
         <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc.html">
-        <link src="bower_components/polymer/polymer.html" rel="import">
+        <link href="bower_components/polymer/polymer.html" rel="import">
         <!-- 2. Load the component using an HTML Import -->
         <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-synchronised.html">
         <link rel="import" href="bower_components/xdmvcclient/polymer/xdmvc-connection.html">
@@ -64,7 +65,6 @@
                 </xdmvc-roles>
                 <xdmvc-devices id="devices" devices="{{devices}}"></xdmvc-devices>
                 <xdmvc-url-pairing connector="visitor" connectee="owner"></xdmvc-url-pairing>
-<h1>hello</h1>
                 <gallery-overview id='overview'
                                   hidden$="{{!albumsVisible}}"
                                   on-click="albumClicked"
@@ -226,6 +226,5 @@
 
         </style>
 
-        <script src="http://code.jquery.com/jquery-2.0.3.js"></script>
     </body>
 </html>
