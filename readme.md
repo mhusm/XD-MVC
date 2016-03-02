@@ -8,11 +8,11 @@ For communication among devices, both a peer-to-peer (based on [PeerJS](http://p
 ## Structure
 **Note that the structure of this project has changed. The project has been split over multiple repositories. The code in this one will no longer be maintained and will be removed in the future.** 
 
-* The **server-side** part is located at [https://github.com/mhusm/XD-MVC-Server](XD-MVC-Server). 
-* The **client-side** part is located at [https://github.com/mhusm/XD-MVC-Client](XD-MVC-Client).
-* A gallery example built with **Polymer** is located at [https://github.com/mhusm/XD-Gallery](XD-Gallery).
-* A maps example built with **JavaScript** is located at [https://github.com/mhusm/XD-Maps](XD-Maps).
-* A Chat example using **d2d** is located at [https://github.com/mhusm/XD-Maps](XD-Maps).
+* The **server-side** part is located at [XD-MVC-Server](https://github.com/mhusm/XD-MVC-Server).
+* The **client-side** part is located at [XD-MVC-Client](https://github.com/mhusm/XD-MVC-Client).
+* A gallery example built with **Polymer** is located at [XD-Gallery](https://github.com/mhusm/XD-Gallery).
+* A maps example built with **JavaScript** is located at [XD-Maps](https://github.com/mhusm/XD-Maps).
+* A Chat example using **d2d** is located at [D2D-Chat](https://github.com/mhusm/D2D-Chat).
 
 ## Supported Browsers
 The framework uses some experimental JavaScript features, hence it may not work equally well in all browsers. 
