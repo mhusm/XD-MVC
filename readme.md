@@ -12,6 +12,9 @@ For communication among devices, both a peer-to-peer (based on [PeerJS](http://p
 * The **client-side** part is located at [XD-MVC-Client](https://github.com/mhusm/XD-MVC-Client).
 * A gallery example built with **Polymer** is located at [XD-Gallery](https://github.com/mhusm/XD-Gallery).
 * A maps example built with **JavaScript** is located at [XD-Maps](https://github.com/mhusm/XD-Maps).
+* A maps example built with **Polymer** is located at [XD-MapsPolymer](https://github.com/mhusm/XD-MapsPolymer).
+* A webcam viewer example built with **Polymer** is located at [xd-webcam](https://github.com/mhusm/xd-webcam).
+* An interactive drawing board example built with **Polymer** is located at [xd-graffiti](https://github.com/mhusm/xd-graffiti).
 * A Chat example using **d2d** is located at [D2D-Chat](https://github.com/mhusm/D2D-Chat).
 
 ## Supported Browsers
@@ -21,4 +24,4 @@ If peer-to-peer communication is used, that is the only browser that is fully su
 If client-server or hybrid communication is used, also Firefox and Safari should work. For applications built with Polymer we have seen best results with Chrome, however, thanks to polyfills all modern browsers should be suppported. Internet Explorer support has not been tested. 
 
 ## About this Project
-XD-MVC is under development at the [Globis Group at ETH Zürich](https://globis.ethz.ch). The project is coordinated by [Maria Husmann](https://globis.ethz.ch/#!/person/maria-husmann/). [Fabian Stutz](https://github.com/fabwid), Silvan Egli, and Marko Zivkovic have contributed to XD-MVC.
+XD-MVC is under development at the [Globis Group at ETH ZÃ¼rich](https://globis.ethz.ch). The project is coordinated by [Maria Husmann](https://globis.ethz.ch/#!/person/maria-husmann/). [Fabian Stutz](https://github.com/fabwid), Silvan Egli, and Marko Zivkovic have contributed to XD-MVC.
